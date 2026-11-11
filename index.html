@@ -92,6 +92,16 @@
   a { color: var(--accent); }
   .links { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: .88rem; }
   .empty { color: var(--muted); max-width: 56ch; }
+  .tabs { display: flex; gap: 4px; flex-wrap: wrap; }
+  .tab { font: inherit; font-weight: 600; background: transparent; color: var(--muted); border: 0; border-bottom: 3px solid transparent; padding: 8px 12px; cursor: pointer; max-width: 16rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tab[aria-current="page"] { color: var(--ink); border-bottom-color: var(--accent); }
+  .tab:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .bar { display: flex; flex-wrap: wrap; gap: 8px 20px; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line); }
+  .who { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; font-size: .85rem; color: var(--muted); padding-bottom: 6px; }
+  .login { max-width: 26rem; margin: 6vh auto 0; display: flex; flex-direction: column; gap: 18px; }
+  .home { display: flex; flex-direction: column; gap: 20px; }
+  .home2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 24rem), 1fr)); gap: 20px; align-items: start; }
+  td .linkbtn { font-size: inherit; text-align: left; }
   textarea { font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 4px; padding: 8px 10px; width: 100%; box-sizing: border-box; min-height: 4.5rem; resize: vertical; }
   details.more > summary { cursor: pointer; font-size: .85rem; font-weight: 600; color: var(--accent); }
   details.more[open] > summary { margin-bottom: 10px; }
@@ -207,20 +217,48 @@
 
 
 <div class="wrap">
-  <header class="top">
+  <div id="v-login" class="login" hidden>
     <div>
-      <h1>Garage 197 Car Lookup</h1>
-      <p>Enter a car and its chassis number to decode it and see what cars like it have sold for. Draft version: it covers Porsche models built before 2003.</p>
+      <h1>Garage 197</h1>
+      <p class="muted" style="margin-top:6px">Track what classic Porsches sell for, keep your cars and their history in one place, and see how your garage sits against the market.</p>
     </div>
-    <div class="cur"><label for="f-cur">Show prices in</label>
-      <select id="f-cur" style="width:auto"><option value="USD">US dollars</option><option value="GBP">Pounds</option><option value="EUR">Euros</option></select>
+    <section class="panel" aria-labelledby="h-login">
+      <h2 id="h-login">Sign in</h2>
+        <form id="acct-form" novalidate>
+                    <div class="field"><label for="a-email">Email</label><input id="a-email" type="email" autocomplete="email" inputmode="email"></div>
+          <div class="field"><label for="a-pass">Password</label><input id="a-pass" type="password" autocomplete="current-password" minlength="8"></div>
+          <div class="btns"><button type="submit" class="btn primary" id="b-signin">Sign in</button><button type="button" class="btn" id="b-signup">Create account</button></div>
+        </form>
+      <p class="status" id="login-status" role="status"></p>
+    </section>
+    <p class="muted small">New here? Enter your email, choose a password of at least 8 characters and press Create account.</p>
+  </div>
+
+  <header id="v-head" hidden>
+    <div class="top" style="margin-bottom:10px">
+      <h1>Garage 197</h1>
+      <div class="who">
+        <label for="f-cur">Prices in</label>
+        <select id="f-cur" style="width:auto"><option value="USD">US dollars</option><option value="GBP">Pounds</option><option value="EUR">Euros</option></select>
+        <span id="who-email" style="overflow-wrap:anywhere"></span>
+        <button type="button" class="btn" id="b-signout" style="padding:4px 10px">Sign out</button>
+      </div>
     </div>
+    <nav class="bar" aria-label="Sections">
+      <div class="tabs">
+        <button type="button" class="tab" id="t-home" aria-current="page">Home</button>
+        <button type="button" class="tab" id="t-garage">My garage</button>
+      </div>
+    </nav>
   </header>
 
+  <main id="v-home" class="home" hidden></main>
+
+  <div id="v-garage" hidden>
   <div class="bench">
     <div class="rail">
       <section class="panel" aria-labelledby="h-acct">
-        <h2 id="h-acct">Account</h2>
+        <h2 id="h-acct">Your account</h2>
         <div id="acct-in" hidden style="display:flex;flex-direction:column;gap:10px">
           <p class="small">Signed in as <b id="acct-email" style="overflow-wrap:anywhere"></b>. Your garage is saved to your account and follows you to any device.</p>
           <p class="small" id="acct-setup" hidden style="color:var(--bad)"></p>
@@ -228,14 +266,7 @@
             <span class="small" id="acct-import-text"></span>
             <div class="btns"><button type="button" class="btn primary" id="b-import">Add them to my account</button><button type="button" class="btn" id="b-import-skip">Not now</button></div>
           </div>
-          <div class="btns"><button type="button" class="btn" id="b-signout">Sign out</button></div>
         </div>
-        <form id="acct-form" novalidate>
-          <p class="muted small">Sign in to keep your garage and logbooks in the cloud and attach photos and documents. Without an account, cars stay on this device only.</p>
-          <div class="field"><label for="a-email">Email</label><input id="a-email" type="email" autocomplete="email" inputmode="email"></div>
-          <div class="field"><label for="a-pass">Password</label><input id="a-pass" type="password" autocomplete="current-password" minlength="8"></div>
-          <div class="btns"><button type="submit" class="btn primary" id="b-signin">Sign in</button><button type="button" class="btn" id="b-signup">Create account</button></div>
-        </form>
         <p class="status" id="acct-status" role="status"></p>
       </section>
       <section class="panel" aria-labelledby="h-garage">
@@ -347,6 +378,7 @@
 
       <p class="muted small">Sold prices are public auction results copied by hand from The Classic Valuer and Classic.com, <span id="data-asof"></span>, covering Porsche models built before 2003. Most models have only their 10 to 20 latest sales on file, without mileage. Prices in other currencies use fixed approximate rates ($1 = £0.75, €1 = £0.86). Condition is saved with the car but doesn’t change the figures yet. This is market research, not a formal valuation.</p>
     </div>
+  </div>
   </div>
 </div>
 
@@ -772,6 +804,66 @@ $('b-rec-del').addEventListener('click', async () => {
 });
 $('rec-form').addEventListener('input', () => { $('b-rec-del').dataset.sure = ''; if (L.editing) $('b-rec-del').textContent = 'Delete record'; });
 
+/* Views: login page, then Home and garage tabs */
+function showView() {
+  const signed = !!(CLOUD && CLOUD.user), v = S.view || 'home';
+  $('v-login').hidden = signed; $('v-head').hidden = !signed;
+  $('v-home').hidden = !signed || v !== 'home'; $('v-garage').hidden = !signed || v !== 'garage';
+  $('t-home').setAttribute('aria-current', v === 'home' ? 'page' : 'false'); $('t-garage').setAttribute('aria-current', v === 'garage' ? 'page' : 'false');
+}
+function go(view) { S.view = view; showView(); if (view === 'garage') renderAll(); else renderHome(); window.scrollTo(0, 0); }
+$('t-home').addEventListener('click', () => go('home'));
+$('t-garage').addEventListener('click', () => go('garage'));
+function explore(model) {
+  S.currentId = null; S.dirty = false; fillForm({ name: model, model: model }); endDelete(); setStatus('');
+  go('garage');
+}
+function renderHome() {
+  const out = $('v-home'); if (!out) return; out.replaceChildren();
+  if (S.salesError) { out.append(el('p', { class: 'empty', text: 'The sold results didn’t load. Reload the page to try again.' })); return; }
+  if (!S.sales) { out.append(el('p', { class: 'empty', text: 'Loading the market…' })); return; }
+  const today = new Date().toISOString().slice(0, 10), y1 = (+today.slice(0, 4) - 1) + today.slice(4);
+  const d90 = new Date(Date.now() - 90 * 864e5).toISOString().slice(0, 10);
+  const last12 = S.sales.filter((r) => r.date >= y1), byModel = {};
+  for (const r of last12) (byModel[r.model] = byModel[r.model] || []).push(r.gbp);
+  const top = last12.reduce((a, r) => (!a || r.gbp > a.gbp ? r : a), null);
+  const latest = [...S.sales].sort((a, b) => b.date.localeCompare(a.date));
+  const stat = (label, value, note) => el('div', { class: 'stat' }, el('span', { class: 'label', text: label }), el('b', { text: value }), note ? el('span', { class: 'muted small', text: note }) : null);
+  const mlink = (model) => { const b = el('button', { type: 'button', class: 'linkbtn', text: shortModel(model) }); b.addEventListener('click', () => explore(model)); return b; };
+  const panel = (title, note, ...kids) => el('section', { class: 'panel' }, el('h2', { text: title }), note ? el('p', { class: 'muted small', text: note }) : null, ...kids);
+  const table = (heads, rows) => el('div', { class: 'tablebox' }, el('table', {}, el('thead', {}, el('tr', {}, ...heads.map((h) => el('th', { class: h[1] || '', text: h[0] })))), el('tbody', {}, ...rows)));
+
+  // Overview
+  out.append(panel('Market at a glance', 'Classic Porsche models built before 2003, from public auction results.', el('div', { class: 'stats' },
+    stat('Sold results on file', num(S.sales.length), Object.keys(S.counts || {}).length + ' models covered'),
+    stat('Sold in the last 90 days', num(S.sales.filter((r) => r.date >= d90).length), 'Latest on ' + fmtDate(latest[0].date)),
+    stat('Top sale, last 12 months', top ? money(top.gbp) : '—', top ? shortModel(top.model) + ', ' + fmtDate(top.date) : ''),
+    stat('Your garage', String(S.cars.length) + (S.cars.length === 1 ? ' car' : ' cars'), S.cars.length ? 'Open the garage tab for each car’s market and logbook' : 'Add your first car under the garage tab'))));
+
+  // Latest sales
+  const rows = latest.slice(0, 12).map((r) => el('tr', {}, el('td', { text: fmtDate(r.date) }), el('td', {}, mlink(r.model)), el('td', { class: 'num', text: money(r.gbp) }), el('td', { class: 'muted', text: [r.year, r.platform !== 'Unknown' ? r.platform : ''].filter(Boolean).join(' · ') })));
+  const latestPanel = panel('Latest sales', 'The most recent sold results on file. Press a model to see its market. Live for-sale listings will appear here once a listings feed is licensed.', table([['Sold'], ['Model'], ['Price', 'num'], ['Car and venue']], rows));
+
+  // Movers against the long-run median
+  const movers = CATALOG.filter((m) => m.median2020 && (byModel[m.name] || []).length >= 5).map((m) => { const med = median(byModel[m.name]); return { m, med, d: (med - m.median2020) / m.median2020, n: byModel[m.name].length }; }).sort((a, b) => b.d - a.d);
+  const mrow = (x) => el('tr', {}, el('td', {}, mlink(x.m.name)), el('td', { class: 'num', text: money(x.med) }), el('td', { class: 'num ' + (x.d >= 0 ? 'up' : 'down'), text: (x.d >= 0 ? '+' : '−') + Math.abs(x.d * 100).toFixed(0) + '%' }), el('td', { class: 'num muted', text: String(x.n) }));
+  const heads = [['Model'], ['Median, 12 months', 'num'], ['Against since 2020', 'num'], ['Sales', 'num']];
+  const up = movers.filter((x) => x.d > 0).slice(0, 6), down = movers.filter((x) => x.d < 0).slice(-6).reverse();
+  const moverPanel = panel('Running hot and cold', 'Each model’s median over the last 12 months against its median since 2020. Based on 5 to 20 sales per model, so read it as a pointer.',
+    el('span', { class: 'label', text: 'Above their long-run level' }), up.length ? table(heads, up.map(mrow)) : el('p', { class: 'empty', text: 'None at the moment.' }),
+    el('span', { class: 'label', text: 'Below their long-run level' }), down.length ? table(heads, down.map(mrow)) : el('p', { class: 'empty', text: 'None at the moment.' }));
+  out.append(el('div', { class: 'home2' }, latestPanel, moverPanel));
+
+  // Families
+  const fams = {};
+  for (const r of last12) { const c = catOf(r.model); const f = c ? c.family : 'Other'; (fams[f] = fams[f] || []).push(r.gbp); }
+  const order = [...new Set(CATALOG.map((m) => m.family))].filter((f) => fams[f]);
+  out.append(panel('By model family, last 12 months', 'Median and range of every sale on file in each family. Families mix cheap and expensive variants, so compare like with like inside the garage view.',
+    table([['Family'], ['Sales', 'num'], ['Median', 'num'], ['Lowest', 'num'], ['Highest', 'num']], order.map((f) => el('tr', {}, el('td', { text: f }), el('td', { class: 'num', text: String(fams[f].length) }), el('td', { class: 'num', text: money(median(fams[f])) }), el('td', { class: 'num', text: money(Math.min(...fams[f])) }), el('td', { class: 'num', text: money(Math.max(...fams[f])) }))))));
+  out.append(el('p', { class: 'muted small', text: 'Sold prices are public auction results copied by hand from The Classic Valuer and Classic.com. This is market research, not a formal valuation.' }));
+}
+showView();
+
 function renderAll() {
   const car = readForm();
   renderGarage();
@@ -787,10 +879,10 @@ function endDelete() { S.deleting = false; $('b-del-yes').hidden = true; $('b-de
 function setStatus(t) { $('status').textContent = t; }
 
 $('car-form').addEventListener('input', () => { S.dirty = true; setStatus(''); renderAll(); });
-$('f-cur').addEventListener('change', () => { S.cur = $('f-cur').value; try { localStorage.setItem('g197-cur', S.cur); } catch (e) {} renderAll(); });
+$('f-cur').addEventListener('change', () => { S.cur = $('f-cur').value; try { localStorage.setItem('g197-cur', S.cur); } catch (e) {} renderAll(); renderHome(); });
 const GKEY = 'g197-garage-name';
 function garageName() { try { return (localStorage.getItem(GKEY) || '').trim(); } catch (e) { return ''; } }
-function showGarageName() { $('h-garage').textContent = garageName() || 'My garage'; }
+function showGarageName() { $('h-garage').textContent = garageName() || 'My garage'; $('t-garage').textContent = garageName() || 'My garage'; }
 function nameEdit(on) { const f = $('name-form'); f.hidden = !on; f.style.display = on ? 'flex' : 'none'; $('b-rename').hidden = on; if (on) { $('g-name').value = garageName(); $('g-name').focus(); } }
 $('b-rename').addEventListener('click', () => nameEdit(true));
 $('b-name-cancel').addEventListener('click', () => nameEdit(false));
@@ -802,8 +894,10 @@ let importSkipped = false;
 function renderAccount() {
   if (!CLOUD) return;
   const u = CLOUD.user;
-  $('acct-form').hidden = !!u; $('acct-in').hidden = !u; $('acct-in').style.display = u ? 'flex' : 'none';
+  $('acct-in').hidden = !u; $('acct-in').style.display = u ? 'flex' : 'none';
+  showView();
   if (!u) return;
+  $('who-email').textContent = u.email || '';
   $('acct-email').textContent = u.email || '';
   $('acct-setup').hidden = !CLOUD.setupError; $('acct-setup').textContent = CLOUD.setupError;
   const n = CLOUD.localCount(), show = n > 0 && !importSkipped && !CLOUD.setupError;
@@ -811,7 +905,7 @@ function renderAccount() {
   $('acct-import-text').textContent = n + (n === 1 ? ' car is' : ' cars are') + ' saved on this device from before you signed in.';
 }
 async function doSign(create) {
-  const email = $('a-email').value.trim(), pass = $('a-pass').value, st = $('acct-status');
+  const email = $('a-email').value.trim(), pass = $('a-pass').value, st = $('login-status');
   if (!/^\S+@\S+\.\S+$/.test(email)) { st.textContent = 'Enter your email address.'; $('a-email').focus(); return; }
   if (pass.length < 8) { st.textContent = 'Use a password of at least 8 characters.'; $('a-pass').focus(); return; }
   st.textContent = create ? 'Creating your account…' : 'Signing in…'; $('b-signin').disabled = $('b-signup').disabled = true;
@@ -828,7 +922,7 @@ async function doSign(create) {
 if (CLOUD) {
   $('acct-form').addEventListener('submit', (ev) => { ev.preventDefault(); doSign(false); });
   $('b-signup').addEventListener('click', () => doSign(true));
-  $('b-signout').addEventListener('click', async () => { $('acct-status').textContent = ''; await CLOUD.signOut(); });
+  $('b-signout').addEventListener('click', async () => { $('acct-status').textContent = ''; $('login-status').textContent = ''; S.view = 'home'; await CLOUD.signOut(); });
   $('b-import-skip').addEventListener('click', () => { importSkipped = true; renderAccount(); });
   $('b-import').addEventListener('click', async () => {
     $('b-import').disabled = true;
@@ -846,7 +940,8 @@ if (CLOUD) {
       else if (CLOUD.user && changed && garageName() && !CLOUD.setupError) CLOUD.saveGarageName(garageName()).catch(() => {});
       else if (!CLOUD.user && changed) localStorage.removeItem(GKEY);
     } catch (e) {}
-    showGarageName(); renderAccount(); renderAll();
+    if (changed) S.view = 'home';
+    showGarageName(); renderAccount(); renderAll(); renderHome();
   });
   renderAccount();
 }
@@ -885,7 +980,7 @@ fetch('sales.csv').then((r) => { if (!r.ok) throw new Error('load'); return r.te
   if (cur && !S.dirty) fillForm(cur); else sel.value = keep;
   const latest = S.sales.map((r) => r.date).sort().pop();
   $('data-asof').textContent = S.sales.length + ' sales, the latest on ' + fmtDate(latest);
-  renderAll();
+  renderAll(); renderHome();
 }).catch(() => { S.salesError = true; renderAll(); });
 
 (async () => {
@@ -898,7 +993,7 @@ fetch('sales.csv').then((r) => { if (!r.ok) throw new Error('load'); return r.te
     if (S.currentId && !S.cars.some((c) => c.id === S.currentId)) S.currentId = null;
     if (!S.pickedFirst && !S.currentId && !S.dirty && S.cars.length) { S.currentId = S.cars[0].id; fillForm(S.cars[0]); }
     S.pickedFirst = true;
-    renderAll();
+    renderAll(); renderHome();
   }, () => { S.db = null; renderAll(); });
   renderAll();
 })();
