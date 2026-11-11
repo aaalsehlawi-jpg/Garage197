@@ -129,7 +129,15 @@
   <div class="bench">
     <div class="rail">
       <section class="panel" aria-labelledby="h-garage">
-        <h2 id="h-garage">Garage</h2>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+          <h2 id="h-garage" style="margin:0;overflow-wrap:anywhere">My garage</h2>
+          <button type="button" class="btn" id="b-rename" style="padding:4px 10px;font-size:.85rem">Rename</button>
+        </div>
+        <form id="name-form" hidden style="display:none;gap:8px;flex-wrap:wrap;align-items:center">
+          <input id="g-name" type="text" maxlength="40" placeholder="My garage" aria-label="Garage name" autocomplete="off" style="flex:1;min-width:10rem">
+          <button type="submit" class="btn primary">Save name</button>
+          <button type="button" class="btn" id="b-name-cancel">Cancel</button>
+        </form>
         <div class="garage" id="garage"></div>
         <p class="muted small" id="garage-empty">Cars you save appear here and stay on this device. Fill in the details below and press Save to garage.</p>
         <div class="btns"><button type="button" class="btn" id="b-new">New car</button></div>
@@ -508,6 +516,14 @@ function setStatus(t) { $('status').textContent = t; }
 
 $('car-form').addEventListener('input', () => { S.dirty = true; setStatus(''); renderAll(); });
 $('f-cur').addEventListener('change', () => { S.cur = $('f-cur').value; try { localStorage.setItem('g197-cur', S.cur); } catch (e) {} renderAll(); });
+const GKEY = 'g197-garage-name';
+function garageName() { try { return (localStorage.getItem(GKEY) || '').trim(); } catch (e) { return ''; } }
+function showGarageName() { $('h-garage').textContent = garageName() || 'My garage'; }
+function nameEdit(on) { const f = $('name-form'); f.hidden = !on; f.style.display = on ? 'flex' : 'none'; $('b-rename').hidden = on; if (on) { $('g-name').value = garageName(); $('g-name').focus(); } }
+$('b-rename').addEventListener('click', () => nameEdit(true));
+$('b-name-cancel').addEventListener('click', () => nameEdit(false));
+$('name-form').addEventListener('submit', (ev) => { ev.preventDefault(); const v = $('g-name').value.trim().slice(0, 40); try { if (v) localStorage.setItem(GKEY, v); else localStorage.removeItem(GKEY); } catch (e) {} showGarageName(); nameEdit(false); });
+showGarageName();
 $('b-new').addEventListener('click', () => { S.currentId = null; S.dirty = false; fillForm({}); endDelete(); setStatus(''); renderAll(); $('f-name').focus(); });
 $('car-form').addEventListener('submit', async (ev) => {
   ev.preventDefault();
