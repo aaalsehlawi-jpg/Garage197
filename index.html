@@ -113,19 +113,94 @@
 </head>
 <body>
 <script>
-// Local garage store: keeps saved cars in this browser until accounts are added.
+// Garage store. Signed out: cars stay in this browser. Signed in: cars, logbooks and files live in the user's cloud account.
 (function () {
-  var KEY = 'g197-cars', subs = [];
-  function load() { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { return {}; } }
-  function save(o) { try { localStorage.setItem(KEY, JSON.stringify(o)); } catch (e) {} emit(); }
-  function snap() { var o = load(); return { docs: Object.keys(o).map(function (id) { return { id: id, data: function () { return o[id]; } }; }) }; }
+  var SB = 'https://rystuaujaihcvulyettd.supabase.co', KEY = 'sb_publishable_fhBGLIojcBo9DXkJQRS01A_GXE4-uUx';
+  var LKEY = 'g197-cars', SKEY = 'g197-session', BUCKET = 'car-files';
+  var subs = [], authSubs = [], session = null, cloud = {};
+  function jget(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }
+  function jset(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  function local() { return jget(LKEY) || {}; }
+  function current() { return session ? cloud : local(); }
+  function snap() { var o = current(); return { docs: Object.keys(o).map(function (id) { return { id: id, data: function () { return o[id]; } }; }) }; }
   function emit() { var s = snap(); subs.forEach(function (f) { f(s); }); }
+  function emitAuth() { authSubs.forEach(function (f) { f(api); }); }
+  function setSession(j) {
+    session = j && j.access_token ? { access_token: j.access_token, refresh_token: j.refresh_token, expires_at: j.expires_at || Math.floor(Date.now() / 1000) + (j.expires_in || 3600), user: { id: j.user.id, email: j.user.email } } : null;
+    jset(SKEY, session); api.user = session ? session.user : null;
+  }
+  async function parse(r) {
+    var t = await r.text(), j = null; try { j = t ? JSON.parse(t) : null; } catch (e) {}
+    if (!r.ok) { var e = new Error((j && (j.msg || j.message || j.error_description || j.error)) || ('Error ' + r.status)); e.status = r.status; e.code = j && (j.error_code || j.code); throw e; }
+    return j;
+  }
+  var refreshing = null;
+  function refresh() {
+    if (!refreshing) refreshing = (async function () {
+      var r = await fetch(SB + '/auth/v1/token?grant_type=refresh_token', { method: 'POST', headers: { apikey: KEY, 'Content-Type': 'application/json' }, body: JSON.stringify({ refresh_token: session.refresh_token }) });
+      if (!r.ok) { if (r.status >= 400 && r.status < 500) { setSession(null); cloud = {}; emit(); emitAuth(); } throw new Error('Your sign-in has expired. Sign in again.'); }
+      var j = await r.json(); setSession(j);
+    })().finally(function () { refreshing = null; });
+    return refreshing;
+  }
+  async function call(path, opt, retried) {
+    opt = opt || {};
+    if (session && session.expires_at - 60 < Date.now() / 1000) await refresh();
+    var h = Object.assign({ apikey: KEY }, opt.headers || {});
+    if (session) h.Authorization = 'Bearer ' + session.access_token;
+    var r = await fetch(SB + path, { method: opt.method || 'GET', headers: h, body: opt.body });
+    if (r.status === 401 && session && !retried) { await refresh(); return call(path, opt, true); }
+    return r;
+  }
+  var JSONH = { 'Content-Type': 'application/json' };
+  async function loadCloud() {
+    api.setupError = '';
+    try {
+      var rows = await parse(await call('/rest/v1/cars?select=id,data'));
+      cloud = {}; rows.forEach(function (r) { cloud[r.id] = r.data; });
+    } catch (e) {
+      cloud = {};
+      api.setupError = e.status === 404 || e.code === 'PGRST205' || e.code === '42P01' ? 'You are signed in, but the cloud tables are not set up yet, so nothing can be saved. The setup text still needs to be run in Supabase.' : 'You are signed in, but your garage could not be loaded (' + e.message + '). Check the connection and reload.';
+    }
+    try { var g = await parse(await call('/rest/v1/garages?select=name')); api.garageName = g && g[0] && g[0].name ? g[0].name : ''; } catch (e) { api.garageName = ''; }
+    emit(); emitAuth();
+  }
+  function upsertCar(id, d) {
+    return call('/rest/v1/cars?on_conflict=user_id,id', { method: 'POST', headers: Object.assign({ Prefer: 'resolution=merge-duplicates,return=minimal' }, JSONH), body: JSON.stringify({ id: id, user_id: session.user.id, data: d, updated_at: new Date().toISOString() }) }).then(parse);
+  }
+  function enc(p) { return p.split('/').map(encodeURIComponent).join('/'); }
   var col = {
     doc: function (id) { id = id || 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-      return { id: id, set: async function (d) { var o = load(); o[id] = d; save(o); }, delete: async function () { var o = load(); delete o[id]; save(o); } }; },
+      return { id: id,
+        set: async function (d) { if (session) { await upsertCar(id, d); cloud[id] = d; emit(); } else { var o = local(); o[id] = d; jset(LKEY, o); emit(); } },
+        delete: async function () { if (session) { await parse(await call('/rest/v1/cars?id=eq.' + encodeURIComponent(id), { method: 'DELETE' })); delete cloud[id]; emit(); } else { var o = local(); delete o[id]; jset(LKEY, o); emit(); } } }; },
     onSnapshot: function (f) { subs.push(f); setTimeout(function () { f(snap()); }, 0); return function () {}; }
   };
+  var api = {
+    user: null, garageName: '', setupError: '', maxFile: 10 * 1024 * 1024,
+    onAuth: function (f) { authSubs.push(f); },
+    sign: async function (email, password, create) {
+      var j = await parse(await fetch(SB + (create ? '/auth/v1/signup' : '/auth/v1/token?grant_type=password'), { method: 'POST', headers: Object.assign({ apikey: KEY }, JSONH), body: JSON.stringify({ email: email, password: password }) }));
+      if (!j || !j.access_token) return { confirm: true };
+      setSession(j); await loadCloud(); return { ok: true };
+    },
+    signOut: async function () { try { await call('/auth/v1/logout', { method: 'POST' }); } catch (e) {} setSession(null); cloud = {}; api.garageName = ''; api.setupError = ''; emit(); emitAuth(); },
+    saveGarageName: function (name) { return call('/rest/v1/garages?on_conflict=user_id', { method: 'POST', headers: Object.assign({ Prefer: 'resolution=merge-duplicates,return=minimal' }, JSONH), body: JSON.stringify({ user_id: session.user.id, name: name, updated_at: new Date().toISOString() }) }).then(parse).then(function () { api.garageName = name; }); },
+    localCount: function () { return Object.keys(local()).length; },
+    importLocal: async function () { var o = local(), ids = Object.keys(o); for (var i = 0; i < ids.length; i++) { var id = cloud[ids[i]] ? ids[i] + '-d' : ids[i]; await upsertCar(id, o[ids[i]]); cloud[id] = o[ids[i]]; } jset(LKEY, null); emit(); return ids.length; },
+    upload: async function (carId, file) {
+      var safe = (file.name || 'file').replace(/[^A-Za-z0-9._-]+/g, '_').slice(-60);
+      var path = session.user.id + '/' + carId + '/' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6) + '-' + safe;
+      await parse(await call('/storage/v1/object/' + BUCKET + '/' + enc(path), { method: 'POST', headers: { 'Content-Type': file.type || 'application/octet-stream', 'x-upsert': 'true' }, body: file }));
+      return { path: path, name: file.name || safe, type: file.type || '', size: file.size || 0 };
+    },
+    fileUrl: async function (path) { var j = await parse(await call('/storage/v1/object/sign/' + BUCKET + '/' + enc(path), { method: 'POST', headers: JSONH, body: JSON.stringify({ expiresIn: 600 }) })); return SB + '/storage/v1' + (j.signedURL || j.signedUrl); },
+    removeFiles: async function (paths) { if (!paths || !paths.length || !session) return; try { await call('/storage/v1/object/' + BUCKET, { method: 'DELETE', headers: JSONH, body: JSON.stringify({ prefixes: paths }) }); } catch (e) {} }
+  };
+  window.g197cloud = api;
   window.claude = { use: async function (n) { return n === 'db' ? { collection: function () { return col; } } : null; } };
+  setSession(jget(SKEY));
+  if (session) loadCloud();
   if ('serviceWorker' in navigator) window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });
 })();
 </script>
@@ -144,6 +219,25 @@
 
   <div class="bench">
     <div class="rail">
+      <section class="panel" aria-labelledby="h-acct">
+        <h2 id="h-acct">Account</h2>
+        <div id="acct-in" hidden style="display:flex;flex-direction:column;gap:10px">
+          <p class="small">Signed in as <b id="acct-email" style="overflow-wrap:anywhere"></b>. Your garage is saved to your account and follows you to any device.</p>
+          <p class="small" id="acct-setup" hidden style="color:var(--bad)"></p>
+          <div id="acct-import" hidden style="display:flex;flex-direction:column;gap:8px;border:1px solid var(--line);border-radius:4px;padding:10px">
+            <span class="small" id="acct-import-text"></span>
+            <div class="btns"><button type="button" class="btn primary" id="b-import">Add them to my account</button><button type="button" class="btn" id="b-import-skip">Not now</button></div>
+          </div>
+          <div class="btns"><button type="button" class="btn" id="b-signout">Sign out</button></div>
+        </div>
+        <form id="acct-form" novalidate>
+          <p class="muted small">Sign in to keep your garage and logbooks in the cloud and attach photos and documents. Without an account, cars stay on this device only.</p>
+          <div class="field"><label for="a-email">Email</label><input id="a-email" type="email" autocomplete="email" inputmode="email"></div>
+          <div class="field"><label for="a-pass">Password</label><input id="a-pass" type="password" autocomplete="current-password" minlength="8"></div>
+          <div class="btns"><button type="submit" class="btn primary" id="b-signin">Sign in</button><button type="button" class="btn" id="b-signup">Create account</button></div>
+        </form>
+        <p class="status" id="acct-status" role="status"></p>
+      </section>
       <section class="panel" aria-labelledby="h-garage">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
           <h2 id="h-garage" style="margin:0;overflow-wrap:anywhere">My garage</h2>
@@ -155,7 +249,7 @@
           <button type="button" class="btn" id="b-name-cancel">Cancel</button>
         </form>
         <div class="garage" id="garage"></div>
-        <p class="muted small" id="garage-empty">Cars you save appear here, each with its own logbook, and stay on this device. Fill in the details below and press Save to garage.</p>
+        <p class="muted small" id="garage-empty">Cars you save appear here, each with its own logbook. Fill in the details below and press Save to garage.</p>
         <div class="btns"><button type="button" class="btn" id="b-new">New car</button></div>
       </section>
 
@@ -237,6 +331,10 @@
           </div>
           <div class="field"><label for="r-status">Condition found</label><select id="r-status"><option value="">Not applicable</option><option value="good">Good</option><option value="fair">Fair, keep an eye on it</option><option value="attention">Needs attention</option></select></div>
           <div class="field"><label for="r-notes">Notes</label><textarea id="r-notes" maxlength="2000" placeholder="Parts fitted, findings, where the paperwork is kept"></textarea></div>
+          <div class="field" id="r-files-field"><label for="r-files">Photos and documents</label>
+            <div id="r-files-list" style="display:flex;flex-direction:column;gap:4px"></div>
+            <input id="r-files" type="file" multiple accept="image/*,application/pdf">
+            <span class="hint" id="r-files-hint"></span></div>
           <div class="btns">
             <button type="submit" class="btn primary" id="b-rec-save">Add to logbook</button>
             <button type="button" class="btn" id="b-rec-cancel">Cancel</button>
@@ -401,6 +499,7 @@ function marketFor(sales, model, carMiles, today) {
 
 const $ = (id) => document.getElementById(id);
 const el = (tag, attrs, ...kids) => { const n = document.createElement(tag); for (const k in (attrs || {})) { if (k === 'class') n.className = attrs[k]; else if (k === 'text') n.textContent = attrs[k]; else n.setAttribute(k, attrs[k]); } n.append(...kids.filter((k) => k != null)); return n; };
+const CLOUD = window.g197cloud || null;
 const S = { sales: null, salesError: false, cars: [], currentId: null, db: null, cur: 'USD', dbReady: false, pickedFirst: false, dirty: false };
 try { const c = localStorage.getItem('g197-cur'); if (c && FX[c]) S.cur = c; } catch (e) {}
 $('f-cur').value = S.cur;
@@ -568,7 +667,7 @@ $('f-find').addEventListener('input', (ev) => { ev.stopPropagation(); buildModel
 
 /* Logbook: each saved car carries its own history records inside its saved document. */
 const REC_TYPES = { service: 'Service', condition: 'Condition', tyres: 'Tyres', document: 'Document', purchase: 'Purchase', note: 'Note' };
-const L = { editing: null, open: false, filter: 'all', carId: null };
+const L = { editing: null, open: false, filter: 'all', carId: null, files: [], removed: [] };
 const cash = (n, cur) => { try { return new Intl.NumberFormat('en-US', { style: 'currency', currency: cur || 'USD', maximumFractionDigits: 0 }).format(n); } catch (e) { return n + ' ' + cur; } };
 function currentCar() { return S.cars.find((c) => c.id === S.currentId) || null; }
 function recForm(on, rec) {
@@ -579,11 +678,28 @@ function recForm(on, rec) {
   $('r-type').value = r.type || 'note'; $('r-date').value = r.date || ''; $('r-title').value = r.title || ''; $('r-odo').value = r.odometer || '';
   $('r-by').value = r.by || ''; $('r-cost').value = r.cost || ''; $('r-cur').value = r.cur || 'USD'; $('r-status').value = r.status || ''; $('r-notes').value = r.notes || '';
   $('b-rec-save').textContent = rec ? 'Save record' : 'Add to logbook'; $('b-rec-del').hidden = !rec; $('b-rec-del').dataset.sure = ''; $('b-rec-del').textContent = 'Delete record';
+  L.files = (r.files || []).slice(); L.removed = []; $('r-files').value = ''; renderRecFiles();
   $('r-title').focus();
 }
 async function saveRecords(car, records, extra) {
   const { id, ...body } = car;
   await S.db.collection('cars').doc(id).set({ ...body, ...(extra || {}), records, updatedAt: new Date().toISOString() });
+}
+function renderRecFiles() {
+  const box = $('r-files-list'); box.replaceChildren();
+  for (const f of L.files) {
+    const rm = el('button', { type: 'button', class: 'linkbtn', text: 'Remove' });
+    rm.addEventListener('click', () => { L.files = L.files.filter((x) => x !== f); L.removed.push(f.path); renderRecFiles(); });
+    box.append(el('span', { class: 'small' }, el('span', { text: f.name + ' ' }), rm));
+  }
+  const on = !!(CLOUD && CLOUD.user);
+  $('r-files').disabled = !on;
+  $('r-files-hint').textContent = on ? 'Photos or PDFs, up to 10 MB each. They are private to your account.' : 'Sign in under Account to attach photos and documents.';
+}
+async function openFile(f, btn) {
+  const w = window.open('', '_blank');
+  try { const url = await CLOUD.fileUrl(f.path); if (w) w.location = url; else location.href = url; }
+  catch (e) { if (w) w.close(); btn.textContent = f.name + ' (couldn’t open)'; }
 }
 function renderLog() {
   const out = $('log-out'), car = currentCar(); out.replaceChildren();
@@ -620,6 +736,7 @@ function renderLog() {
         el('b', { text: r.title || 'Untitled record' }),
         (r.by || +r.cost) ? el('span', { class: 'muted small', text: [r.by, +r.cost ? cash(+r.cost, r.cur) : ''].filter(Boolean).join(' · ') }) : null,
         r.notes ? el('span', { class: 'small', style: 'white-space:pre-wrap', text: r.notes }) : null,
+        r.files && r.files.length ? el('span', { style: 'display:flex;flex-wrap:wrap;gap:4px 12px' }, ...r.files.map((f) => { const b = el('button', { type: 'button', class: 'linkbtn', text: f.name }); if (CLOUD && CLOUD.user) b.addEventListener('click', () => openFile(f, b)); else b.disabled = true; return b; })) : null,
         S.db ? el('span', {}, edit) : null)));
   }
   out.append(ul);
@@ -632,14 +749,25 @@ $('rec-form').addEventListener('submit', async (ev) => {
   const r = { id: L.editing || 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), type: $('r-type').value, date: $('r-date').value, title: $('r-title').value.trim(), odometer: $('r-odo').value, by: $('r-by').value.trim(), cost: $('r-cost').value, cur: $('r-cur').value, status: $('r-status').value, notes: $('r-notes').value.trim() };
   if (!r.title) { $('rec-status').textContent = 'Say what happened first.'; $('r-title').focus(); return; }
   if (!r.date) { $('rec-status').textContent = 'Add the date.'; $('r-date').focus(); return; }
-  const records = (car.records || []).filter((x) => x.id !== r.id).concat(r);
-  try { await saveRecords(car, records, { lastCur: r.cur }); recForm(false); } catch (e) { $('rec-status').textContent = 'Couldn’t save the record. Try again in a moment.'; }
+  const picked = [...$('r-files').files];
+  if (picked.some((f) => f.size > 10 * 1024 * 1024)) { $('rec-status').textContent = 'One of the files is over 10 MB. Choose smaller files.'; return; }
+  $('b-rec-save').disabled = true;
+  try {
+    if (picked.length && CLOUD && CLOUD.user) { let n = 0; for (const f of picked) { $('rec-status').textContent = 'Uploading file ' + (++n) + ' of ' + picked.length + '…'; L.files.push(await CLOUD.upload(car.id, f)); } $('r-files').value = ''; }
+    r.files = L.files.slice();
+    const records = (car.records || []).filter((x) => x.id !== r.id).concat(r);
+    const gone = L.removed.slice();
+    await saveRecords(car, records, { lastCur: r.cur }); recForm(false);
+    if (gone.length && CLOUD) CLOUD.removeFiles(gone);
+  } catch (e) { renderRecFiles(); $('rec-status').textContent = 'Couldn’t save the record' + (e && e.message ? ': ' + e.message : '') + '. Try again in a moment.'; }
+  $('b-rec-save').disabled = false;
   renderLog();
 });
 $('b-rec-del').addEventListener('click', async () => {
   const car = currentCar(); if (!car || !S.db || !L.editing) return;
   if ($('b-rec-del').dataset.sure !== '1') { $('b-rec-del').dataset.sure = '1'; $('b-rec-del').textContent = 'Yes, delete it'; return; }
-  try { await saveRecords(car, (car.records || []).filter((x) => x.id !== L.editing)); recForm(false); } catch (e) { $('rec-status').textContent = 'Couldn’t delete it. Try again in a moment.'; }
+  const dead = (car.records || []).find((x) => x.id === L.editing);
+  try { await saveRecords(car, (car.records || []).filter((x) => x.id !== L.editing)); recForm(false); if (CLOUD && dead && dead.files) CLOUD.removeFiles(dead.files.map((f) => f.path)); } catch (e) { $('rec-status').textContent = 'Couldn’t delete it. Try again in a moment.'; }
   renderLog();
 });
 $('rec-form').addEventListener('input', () => { $('b-rec-del').dataset.sure = ''; if (L.editing) $('b-rec-del').textContent = 'Delete record'; });
@@ -666,8 +794,62 @@ function showGarageName() { $('h-garage').textContent = garageName() || 'My gara
 function nameEdit(on) { const f = $('name-form'); f.hidden = !on; f.style.display = on ? 'flex' : 'none'; $('b-rename').hidden = on; if (on) { $('g-name').value = garageName(); $('g-name').focus(); } }
 $('b-rename').addEventListener('click', () => nameEdit(true));
 $('b-name-cancel').addEventListener('click', () => nameEdit(false));
-$('name-form').addEventListener('submit', (ev) => { ev.preventDefault(); const v = $('g-name').value.trim().slice(0, 40); try { if (v) localStorage.setItem(GKEY, v); else localStorage.removeItem(GKEY); } catch (e) {} showGarageName(); nameEdit(false); });
+$('name-form').addEventListener('submit', (ev) => { ev.preventDefault(); const v = $('g-name').value.trim().slice(0, 40); try { if (v) localStorage.setItem(GKEY, v); else localStorage.removeItem(GKEY); } catch (e) {} showGarageName(); nameEdit(false); if (window.g197cloud && window.g197cloud.user) window.g197cloud.saveGarageName(v).catch(() => {}); });
 showGarageName();
+
+/* Accounts and cloud files */
+let importSkipped = false;
+function renderAccount() {
+  if (!CLOUD) return;
+  const u = CLOUD.user;
+  $('acct-form').hidden = !!u; $('acct-in').hidden = !u; $('acct-in').style.display = u ? 'flex' : 'none';
+  if (!u) return;
+  $('acct-email').textContent = u.email || '';
+  $('acct-setup').hidden = !CLOUD.setupError; $('acct-setup').textContent = CLOUD.setupError;
+  const n = CLOUD.localCount(), show = n > 0 && !importSkipped && !CLOUD.setupError;
+  $('acct-import').hidden = !show; $('acct-import').style.display = show ? 'flex' : 'none';
+  $('acct-import-text').textContent = n + (n === 1 ? ' car is' : ' cars are') + ' saved on this device from before you signed in.';
+}
+async function doSign(create) {
+  const email = $('a-email').value.trim(), pass = $('a-pass').value, st = $('acct-status');
+  if (!/^\S+@\S+\.\S+$/.test(email)) { st.textContent = 'Enter your email address.'; $('a-email').focus(); return; }
+  if (pass.length < 8) { st.textContent = 'Use a password of at least 8 characters.'; $('a-pass').focus(); return; }
+  st.textContent = create ? 'Creating your account…' : 'Signing in…'; $('b-signin').disabled = $('b-signup').disabled = true;
+  try {
+    const r = await CLOUD.sign(email, pass, create);
+    if (r.confirm) st.textContent = 'Account created. Open the confirmation email we sent, then sign in here.';
+    else { st.textContent = ''; $('a-pass').value = ''; }
+  } catch (e) {
+    const m = (e.message || '').toLowerCase();
+    st.textContent = /invalid login|invalid_credentials/.test(m + (e.code || '')) ? 'That email and password don’t match an account. Check them, or press Create account.' : /already registered|user_already_exists/.test(m + (e.code || '')) ? 'That email already has an account. Press Sign in instead.' : /failed to fetch|networkerror|load failed/.test(m) ? 'Couldn’t reach the server. Check your connection and try again.' : 'Couldn’t ' + (create ? 'create the account' : 'sign in') + ': ' + e.message;
+  }
+  $('b-signin').disabled = $('b-signup').disabled = false;
+}
+if (CLOUD) {
+  $('acct-form').addEventListener('submit', (ev) => { ev.preventDefault(); doSign(false); });
+  $('b-signup').addEventListener('click', () => doSign(true));
+  $('b-signout').addEventListener('click', async () => { $('acct-status').textContent = ''; await CLOUD.signOut(); });
+  $('b-import-skip').addEventListener('click', () => { importSkipped = true; renderAccount(); });
+  $('b-import').addEventListener('click', async () => {
+    $('b-import').disabled = true;
+    try { const n = await CLOUD.importLocal(); $('acct-status').textContent = n + (n === 1 ? ' car' : ' cars') + ' added to your account.'; }
+    catch (e) { $('acct-status').textContent = 'Couldn’t add them: ' + e.message; }
+    $('b-import').disabled = false; renderAccount();
+  });
+  let lastUser = CLOUD.user ? CLOUD.user.id : null;
+  CLOUD.onAuth(() => {
+    const id = CLOUD.user ? CLOUD.user.id : null, changed = id !== lastUser;
+    if (changed) { lastUser = id; S.currentId = null; S.pickedFirst = false; S.dirty = false; fillForm({}); endDelete(); setStatus(''); }
+    if (!S.currentId && !S.dirty && S.cars.length) { S.currentId = S.cars[0].id; fillForm(S.cars[0]); S.pickedFirst = true; }
+    try {
+      if (CLOUD.user && CLOUD.garageName) localStorage.setItem(GKEY, CLOUD.garageName);
+      else if (CLOUD.user && changed && garageName() && !CLOUD.setupError) CLOUD.saveGarageName(garageName()).catch(() => {});
+      else if (!CLOUD.user && changed) localStorage.removeItem(GKEY);
+    } catch (e) {}
+    showGarageName(); renderAccount(); renderAll();
+  });
+  renderAccount();
+}
 $('b-new').addEventListener('click', () => { S.currentId = null; S.dirty = false; fillForm({}); endDelete(); setStatus(''); renderAll(); $('f-name').focus(); });
 $('car-form').addEventListener('submit', async (ev) => {
   ev.preventDefault();
@@ -687,7 +869,8 @@ $('b-del').addEventListener('click', () => { S.deleting = true; $('b-del').hidde
 $('b-del-no').addEventListener('click', () => { endDelete(); renderAll(); });
 $('b-del-yes').addEventListener('click', async () => {
   if (!S.db || !S.currentId) return;
-  try { await S.db.collection('cars').doc(S.currentId).delete(); S.currentId = null; S.dirty = false; fillForm({}); setStatus('Removed.'); }
+  const goneCar = currentCar(), paths = goneCar ? (goneCar.records || []).flatMap((r) => (r.files || []).map((f) => f.path)) : [];
+  try { await S.db.collection('cars').doc(S.currentId).delete(); if (window.g197cloud) window.g197cloud.removeFiles(paths); S.currentId = null; S.dirty = false; fillForm({}); setStatus('Removed.'); }
   catch (e) { setStatus('Couldn’t remove it. Try again in a moment.'); }
   endDelete(); renderAll();
 });
