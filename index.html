@@ -586,7 +586,7 @@ function renderVin(car) {
 function searchLinks(car) {
   const q = [car.year, car.name].filter(Boolean).join(' ') || 'classic car';
   const mk = (label, site) => el('a', { href: 'https://www.google.com/search?q=' + encodeURIComponent(q + ' sold site:' + site), target: '_blank', rel: 'noopener', text: label });
-  return el('div', { class: 'links' }, mk('Classic.com results', 'classic.com'), mk('The Classic Valuer results', 'theclassicvaluer.com'), mk('Bring a Trailer results', 'bringatrailer.com'), mk('Collecting Cars results', 'collectingcars.com'));
+  return el('div', { class: 'links' }, mk('Classic.com results', 'classic.com'), mk('The Classic Valuer results', 'theclassicvaluer.com'), mk('Bring a Trailer results', 'bringatrailer.com'), mk('Collecting Cars results', 'collectingcars.com'), el('a', { href: 'https://www.google.com/search?q=' + encodeURIComponent(q + ' for sale site:dubizzle.com'), target: '_blank', rel: 'noopener', text: 'For sale on Dubizzle' }));
 }
 
 function drawChart(host, m, miles) {
