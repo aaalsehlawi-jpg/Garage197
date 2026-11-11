@@ -13,3 +13,7 @@ Saved cars are kept in the browser on each device. Accounts, a shared database a
 ## Accounts and cloud storage
 
 Signed-in users' garages, logbooks and files are stored in a Supabase project (URL and publishable key are at the top of `index.html`; both are designed to be public). The database tables, privacy rules and file bucket are created by `supabase-setup.sql`, run once in the Supabase SQL editor.
+
+## Editing the app
+
+`index.html` is built from the parts in `src/` (`head.html` styles and page shell, `store.js` accounts and cloud storage, `pure.js` catalogue and market maths, `i18n.js` Arabic text, `ui.js` screens). Edit those, then run `python3 build.py`. Every visible string goes through `t()` in `ui.js`; add its Arabic to `i18n.js`. Bump `CACHE` in `sw.js` on each release so installed copies update.

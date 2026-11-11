@@ -7,127 +7,158 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icon-192.png">
-<title>Garage 197 Car Lookup</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..700&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap">
+<title>Garage 197</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap">
 <style>
-  /* Layout: a workbench. Left rail holds the garage list and the car's details; the right side is the market read-out for that car. */
+  /* Garage 197. Built from src/ by build.py: edit the parts there, not index.html. */
   :root {
     --bg: #f3f2f6; --panel: #ffffff; --ink: #1c1926; --muted: #615c70; --line: #dbd7e4;
     --accent: #6a3f9e; --accent-ink: #ffffff; --accent-soft: #ece4f6;
     --ok: #1d7a4c; --bad: #b3372f; --warn: #94600a;
-    --f-display: "Archivo", "Helvetica Neue", Arial, sans-serif;
-    --f-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --f-display: "Archivo", "IBM Plex Sans Arabic", "Helvetica Neue", Arial, sans-serif;
+    --f-body: "Inter", "IBM Plex Sans Arabic", system-ui, -apple-system, "Segoe UI", sans-serif;
     --f-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
   }
-  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  @media (prefers-color-scheme: dark) { :root {
     --bg: #14121a; --panel: #1d1a26; --ink: #ebe8f2; --muted: #a39db4; --line: #342f42;
     --accent: #b794e8; --accent-ink: #1a1424; --accent-soft: #2b2340;
     --ok: #5cc48e; --bad: #f0857c; --warn: #e0b060; color-scheme: dark } }
-  :root[data-theme="dark"] {
-    --bg: #14121a; --panel: #1d1a26; --ink: #ebe8f2; --muted: #a39db4; --line: #342f42;
-    --accent: #b794e8; --accent-ink: #1a1424; --accent-soft: #2b2340;
-    --ok: #5cc48e; --bad: #f0857c; --warn: #e0b060; color-scheme: dark }
-
-  body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.5; }
-  .wrap { max-width: 1180px; margin-inline: auto; padding-block: 28px 56px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: flex; flex-direction: column; gap: 24px; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.5; }
+  [hidden] { display: none !important; }
+  img { max-width: 100%; }
   h1, h2, h3, p { margin: 0; }
-  h1 { font-family: var(--f-display); font-stretch: 112%; font-weight: 700; font-size: 1.75rem; letter-spacing: -0.01em; text-wrap: balance; }
+  h1 { font-family: var(--f-display); font-stretch: 112%; font-weight: 700; font-size: 1.6rem; letter-spacing: -0.01em; text-wrap: balance; }
   h2 { font-family: var(--f-display); font-weight: 600; font-size: 1.05rem; text-wrap: balance; }
-  .top { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: end; justify-content: space-between; }
-  .top p { color: var(--muted); max-width: 62ch; }
-  .cur { display: flex; align-items: center; gap: 8px; font-size: .85rem; color: var(--muted); }
-  .bench { display: grid; grid-template-columns: minmax(0, 22rem) minmax(0, 1fr); gap: 24px; align-items: start; }
-  @media (max-width: 860px) { .bench { grid-template-columns: minmax(0, 1fr); } }
-  .rail, .out { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
-  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 18px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
-  .label { font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+  a { color: var(--accent); }
+  .wrap { max-width: 1100px; margin-inline: auto; padding-block: 20px 56px; padding-inline: max(16px, env(safe-area-inset-left, 0px)) max(16px, env(safe-area-inset-right, 0px)); display: flex; flex-direction: column; gap: 20px; }
+  .col { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; }
+  .between { justify-content: space-between; }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 18px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+  .label { font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
   .muted { color: var(--muted); } .small { font-size: .85rem; }
+  .empty { color: var(--muted); max-width: 56ch; }
+  .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 24rem), 1fr)); gap: 20px; align-items: start; }
 
-  .garage { display: flex; flex-direction: column; gap: 6px; }
-  .car-btn { font: inherit; text-align: left; background: transparent; color: var(--ink); border: 1px solid var(--line); border-radius: 4px; padding: 9px 11px; cursor: pointer; display: flex; flex-direction: column; gap: 1px; }
-  .car-btn span:last-child { font-family: var(--f-mono); font-size: .76rem; color: var(--muted); overflow-wrap: anywhere; }
-  .car-btn[aria-current="true"] { border-color: var(--accent); background: var(--accent-soft); }
-  .car-btn:hover { border-color: var(--accent); }
+  /* header and tabs */
+  .head { display: flex; flex-wrap: wrap; gap: 8px 20px; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line); }
+  .tabs { display: flex; gap: 4px; }
+  .tab { font: inherit; font-weight: 600; background: transparent; color: var(--muted); border: 0; border-bottom: 3px solid transparent; padding: 10px 14px; cursor: pointer; white-space: nowrap; max-width: 14rem; overflow: hidden; text-overflow: ellipsis; text-decoration: none; }
+  .tab[aria-current="page"] { color: var(--ink); border-bottom-color: var(--accent); }
+  .subtabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); }
+  @media (max-width: 640px) {
+    .head .tabs { position: fixed; inset-inline: 0; bottom: 0; z-index: 20; background: var(--panel); border-top: 1px solid var(--line); justify-content: space-around; padding-bottom: env(safe-area-inset-bottom, 0px); }
+    .head .tab { flex: 1; text-align: center; border-bottom: 0; border-top: 3px solid transparent; padding: 12px 6px; max-width: none; }
+    .head .tab[aria-current="page"] { border-top-color: var(--accent); }
+    .head { border-bottom: 0; }
+    .wrap { padding-bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
+  }
 
+  /* forms */
   form { display: flex; flex-direction: column; gap: 12px; }
   .field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
   .field label { font-size: .82rem; font-weight: 500; }
   .row2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-  input, select { font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 4px; padding: 8px 10px; min-width: 0; width: 100%; box-sizing: border-box; }
-  #f-vin { font-family: var(--f-mono); text-transform: uppercase; letter-spacing: .04em; }
+  input, select, textarea { font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 9px 10px; min-width: 0; width: 100%; }
+  textarea { min-height: 4.5rem; resize: vertical; }
+  .mono { font-family: var(--f-mono); letter-spacing: .04em; }
   .hint { font-size: .78rem; color: var(--muted); }
-  .btns { display: flex; flex-wrap: wrap; gap: 8px; }
-  .btn { font: inherit; font-weight: 600; border-radius: 4px; padding: 8px 14px; cursor: pointer; border: 1px solid var(--line); background: transparent; color: var(--ink); }
+  .btn { font: inherit; font-weight: 600; border-radius: 6px; padding: 9px 14px; cursor: pointer; border: 1px solid var(--line); background: transparent; color: var(--ink); text-decoration: none; display: inline-block; }
   .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
   .btn.danger { color: var(--bad); }
+  .btn.sm { padding: 5px 10px; font-size: .85rem; }
   .btn:disabled { opacity: .5; cursor: default; }
-  :is(.btn, .car-btn, input, select, a):focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-  .status { font-size: .82rem; color: var(--muted); min-height: 1.2em; }
+  .linkbtn { font: inherit; background: none; border: 0; padding: 0; color: var(--accent); text-decoration: underline; cursor: pointer; text-align: start; }
+  :is(.btn, .tab, .card, .chip, .linkbtn, input, select, textarea, a, summary):focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .status { font-size: .85rem; color: var(--muted); min-height: 1.2em; }
+  details.more > summary { cursor: pointer; font-size: .88rem; font-weight: 600; color: var(--accent); }
+  details.more[open] > summary { margin-bottom: 12px; }
+  details.more > div { display: flex; flex-direction: column; gap: 12px; }
+  .login { max-width: 26rem; margin: 5vh auto 0; display: flex; flex-direction: column; gap: 18px; width: 100%; }
 
-  .plate { display: flex; flex-wrap: wrap; gap: 6px; }
-  .seg { border: 1px solid var(--line); border-radius: 4px; padding: 6px 9px 7px; display: flex; flex-direction: column; gap: 2px; background: var(--bg); min-width: 0; }
-  .seg b { font-family: var(--f-mono); font-weight: 500; font-size: 1.15rem; letter-spacing: .12em; }
-  .seg .label { font-size: .64rem; }
-  .seg em { font-style: normal; font-size: .8rem; color: var(--ink); }
-  .flag { display: inline-flex; align-items: center; gap: 6px; font-size: .82rem; border: 1px solid var(--line); border-radius: 999px; padding: 2px 10px; }
-  .flag::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--muted); }
-  .flag.ok::before { background: var(--ok); } .flag.bad::before { background: var(--bad); } .flag.warn::before { background: var(--warn); }
-  .flags { display: flex; flex-wrap: wrap; gap: 6px; }
+  /* garage cards */
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr)); gap: 16px; }
+  .card { font: inherit; color: inherit; text-align: start; text-decoration: none; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; cursor: pointer; display: flex; flex-direction: column; padding: 0; }
+  .card:hover { border-color: var(--accent); }
+  .photo { aspect-ratio: 16 / 10; background: var(--accent-soft); display: grid; place-items: center; color: var(--accent); overflow: hidden; }
+  .photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .photo svg { width: 38%; height: auto; opacity: .55; }
+  .card .body { padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 3px; }
+  .card b { font-family: var(--f-display); font-weight: 600; font-size: 1.02rem; overflow-wrap: anywhere; }
+  .badge { display: inline-block; font-size: .72rem; font-weight: 600; border-radius: 999px; padding: 1px 9px; background: var(--accent-soft); color: var(--accent); }
+  .badge.due { background: transparent; border: 1px solid var(--bad); color: var(--bad); }
+  .hero { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+  @media (max-width: 760px) { .hero { grid-template-columns: minmax(0, 1fr); } }
+  .hero .photo { border-radius: 8px; border: 1px solid var(--line); }
+  dl.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); gap: 12px 18px; margin: 0; }
+  dl.facts div { display: flex; flex-direction: column; gap: 1px; border-top: 1px solid var(--line); padding-top: 8px; min-width: 0; overflow-wrap: anywhere; }
+  dl.facts dt { font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+  dl.facts dd { margin: 0; }
 
-  .headline { display: flex; flex-wrap: wrap; gap: 6px 28px; align-items: end; }
-  .big { font-family: var(--f-display); font-stretch: 110%; font-weight: 700; font-size: clamp(1.7rem, 5vw, 2.5rem); line-height: 1.05; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+  /* numbers */
+  .big { font-family: var(--f-display); font-stretch: 110%; font-weight: 700; font-size: clamp(1.7rem, 5vw, 2.4rem); line-height: 1.1; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
   .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr)); gap: 14px 20px; }
-  .stat { display: flex; flex-direction: column; gap: 2px; border-top: 1px solid var(--line); padding-top: 10px; }
+  .stat { display: flex; flex-direction: column; gap: 2px; border-top: 1px solid var(--line); padding-top: 10px; min-width: 0; }
   .stat b { font-family: var(--f-display); font-weight: 600; font-size: 1.2rem; font-variant-numeric: tabular-nums; }
   .up { color: var(--ok); } .down { color: var(--bad); }
-  .chart { position: relative; }
-  .chart svg { display: block; width: 100%; height: auto; overflow: visible; }
-  .tip { position: absolute; pointer-events: none; background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 6px 9px; font-size: .8rem; box-shadow: 0 4px 14px rgb(0 0 0 / .14); max-width: 15rem; }
   .tablebox { overflow-x: auto; }
   table { width: 100%; border-collapse: collapse; font-size: .85rem; font-variant-numeric: tabular-nums; }
-  th { text-align: left; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 600; white-space: nowrap; }
-  th, td { padding: 7px 10px 7px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
-  td.num, th.num { text-align: right; }
+  th { text-align: start; font-size: .72rem; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); font-weight: 600; white-space: nowrap; }
+  th, td { padding: 7px 0; padding-inline-end: 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  td.num, th.num { text-align: end; }
   td:first-child { white-space: nowrap; }
-  a { color: var(--accent); }
   .links { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: .88rem; }
-  .empty { color: var(--muted); max-width: 56ch; }
-  .tabs { display: flex; gap: 4px; flex-wrap: wrap; }
-  .tab { font: inherit; font-weight: 600; background: transparent; color: var(--muted); border: 0; border-bottom: 3px solid transparent; padding: 8px 12px; cursor: pointer; max-width: 16rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .tab[aria-current="page"] { color: var(--ink); border-bottom-color: var(--accent); }
-  .tab:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-  .bar { display: flex; flex-wrap: wrap; gap: 8px 20px; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line); }
-  .who { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; font-size: .85rem; color: var(--muted); padding-bottom: 6px; }
-  .login { max-width: 26rem; margin: 6vh auto 0; display: flex; flex-direction: column; gap: 18px; }
-  .home { display: flex; flex-direction: column; gap: 20px; }
-  .home2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 24rem), 1fr)); gap: 20px; align-items: start; }
-  td .linkbtn { font-size: inherit; text-align: left; }
-  textarea { font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 4px; padding: 8px 10px; width: 100%; box-sizing: border-box; min-height: 4.5rem; resize: vertical; }
-  details.more > summary { cursor: pointer; font-size: .85rem; font-weight: 600; color: var(--accent); }
-  details.more[open] > summary { margin-bottom: 10px; }
-  details.more > div { display: flex; flex-direction: column; gap: 12px; }
+  .chart { position: relative; direction: ltr; }
+  .chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .tip { position: absolute; pointer-events: none; background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 6px 9px; font-size: .8rem; box-shadow: 0 4px 14px rgb(0 0 0 / .14); max-width: 15rem; }
+
+  /* chassis plate */
+  .plate { display: flex; flex-wrap: wrap; gap: 6px; direction: ltr; }
+  .seg { border: 1px solid var(--line); border-radius: 4px; padding: 6px 9px 7px; display: flex; flex-direction: column; gap: 2px; background: var(--bg); min-width: 0; }
+  .seg b { font-family: var(--f-mono); font-weight: 500; font-size: 1.1rem; letter-spacing: .12em; }
+  .seg em { font-style: normal; font-size: .8rem; }
+  .flags { display: flex; flex-wrap: wrap; gap: 6px; }
+  .flag { display: inline-flex; align-items: center; gap: 6px; font-size: .82rem; border: 1px solid var(--line); border-radius: 999px; padding: 2px 10px; }
+  .flag::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--muted); flex: none; }
+  .flag.ok::before { background: var(--ok); } .flag.bad::before { background: var(--bad); } .flag.warn::before { background: var(--warn); }
+
+  /* logbook */
   .chips { display: flex; flex-wrap: wrap; gap: 6px; }
   .chip { font: inherit; font-size: .8rem; border: 1px solid var(--line); border-radius: 999px; padding: 3px 11px; background: transparent; color: var(--ink); cursor: pointer; }
   .chip[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); }
   .log { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
-  .log li { display: grid; grid-template-columns: 6.2rem minmax(0, 1fr); gap: 4px 14px; padding: 12px 0; border-top: 1px solid var(--line); }
+  .log li { display: grid; grid-template-columns: 6.4rem minmax(0, 1fr); gap: 4px 14px; padding: 12px 0; border-top: 1px solid var(--line); }
   .log .when { font-size: .82rem; color: var(--muted); font-variant-numeric: tabular-nums; display: flex; flex-direction: column; gap: 2px; }
   .log .what { display: flex; flex-direction: column; gap: 3px; min-width: 0; overflow-wrap: anywhere; }
-  .log .what b { font-weight: 600; }
-  .tag { display: inline-block; font-size: .68rem; letter-spacing: .06em; text-transform: uppercase; font-weight: 600; color: var(--accent); }
-  .tag.s-good { color: var(--ok); } .tag.s-fair { color: var(--warn); } .tag.s-attention { color: var(--bad); }
-  .linkbtn { font: inherit; font-size: .8rem; background: none; border: 0; padding: 0; color: var(--accent); text-decoration: underline; cursor: pointer; }
+  .tag { font-size: .68rem; letter-spacing: .05em; text-transform: uppercase; font-weight: 600; color: var(--accent); }
+  .tag.s-good { color: var(--ok); } .tag.s-fair { color: var(--warn); } .tag.s-attention, .tag.s-overdue { color: var(--bad); } .tag.s-soon { color: var(--warn); }
   @media (max-width: 480px) { .log li { grid-template-columns: minmax(0, 1fr); } .log .when { flex-direction: row; gap: 10px; } }
+  .due-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+  .due-list li { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline; justify-content: space-between; padding: 9px 0; border-top: 1px solid var(--line); }
+
+  #toast { position: fixed; inset-inline: 0; bottom: calc(96px + env(safe-area-inset-bottom, 0px)); display: grid; place-items: center; pointer-events: none; z-index: 30; }
+  #toast span { background: var(--ink); color: var(--bg); border-radius: 999px; padding: 8px 18px; font-weight: 600; font-size: .9rem; box-shadow: 0 6px 20px rgb(0 0 0 / .25); }
+  #print { display: none; }
+  @media print {
+    body > *:not(#print) { display: none !important; }
+    #print { display: block; color: #000; background: #fff; font-size: 11pt; padding: 0; }
+    #print h1 { font-size: 18pt; margin-bottom: 4pt; } #print h2 { font-size: 12pt; margin: 14pt 0 6pt; }
+    #print table { font-size: 10pt; } #print td, #print th { border-bottom: 1px solid #bbb; color: #000; white-space: normal; }
+    #print dl.facts div { border-top: 1px solid #bbb; } #print dl.facts dt { color: #444; }
+  }
 </style>
-<style>body{margin:0} [hidden]{display:none!important} img{max-width:100%}</style>
 </head>
 <body>
+<div class="wrap" id="app"></div>
+<div id="toast" hidden role="status" aria-live="polite"><span></span></div>
+<div id="print"></div>
 <script>
 // Garage store. Signed out: cars stay in this browser. Signed in: cars, logbooks and files live in the user's cloud account.
 (function () {
   var SB = 'https://rystuaujaihcvulyettd.supabase.co', KEY = 'sb_publishable_fhBGLIojcBo9DXkJQRS01A_GXE4-uUx';
   var LKEY = 'g197-cars', SKEY = 'g197-session', BUCKET = 'car-files';
-  var subs = [], authSubs = [], session = null, cloud = {};
+  var subs = [], authSubs = [], session = null, cloud = {}, urlCache = {};
   function jget(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }
   function jset(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
   function local() { return jget(LKEY) || {}; }
@@ -164,7 +195,7 @@
   }
   var JSONH = { 'Content-Type': 'application/json' };
   async function loadCloud() {
-    api.setupError = '';
+    api.setupError = ''; api.loaded = false;
     try {
       var rows = await parse(await call('/rest/v1/cars?select=id,data'));
       cloud = {}; rows.forEach(function (r) { cloud[r.id] = r.data; });
@@ -173,7 +204,7 @@
       api.setupError = e.status === 404 || e.code === 'PGRST205' || e.code === '42P01' ? 'You are signed in, but the cloud tables are not set up yet, so nothing can be saved. The setup text still needs to be run in Supabase.' : 'You are signed in, but your garage could not be loaded (' + e.message + '). Check the connection and reload.';
     }
     try { var g = await parse(await call('/rest/v1/garages?select=name')); api.garageName = g && g[0] && g[0].name ? g[0].name : ''; } catch (e) { api.garageName = ''; }
-    emit(); emitAuth();
+    api.loaded = true; emit(); emitAuth();
   }
   function upsertCar(id, d) {
     return call('/rest/v1/cars?on_conflict=user_id,id', { method: 'POST', headers: Object.assign({ Prefer: 'resolution=merge-duplicates,return=minimal' }, JSONH), body: JSON.stringify({ id: id, user_id: session.user.id, data: d, updated_at: new Date().toISOString() }) }).then(parse);
@@ -189,6 +220,7 @@
   var api = {
     user: null, garageName: '', setupError: '', maxFile: 10 * 1024 * 1024,
     onAuth: function (f) { authSubs.push(f); },
+    newId: function () { return 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); },
     sign: async function (email, password, create) {
       var j = await parse(await fetch(SB + (create ? '/auth/v1/signup' : '/auth/v1/token?grant_type=password'), { method: 'POST', headers: Object.assign({ apikey: KEY }, JSONH), body: JSON.stringify({ email: email, password: password }) }));
       if (!j || !j.access_token) return { confirm: true };
@@ -204,7 +236,26 @@
       await parse(await call('/storage/v1/object/' + BUCKET + '/' + enc(path), { method: 'POST', headers: { 'Content-Type': file.type || 'application/octet-stream', 'x-upsert': 'true' }, body: file }));
       return { path: path, name: file.name || safe, type: file.type || '', size: file.size || 0 };
     },
-    fileUrl: async function (path) { var j = await parse(await call('/storage/v1/object/sign/' + BUCKET + '/' + enc(path), { method: 'POST', headers: JSONH, body: JSON.stringify({ expiresIn: 600 }) })); return SB + '/storage/v1' + (j.signedURL || j.signedUrl); },
+    fileUrl: async function (path) {
+      var c = urlCache[path]; if (c && c.until > Date.now()) return c.url;
+      var j = await parse(await call('/storage/v1/object/sign/' + BUCKET + '/' + enc(path), { method: 'POST', headers: JSONH, body: JSON.stringify({ expiresIn: 3600 }) }));
+      var url = SB + '/storage/v1' + (j.signedURL || j.signedUrl); urlCache[path] = { url: url, until: Date.now() + 50 * 60 * 1000 }; return url;
+    },
+    recover: async function (email) {
+      await parse(await fetch(SB + '/auth/v1/recover?redirect_to=' + encodeURIComponent(location.origin + location.pathname), { method: 'POST', headers: Object.assign({ apikey: KEY }, JSONH), body: JSON.stringify({ email: email }) }));
+    },
+    // Reads the tokens a password-reset or confirmation email link leaves in the address. Returns 'recovery', 'signin', an {error} or null.
+    fromLink: async function () {
+      var h = location.hash || ''; if (!/access_token=|error_description=/.test(h)) return null;
+      var q = new URLSearchParams(h.replace(/^#\/?/, '')); history.replaceState(null, '', location.pathname);
+      if (q.get('error_description')) return { error: q.get('error_description').replace(/\+/g, ' ') };
+      var tok = q.get('access_token');
+      var u = await parse(await fetch(SB + '/auth/v1/user', { headers: { apikey: KEY, Authorization: 'Bearer ' + tok } }));
+      setSession({ access_token: tok, refresh_token: q.get('refresh_token'), expires_in: +q.get('expires_in') || 3600, user: u });
+      await loadCloud();
+      return q.get('type') === 'recovery' ? 'recovery' : 'signin';
+    },
+    setPassword: async function (password) { await parse(await call('/auth/v1/user', { method: 'PUT', headers: JSONH, body: JSON.stringify({ password: password }) })); },
     removeFiles: async function (paths) { if (!paths || !paths.length || !session) return; try { await call('/storage/v1/object/' + BUCKET, { method: 'DELETE', headers: JSONH, body: JSON.stringify({ prefixes: paths }) }); } catch (e) {} }
   };
   window.g197cloud = api;
@@ -214,177 +265,9 @@
   if ('serviceWorker' in navigator) window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });
 })();
 </script>
-
-
-<div class="wrap">
-  <div id="v-login" class="login" hidden>
-    <div>
-      <h1>Garage 197</h1>
-      <p class="muted" style="margin-top:6px">Track what classic Porsches sell for, keep your cars and their history in one place, and see how your garage sits against the market.</p>
-    </div>
-    <section class="panel" aria-labelledby="h-login">
-      <h2 id="h-login">Sign in</h2>
-        <form id="acct-form" novalidate>
-                    <div class="field"><label for="a-email">Email</label><input id="a-email" type="email" autocomplete="email" inputmode="email"></div>
-          <div class="field"><label for="a-pass">Password</label><input id="a-pass" type="password" autocomplete="current-password" minlength="8"></div>
-          <div class="btns"><button type="submit" class="btn primary" id="b-signin">Sign in</button><button type="button" class="btn" id="b-signup">Create account</button></div>
-        </form>
-      <p class="status" id="login-status" role="status"></p>
-    </section>
-    <p class="muted small">New here? Enter your email, choose a password of at least 8 characters and press Create account.</p>
-  </div>
-
-  <header id="v-head" hidden>
-    <div class="top" style="margin-bottom:10px">
-      <h1>Garage 197</h1>
-      <div class="who">
-        <label for="f-cur">Prices in</label>
-        <select id="f-cur" style="width:auto"><option value="USD">US dollars</option><option value="GBP">Pounds</option><option value="EUR">Euros</option></select>
-        <span id="who-email" style="overflow-wrap:anywhere"></span>
-        <button type="button" class="btn" id="b-signout" style="padding:4px 10px">Sign out</button>
-      </div>
-    </div>
-    <nav class="bar" aria-label="Sections">
-      <div class="tabs">
-        <button type="button" class="tab" id="t-home" aria-current="page">Home</button>
-        <button type="button" class="tab" id="t-garage">My garage</button>
-      </div>
-    </nav>
-  </header>
-
-  <main id="v-home" class="home" hidden></main>
-
-  <div id="v-garage" hidden>
-  <div class="bench">
-    <div class="rail">
-      <section class="panel" aria-labelledby="h-acct">
-        <h2 id="h-acct">Your account</h2>
-        <div id="acct-in" hidden style="display:flex;flex-direction:column;gap:10px">
-          <p class="small">Signed in as <b id="acct-email" style="overflow-wrap:anywhere"></b>. Your garage is saved to your account and follows you to any device.</p>
-          <p class="small" id="acct-setup" hidden style="color:var(--bad)"></p>
-          <div id="acct-import" hidden style="display:flex;flex-direction:column;gap:8px;border:1px solid var(--line);border-radius:4px;padding:10px">
-            <span class="small" id="acct-import-text"></span>
-            <div class="btns"><button type="button" class="btn primary" id="b-import">Add them to my account</button><button type="button" class="btn" id="b-import-skip">Not now</button></div>
-          </div>
-        </div>
-        <p class="status" id="acct-status" role="status"></p>
-      </section>
-      <section class="panel" aria-labelledby="h-garage">
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
-          <h2 id="h-garage" style="margin:0;overflow-wrap:anywhere">My garage</h2>
-          <button type="button" class="btn" id="b-rename" style="padding:4px 10px;font-size:.85rem">Rename</button>
-        </div>
-        <form id="name-form" hidden style="display:none;gap:8px;flex-wrap:wrap;align-items:center">
-          <input id="g-name" type="text" maxlength="40" placeholder="My garage" aria-label="Garage name" autocomplete="off" style="flex:1;min-width:10rem">
-          <button type="submit" class="btn primary">Save name</button>
-          <button type="button" class="btn" id="b-name-cancel">Cancel</button>
-        </form>
-        <div class="garage" id="garage"></div>
-        <p class="muted small" id="garage-empty">Cars you save appear here, each with its own logbook. Fill in the details below and press Save to garage.</p>
-        <div class="btns"><button type="button" class="btn" id="b-new">New car</button></div>
-      </section>
-
-      <section class="panel" aria-labelledby="h-car">
-        <h2 id="h-car">Car details</h2>
-        <form id="car-form" novalidate>
-          <div class="field"><label for="f-name">Car name</label><input id="f-name" type="text" placeholder="e.g. Porsche 964 Turbo" autocomplete="off"></div>
-          <div class="field"><label for="f-vin">Chassis number (VIN)</label><input id="f-vin" type="text" placeholder="17 characters on 1981-on cars" autocomplete="off" spellcheck="false" maxlength="24"></div>
-          <div class="row2">
-            <div class="field"><label for="f-year">Model year</label><input id="f-year" type="number" min="1900" max="2030" inputmode="numeric" placeholder="1991"></div>
-            <div class="field"><label for="f-cond">Condition</label>
-              <select id="f-cond"><option value="">Not graded</option><option value="1">1 Concours</option><option value="2">2 Excellent</option><option value="3">3 Good</option><option value="4">4 Fair</option></select></div>
-          </div>
-          <div class="row2">
-            <div class="field"><label for="f-miles">Odometer</label><input id="f-miles" type="number" min="0" inputmode="numeric" placeholder="77000"></div>
-            <div class="field"><label for="f-unit">Unit</label><select id="f-unit"><option value="mi">Miles</option><option value="km">Kilometres</option></select></div>
-          </div>
-          <details class="more" id="more">
-            <summary>Profile details</summary>
-            <div>
-              <div class="row2">
-                <div class="field"><label for="f-colour">Colour</label><input id="f-colour" type="text" autocomplete="off" placeholder="e.g. Amethyst"></div>
-                <div class="field"><label for="f-interior">Interior</label><input id="f-interior" type="text" autocomplete="off"></div>
-              </div>
-              <div class="row2">
-                <div class="field"><label for="f-reg">Registration</label><input id="f-reg" type="text" autocomplete="off"></div>
-                <div class="field"><label for="f-acq">Date acquired</label><input id="f-acq" type="date"></div>
-              </div>
-              <div class="row2">
-                <div class="field"><label for="f-paid">Purchase price</label><input id="f-paid" type="number" min="0" inputmode="numeric"></div>
-                <div class="field"><label for="f-paidcur">Currency</label><select id="f-paidcur"><option>USD</option><option>GBP</option><option>EUR</option><option>QAR</option><option>AED</option><option>SAR</option></select></div>
-              </div>
-            </div>
-          </details>
-          <div class="field"><label for="f-model">Market to compare against</label>
-            <input id="f-find" type="search" placeholder="Filter the list, e.g. 993 or Speedster" aria-label="Filter the model list" autocomplete="off" style="margin-bottom:6px">
-            <select id="f-model"><option value="auto">Work it out from the details</option></select>
-            <span class="hint" id="model-hint"></span></div>
-          <div class="btns">
-            <button type="submit" class="btn primary" id="b-save">Save to garage</button>
-            <button type="button" class="btn danger" id="b-del" hidden>Remove</button>
-            <button type="button" class="btn danger" id="b-del-yes" hidden>Yes, remove it</button>
-            <button type="button" class="btn" id="b-del-no" hidden>Keep it</button>
-          </div>
-          <p class="status" id="status" role="status"></p>
-        </form>
-      </section>
-    </div>
-
-    <div class="out">
-      <section class="panel" id="p-vin" aria-labelledby="h-vin">
-        <h2 id="h-vin">Chassis number</h2>
-        <div id="vin-out"><p class="empty">Type a chassis number to decode the maker, model year, plant and, for Porsches, the model type.</p></div>
-      </section>
-
-      <section class="panel" id="p-market" aria-labelledby="h-market">
-        <h2 id="h-market">Market read-out</h2>
-        <div id="market-out" style="display:flex;flex-direction:column;gap:18px"><p class="empty">Loading sold results…</p></div>
-      </section>
-
-      <section class="panel" id="p-log" aria-labelledby="h-log">
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
-          <h2 id="h-log">Logbook</h2>
-          <button type="button" class="btn" id="b-rec-new" hidden>Add a record</button>
-        </div>
-        <form id="rec-form" hidden novalidate>
-          <div class="row2">
-            <div class="field"><label for="r-type">Type</label><select id="r-type"><option value="service">Service or repair</option><option value="condition">Condition check</option><option value="tyres">Tyres</option><option value="document">Document</option><option value="purchase">Purchase or sale</option><option value="note">Note</option></select></div>
-            <div class="field"><label for="r-date">Date</label><input id="r-date" type="date"></div>
-          </div>
-          <div class="field"><label for="r-title">What happened</label><input id="r-title" type="text" autocomplete="off" maxlength="120" placeholder="e.g. Major service and brake fluid"></div>
-          <div class="row2">
-            <div class="field"><label for="r-odo">Odometer</label><input id="r-odo" type="number" min="0" inputmode="numeric"></div>
-            <div class="field"><label for="r-by">Done by</label><input id="r-by" type="text" autocomplete="off" maxlength="80" placeholder="Workshop or person"></div>
-          </div>
-          <div class="row2">
-            <div class="field"><label for="r-cost">Cost</label><input id="r-cost" type="number" min="0" inputmode="decimal"></div>
-            <div class="field"><label for="r-cur">Currency</label><select id="r-cur"><option>USD</option><option>GBP</option><option>EUR</option><option>QAR</option><option>AED</option><option>SAR</option></select></div>
-          </div>
-          <div class="field"><label for="r-status">Condition found</label><select id="r-status"><option value="">Not applicable</option><option value="good">Good</option><option value="fair">Fair, keep an eye on it</option><option value="attention">Needs attention</option></select></div>
-          <div class="field"><label for="r-notes">Notes</label><textarea id="r-notes" maxlength="2000" placeholder="Parts fitted, findings, where the paperwork is kept"></textarea></div>
-          <div class="field" id="r-files-field"><label for="r-files">Photos and documents</label>
-            <div id="r-files-list" style="display:flex;flex-direction:column;gap:4px"></div>
-            <input id="r-files" type="file" multiple accept="image/*,application/pdf">
-            <span class="hint" id="r-files-hint"></span></div>
-          <div class="btns">
-            <button type="submit" class="btn primary" id="b-rec-save">Add to logbook</button>
-            <button type="button" class="btn" id="b-rec-cancel">Cancel</button>
-            <button type="button" class="btn danger" id="b-rec-del" hidden>Delete record</button>
-          </div>
-          <p class="status" id="rec-status" role="status"></p>
-        </form>
-        <div id="log-out" style="display:flex;flex-direction:column;gap:16px"></div>
-      </section>
-
-      <p class="muted small">Sold prices are public auction results copied by hand from The Classic Valuer and Classic.com, <span id="data-asof"></span>, covering Porsche models built before 2003. Most models have only their 10 to 20 latest sales on file, without mileage. Prices in other currencies use fixed approximate rates ($1 = £0.75, €1 = £0.86). Condition is saved with the car but doesn’t change the figures yet. This is market research, not a formal valuation.</p>
-    </div>
-  </div>
-  </div>
-</div>
-
 <script>
 /*PURE-START*/
-const FX = { GBP: 1, USD: 0.75, EUR: 0.86 };
+const FX = { GBP: 1, USD: 0.75, EUR: 0.86, QAR: 0.206, AED: 0.204, SAR: 0.2 };
 const WMI = { WP0: 'Porsche', WP1: 'Porsche', ZFF: 'Ferrari', WDB: 'Mercedes-Benz', WDD: 'Mercedes-Benz', WBA: 'BMW', WBS: 'BMW M', SCF: 'Aston Martin', ZHW: 'Lamborghini', ZA9: 'Lamborghini', SAJ: 'Jaguar', ZAM: 'Maserati', SCC: 'Lotus', JN1: 'Nissan', JT2: 'Toyota', JH4: 'Acura', JHM: 'Honda', WAU: 'Audi', WVW: 'Volkswagen', ZAR: 'Alfa Romeo', SAL: 'Land Rover', SCA: 'Rolls-Royce', SCB: 'Bentley', '1G1': 'Chevrolet', '1FA': 'Ford', ZLA: 'Lancia', VF1: 'Renault', VF7: 'Citroën', SAR: 'Rover' };
 const PLANTS = { S: 'Stuttgart-Zuffenhausen', N: 'Neckarsulm', L: 'Leipzig', U: 'Uusikaupunki', K: 'Osnabrück' };
 const YEAR_CODES = 'ABCDEFGHJKLMNPRSTVWXY123456789';
@@ -528,101 +411,478 @@ function marketFor(sales, model, carMiles, today) {
   };
 }
 /*PURE-END*/
-
+/* Arabic text for every string the screens show. Keys are the English strings passed to t() in ui.js; a missing key falls back to English. */
+const AR = {
+  // sign in
+  'That email and password don’t match an account. Check them, or press Create account.': 'البريد الإلكتروني وكلمة المرور لا يطابقان أي حساب. تحقق منهما أو اضغط «إنشاء حساب».',
+  'That email already has an account. Press Sign in instead.': 'هذا البريد الإلكتروني لديه حساب بالفعل. اضغط «تسجيل الدخول».',
+  'Too many emails have been requested. Wait a few minutes and try again.': 'تم طلب رسائل كثيرة. انتظر بضع دقائق ثم حاول مرة أخرى.',
+  'Couldn’t reach the server. Check your connection and try again.': 'تعذر الاتصال بالخادم. تحقق من اتصالك وحاول مرة أخرى.',
+  'Couldn’t create the account: {m}': 'تعذر إنشاء الحساب: {m}',
+  'Couldn’t sign in: {m}': 'تعذر تسجيل الدخول: {m}',
+  'Use a password of at least 8 characters.': 'استخدم كلمة مرور من 8 أحرف على الأقل.',
+  'Saving…': 'جارٍ الحفظ…',
+  'Password changed': 'تم تغيير كلمة المرور',
+  'Couldn’t change the password: {m}': 'تعذر تغيير كلمة المرور: {m}',
+  'Choose a new password for {email}.': 'اختر كلمة مرور جديدة للحساب {email}.',
+  'New password': 'كلمة المرور الجديدة',
+  'Save new password': 'حفظ كلمة المرور الجديدة',
+  'Enter your email address.': 'أدخل بريدك الإلكتروني.',
+  'Sending…': 'جارٍ الإرسال…',
+  'If that email has an account, a reset link is on its way. Open it on this device to choose a new password.': 'إذا كان لهذا البريد حساب فسيصلك رابط لإعادة التعيين. افتحه على هذا الجهاز لاختيار كلمة مرور جديدة.',
+  'Enter your email and we will send you a link to choose a new password.': 'أدخل بريدك الإلكتروني وسنرسل لك رابطًا لاختيار كلمة مرور جديدة.',
+  'Email': 'البريد الإلكتروني',
+  'Send reset link': 'إرسال رابط إعادة التعيين',
+  'Back to sign in': 'العودة إلى تسجيل الدخول',
+  'Account created. Open the confirmation email we sent, then sign in here.': 'تم إنشاء الحساب. افتح رسالة التأكيد التي أرسلناها ثم سجّل الدخول هنا.',
+  'Password': 'كلمة المرور',
+  'Sign in': 'تسجيل الدخول',
+  'Create account': 'إنشاء حساب',
+  'Forgot your password?': 'نسيت كلمة المرور؟',
+  'Track what classic Porsches sell for, keep your cars and their history in one place, and see how your garage sits against the market.': 'تابع أسعار بيع سيارات بورشه الكلاسيكية، واحفظ سياراتك وسجلاتها في مكان واحد، وقارن مرآبك بالسوق.',
+  'New here? Enter your email, choose a password of at least 8 characters and press Create account.': 'مستخدم جديد؟ أدخل بريدك الإلكتروني واختر كلمة مرور من 8 أحرف على الأقل ثم اضغط «إنشاء حساب».',
+  'Creating your account…': 'جارٍ إنشاء حسابك…',
+  'Signing in…': 'جارٍ تسجيل الدخول…',
+  'Choose a new password': 'اختر كلمة مرور جديدة',
+  'Reset your password': 'إعادة تعيين كلمة المرور',
+  'That link didn’t work: {m}. Ask for a new one.': 'لم يعمل الرابط: {m}. اطلب رابطًا جديدًا.',
+  'That link has expired. Ask for a new one.': 'انتهت صلاحية الرابط. اطلب رابطًا جديدًا.',
+  // market
+  'Classic.com results': 'نتائج Classic.com',
+  'The Classic Valuer results': 'نتائج The Classic Valuer',
+  'Bring a Trailer results': 'نتائج Bring a Trailer',
+  'Collecting Cars results': 'نتائج Collecting Cars',
+  'For sale on Dubizzle': 'معروض للبيع على دوبيزل',
+  'Sold price against distance driven for recent sales': 'سعر البيع مقابل المسافة المقطوعة للمبيعات الأخيرة',
+  'Distance at sale ({u})': 'المسافة عند البيع ({u})',
+  'This car': 'هذه السيارة',
+  'The sold results didn’t load. Reload the page to try again.': 'لم يتم تحميل نتائج البيع. أعد تحميل الصفحة للمحاولة مرة أخرى.',
+  'Loading sold results…': 'جارٍ تحميل نتائج البيع…',
+  'We couldn’t match this car to a model in the catalogue, which covers Porsche models built before 2003. Edit the car and pick the model under “More details”. Meanwhile these searches open public results:': 'لم نتمكن من مطابقة هذه السيارة مع طراز في القائمة التي تغطي طرازات بورشه المصنوعة قبل 2003. عدّل السيارة واختر الطراز من «تفاصيل إضافية». في الأثناء تفتح هذه الروابط نتائج عامة:',
+  'No sold results are on file yet for the {model}. It is in the catalogue, so sales will show here as soon as they are added. Meanwhile these searches open public results:': 'لا توجد نتائج بيع مسجلة بعد لطراز {model}. هو موجود في القائمة، وستظهر المبيعات هنا فور إضافتها. في الأثناء تفتح هذه الروابط نتائج عامة:',
+  'Cars like yours sold for': 'سيارات مثل سيارتك بيعت بسعر',
+  'Based on {n} {model} sales in the last two years with {a} to {b} {u} on the clock. Their typical price was {p}.': 'استنادًا إلى {n} عملية بيع لطراز {model} خلال العامين الماضيين بعداد بين {a} و{b} {u}. السعر المعتاد لها كان {p}.',
+  'From the {n} sales on file since {d}. Only {k} sold in the last 12 months, so this is a longer-run figure.': 'من {n} عملية بيع مسجلة منذ {d}. بيعت {k} فقط خلال آخر 12 شهرًا، لذا فهذا رقم على المدى الأطول.',
+  'From {n} sales at any mileage.': 'من {n} عملية بيع بأي عداد.',
+  'From {n} sales at any mileage. The sales on file for this model don’t record mileage yet, so we can’t narrow it to cars like yours.': 'من {n} عملية بيع بأي عداد. المبيعات المسجلة لهذا الطراز لا تتضمن قراءة العداد بعد، لذا لا يمكن حصرها في سيارات مثل سيارتك.',
+  'From {n} sales at any mileage. Too few recent sales have mileage close to this car’s to narrow it further.': 'من {n} عملية بيع بأي عداد. المبيعات الأخيرة القريبة من عداد هذه السيارة قليلة جدًا لحصر النتيجة أكثر.',
+  'From {n} sales at any mileage. Add the odometer reading to narrow this to cars like yours.': 'من {n} عملية بيع بأي عداد. أضف قراءة العداد لحصر النتيجة في سيارات مثل سيارتك.',
+  'This year': 'هذا العام',
+  '{n} sales': '{n} عملية بيع',
+  'Against last year': 'مقارنة بالعام الماضي',
+  'Not enough sales in both years to compare': 'لا توجد مبيعات كافية في العامين للمقارنة',
+  'Last year {p} from {n} sales': 'العام الماضي {p} من {n} عملية بيع',
+  'Last 12 months': 'آخر 12 شهرًا',
+  '{n} sales, from {a} to {b}': '{n} عملية بيع، من {a} إلى {b}',
+  'No sales': 'لا مبيعات',
+  'Since 2020': 'منذ 2020',
+  'The last 12 months are {p} against it': 'آخر 12 شهرًا {p} مقارنة به',
+  'Price against distance driven, last two years': 'السعر مقابل المسافة المقطوعة، آخر عامين',
+  'Sold': 'تاريخ البيع',
+  'Price': 'السعر',
+  'Car and venue': 'السيارة وجهة البيع',
+  'How this is worked out': 'كيف يُحسب هذا',
+  'The typical price is the middle sale: half the cars sold for more and half for less, so one unusual car doesn’t distort it. “Cars like yours” uses sales with between half and one and a half times your car’s mileage and shows the middle half of them. Prices come from public auction results copied by hand, converted at fixed approximate exchange rates. This is market research, not a formal valuation.': 'السعر المعتاد هو البيع الأوسط: نصف السيارات بيع بأكثر ونصفها بأقل، فلا تشوّهه سيارة واحدة غير عادية. «سيارات مثل سيارتك» تعتمد مبيعات بعداد بين نصف عداد سيارتك ومرة ونصف منه وتعرض النصف الأوسط منها. الأسعار من نتائج مزادات عامة منسوخة يدويًا ومحوّلة بأسعار صرف ثابتة تقريبية. هذا بحث في السوق وليس تقييمًا رسميًا.',
+  'Typical price, all sales on file': 'السعر المعتاد، كل المبيعات المسجلة',
+  'Typical price, last 12 months': 'السعر المعتاد، آخر 12 شهرًا',
+  'Closest sales by mileage': 'أقرب المبيعات حسب العداد',
+  'Most recent sales': 'أحدث المبيعات',
+  // home
+  'Loading your garage…': 'جارٍ تحميل مرآبك…',
+  'Your garage could not be loaded from the cloud. Check your connection and reload the page.': 'تعذر تحميل مرآبك من السحابة. تحقق من اتصالك وأعد تحميل الصفحة.',
+  'Welcome to Garage 197': 'مرحبًا بك في Garage 197',
+  'Start by adding your first car. It takes a minute: give its name, year and mileage, and you will see what cars like it sell for and can start its logbook.': 'ابدأ بإضافة سيارتك الأولى. يستغرق ذلك دقيقة: أدخل اسمها وسنة الصنع وقراءة العداد، وسترى أسعار بيع السيارات المشابهة وتبدأ سجلها.',
+  'Add your first car': 'أضف سيارتك الأولى',
+  '{a} of {b} cars valued from recent sales.': 'تم تقدير {a} من {b} من سياراتك من المبيعات الأخيرة.',
+  'Against what you paid': 'مقارنة بما دفعته',
+  'Cars with a purchase price: {n}': 'سيارات لها سعر شراء: {n}',
+  'Since {d}': 'منذ {d}',
+  'Change in the estimate since you first opened the app': 'التغير في التقدير منذ أول فتح للتطبيق',
+  'Your garage is worth about': 'قيمة مرآبك تقريبًا',
+  'An estimate from public sales, not a formal valuation.': 'تقدير من مبيعات عامة وليس تقييمًا رسميًا.',
+  'Open my garage': 'افتح مرآبي',
+  'Coming up': 'القادم',
+  'e.g. 993 Turbo or 356 Speedster': 'مثال: 993 Turbo أو 356 Speedster',
+  'No model matches that. Try the list.': 'لا يوجد طراز مطابق. جرّب القائمة.',
+  'Look up any model': 'ابحث عن أي طراز',
+  'See its market': 'اعرض سوقه',
+  'Loading the market…': 'جارٍ تحميل السوق…',
+  'Market at a glance': 'السوق في لمحة',
+  'Classic Porsche models built before 2003, from public auction results.': 'طرازات بورشه الكلاسيكية المصنوعة قبل 2003، من نتائج المزادات العامة.',
+  'Sold results on file': 'نتائج البيع المسجلة',
+  '{n} models covered': '{n} طرازًا مشمولًا',
+  'Sold in the last 90 days': 'بيعت في آخر 90 يومًا',
+  'Latest on {d}': 'الأحدث في {d}',
+  'Top sale, last 12 months': 'أعلى بيع، آخر 12 شهرًا',
+  'Latest sales': 'أحدث المبيعات',
+  'The most recent sold results on file. Press a model to see its market. Live for-sale listings will appear here once a listings feed is licensed.': 'أحدث نتائج البيع المسجلة. اضغط على طراز لعرض سوقه. ستظهر هنا الإعلانات المعروضة للبيع حاليًا بعد ترخيص مصدر للإعلانات.',
+  'Model': 'الطراز',
+  'Typical price, 12 months': 'السعر المعتاد، 12 شهرًا',
+  'Against since 2020': 'مقارنة بمنذ 2020',
+  'Sales': 'المبيعات',
+  'Running hot and cold': 'الصاعد والهابط',
+  'Each model’s typical price over the last 12 months against its typical price since 2020. Based on 5 to 20 sales per model, so read it as a pointer.': 'السعر المعتاد لكل طراز خلال آخر 12 شهرًا مقارنة بسعره المعتاد منذ 2020. يستند إلى 5 إلى 20 عملية بيع لكل طراز، فاعتبره مؤشرًا فقط.',
+  'Above their long-run level': 'أعلى من مستواها على المدى الطويل',
+  'None at the moment.': 'لا شيء حاليًا.',
+  'Below their long-run level': 'أدنى من مستواها على المدى الطويل',
+  'By model family, last 12 months': 'حسب فئة الطراز، آخر 12 شهرًا',
+  'Typical price and range of every sale on file in each family. Families mix cheap and expensive variants, so compare like with like on a model’s own page.': 'السعر المعتاد والنطاق لكل المبيعات المسجلة في كل فئة. الفئات تجمع نسخًا رخيصة وغالية، لذا قارن المتشابه في صفحة الطراز نفسه.',
+  'Family': 'الفئة',
+  'Typical price': 'السعر المعتاد',
+  'Lowest': 'الأدنى',
+  'Highest': 'الأعلى',
+  'Sold prices are public auction results copied by hand from The Classic Valuer and Classic.com. This is market research, not a formal valuation.': 'أسعار البيع هي نتائج مزادات عامة منسوخة يدويًا من The Classic Valuer و Classic.com. هذا بحث في السوق وليس تقييمًا رسميًا.',
+  'Due now': 'مستحق الآن',
+  'Due soon': 'مستحق قريبًا',
+  'Planned': 'مخطط',
+  // garage
+  'My garage': 'مرآبي',
+  'Garage name': 'اسم المرآب',
+  'Saved': 'تم الحفظ',
+  'Couldn’t save. Try again.': 'تعذر الحفظ. حاول مرة أخرى.',
+  'Save name': 'حفظ الاسم',
+  'Cancel': 'إلغاء',
+  'Rename': 'إعادة تسمية',
+  'Add a car': 'أضف سيارة',
+  'Your garage is empty. Add your first car to see what it is worth and start its logbook.': 'مرآبك فارغ. أضف سيارتك الأولى لترى قيمتها وتبدأ سجلها.',
+  'Unnamed car': 'سيارة بلا اسم',
+  'Worth about {p}': 'قيمتها تقريبًا {p}',
+  'No market data yet': 'لا توجد بيانات سوق بعد',
+  '{n} due': '{n} مستحق',
+  // car form
+  'e.g. Porsche 964 Turbo': 'مثال: Porsche 964 Turbo',
+  'Miles': 'أميال',
+  'Kilometres': 'كيلومترات',
+  'mi': 'ميل',
+  'km': 'كم',
+  'Not graded': 'غير مصنفة',
+  '1 Concours': '1 حالة عرض',
+  '2 Excellent': '2 ممتازة',
+  '3 Good': '3 جيدة',
+  '4 Fair': '4 مقبولة',
+  'Work it out from the name': 'حدّده من الاسم',
+  'Another model (not in the catalogue)': 'طراز آخر (غير موجود في القائمة)',
+  'Optional. On cars built from 1981 it has 17 characters and tells us the exact model.': 'اختياري. في السيارات المصنوعة منذ 1981 يتكون من 17 خانة ويحدد الطراز بدقة.',
+  'type {x}': 'النوع {x}',
+  'check digit fails, one character may be mistyped': 'خانة التحقق غير صحيحة، قد تكون إحدى الخانات مكتوبة خطأ',
+  '{n} characters so far': '{n} خانة حتى الآن',
+  'Give the car a name first, for example its model.': 'أعطِ السيارة اسمًا أولًا، مثل طرازها.',
+  'Couldn’t save: {m}': 'تعذر الحفظ: {m}',
+  'Car name': 'اسم السيارة',
+  'Model year': 'سنة الصنع',
+  'Odometer': 'قراءة العداد',
+  'Unit': 'الوحدة',
+  'Photo': 'صورة',
+  'Choose a file to replace the current photo.': 'اختر ملفًا لاستبدال الصورة الحالية.',
+  'Optional. One photo to show on the car’s card.': 'اختياري. صورة واحدة تظهر على بطاقة السيارة.',
+  'More details': 'تفاصيل إضافية',
+  'Chassis number (VIN)': 'رقم الهيكل (VIN)',
+  'Colour': 'اللون',
+  'Interior': 'المقصورة',
+  'Registration': 'رقم اللوحة',
+  'Date acquired': 'تاريخ الشراء',
+  'Purchase price': 'سعر الشراء',
+  'Currency': 'العملة',
+  'Condition': 'الحالة',
+  'Model to compare against': 'الطراز المستخدم للمقارنة',
+  'Three things are enough to start: the name, the year and the mileage. Everything else can wait.': 'ثلاثة أشياء تكفي للبدء: الاسم وسنة الصنع وقراءة العداد. والباقي يمكن إضافته لاحقًا.',
+  'Remove this car': 'إزالة هذه السيارة',
+  'Yes, remove it and its logbook': 'نعم، أزلها مع سجلها',
+  'Car removed': 'تمت إزالة السيارة',
+  'Couldn’t remove it. Try again.': 'تعذرت الإزالة. حاول مرة أخرى.',
+  'Add to my garage': 'أضف إلى مرآبي',
+  'Save changes': 'حفظ التغييرات',
+  'Car added': 'تمت إضافة السيارة',
+  'Edit {name}': 'تعديل {name}',
+  // car page
+  '{n} characters. Cars built before 1981 have shorter chassis numbers that can’t be decoded automatically; newer cars have 17.': '{n} خانة. السيارات المصنوعة قبل 1981 لها أرقام هيكل أقصر لا يمكن قراءتها آليًا، والأحدث منها 17 خانة.',
+  '{n} characters. A modern chassis number has 17.': '{n} خانة. رقم الهيكل الحديث يتكون من 17 خانة.',
+  'Check digit should be {a}, not {b}. One character is probably mistyped.': 'خانة التحقق يجب أن تكون {a} وليس {b}. يبدو أن إحدى الخانات مكتوبة خطأ.',
+  'The chassis number says model year {a}, but the car is saved as {b}.': 'رقم الهيكل يشير إلى سنة الصنع {a}، لكن السيارة محفوظة بسنة {b}.',
+  'Contains I, O or Q, which chassis numbers never use. Check for 1 or 0.': 'يحتوي على I أو O أو Q وهي أحرف لا تُستخدم في أرقام الهيكل. تحقق من 1 أو 0.',
+  'Rest-of-world format, which has no check digit to verify.': 'صيغة بقية العالم، وليس فيها خانة تحقق.',
+  'Check digit is valid, so the number is typed correctly.': 'خانة التحقق صحيحة، فالرقم مكتوب بشكل سليم.',
+  'Maker': 'الصانع', 'Spec': 'المواصفة', 'Type': 'النوع', 'Check': 'التحقق', 'Year': 'السنة', 'Plant': 'المصنع', 'Serial': 'التسلسل',
+  'Rest of world': 'بقية العالم', 'USA / Canada': 'أمريكا / كندا', 'Not recognised': 'غير معروف', 'None': 'لا يوجد', 'Valid': 'صحيح', 'Fails': 'خطأ',
+  'Overview': 'نظرة عامة',
+  'Market': 'السوق',
+  'Logbook': 'السجل',
+  'Car sections': 'أقسام السيارة',
+  'Acquired': 'تاريخ الشراء',
+  'Paid': 'المدفوع',
+  'Compared against': 'يقارن مع',
+  'We couldn’t value this car yet. Open the Market tab to see why.': 'لم نتمكن من تقدير هذه السيارة بعد. افتح تبويب السوق لمعرفة السبب.',
+  'From {n} recent sales of cars with similar mileage, which ranged from {a} to {b}.': 'من {n} عملية بيع حديثة لسيارات بعداد مشابه، تراوحت بين {a} و{b}.',
+  'The typical price of {n} sales in the last 12 months, which ranged from {a} to {b}.': 'السعر المعتاد لـ {n} عملية بيع خلال آخر 12 شهرًا، تراوحت بين {a} و{b}.',
+  'The typical price of the {n} sales on file. Few are recent, so treat it as a rough guide.': 'السعر المعتاد لـ {n} عملية بيع مسجلة. قليل منها حديث، فاعتبره دليلًا تقريبيًا.',
+  'Worth about': 'القيمة التقريبية',
+  '{d} against the {p} you paid': '{d} مقارنة بـ {p} التي دفعتها',
+  'See the market': 'اعرض السوق',
+  'Open the logbook': 'افتح السجل',
+  'Details': 'التفاصيل',
+  'No details yet.': 'لا توجد تفاصيل بعد.',
+  'Edit details': 'تعديل التفاصيل',
+  'That car is no longer in your garage.': 'هذه السيارة لم تعد في مرآبك.',
+  // logbook
+  'Done': 'تم',
+  'Reminder cleared': 'تم إنهاء التذكير',
+  'Nothing planned. Add a reminder for the next service, inspection or insurance renewal.': 'لا شيء مخطط. أضف تذكيرًا للصيانة القادمة أو الفحص أو تجديد التأمين.',
+  'e.g. Annual service': 'مثال: الصيانة السنوية',
+  'Say what is due.': 'اكتب ما المستحق.',
+  'Add a date, a mileage, or both.': 'أضف تاريخًا أو قراءة عداد أو كليهما.',
+  'Reminder added': 'تمت إضافة التذكير',
+  'What is due': 'ما المستحق',
+  'Due date': 'تاريخ الاستحقاق',
+  'Or at ({u})': 'أو عند ({u})',
+  'Add reminder': 'إضافة التذكير',
+  'Add a reminder': 'أضف تذكيرًا',
+  'History': 'التاريخ',
+  'Download as PDF': 'تنزيل بصيغة PDF',
+  'Add a record': 'أضف سجلًا',
+  'No records yet. Add the first service, condition check or document for this car.': 'لا توجد سجلات بعد. أضف أول صيانة أو فحص حالة أو مستند لهذه السيارة.',
+  'Records': 'السجلات',
+  'Spent on the car': 'المصروف على السيارة',
+  'Not counting the purchase': 'دون احتساب الشراء',
+  'Last service': 'آخر صيانة',
+  'None logged yet': 'لم تُسجل بعد',
+  'Highest odometer logged': 'أعلى قراءة عداد مسجلة',
+  '{n} need attention': '{n} تحتاج إلى عناية',
+  'Nothing flagged': 'لا ملاحظات',
+  'Filter records': 'تصفية السجلات',
+  'All': 'الكل',
+  'Couldn’t open the file.': 'تعذر فتح الملف.',
+  'Edit': 'تعديل',
+  'e.g. Major service and brake fluid': 'مثال: صيانة شاملة وزيت الفرامل',
+  'Workshop or person': 'الورشة أو الشخص',
+  'Not applicable': 'لا ينطبق',
+  'Good': 'جيدة',
+  'Fair': 'مقبولة',
+  'Fair, keep an eye on it': 'مقبولة، تحتاج إلى متابعة',
+  'Needs attention': 'تحتاج إلى عناية',
+  'Parts fitted, findings, where the paperwork is kept': 'القطع المركبة، الملاحظات، مكان حفظ الأوراق',
+  'Remove': 'إزالة',
+  'Delete record': 'حذف السجل',
+  'Yes, delete it': 'نعم، احذفه',
+  'Record deleted': 'تم حذف السجل',
+  'Couldn’t delete it. Try again.': 'تعذر الحذف. حاول مرة أخرى.',
+  'Say what happened first.': 'اكتب ما حدث أولًا.',
+  'Add the date.': 'أضف التاريخ.',
+  'One of the files is over 10 MB. Choose smaller files.': 'أحد الملفات يتجاوز 10 ميغابايت. اختر ملفات أصغر.',
+  'Uploading file {a} of {b}…': 'جارٍ رفع الملف {a} من {b}…',
+  'Saved to the logbook': 'تم الحفظ في السجل',
+  'Date': 'التاريخ',
+  'What happened': 'ما حدث',
+  'Odometer ({u})': 'قراءة العداد ({u})',
+  'Done by': 'نفّذها',
+  'Cost': 'التكلفة',
+  'Condition found': 'الحالة عند الفحص',
+  'Notes': 'ملاحظات',
+  'Photos and documents': 'صور ومستندات',
+  'Photos or PDFs, up to 10 MB each. They are private to your account.': 'صور أو ملفات PDF حتى 10 ميغابايت لكل ملف. وهي خاصة بحسابك.',
+  'Logbook from {g}, printed {d}': 'سجل من {g}، طُبع في {d}',
+  'Attached: {f}': 'المرفقات: {f}',
+  'Save record': 'حفظ السجل',
+  'Add to logbook': 'أضف إلى السجل',
+  'Service': 'صيانة', 'Tyres': 'إطارات', 'Document': 'مستند', 'Purchase': 'شراء', 'Note': 'ملاحظة',
+  'Service or repair': 'صيانة أو إصلاح', 'Condition check': 'فحص الحالة', 'Purchase or sale': 'شراء أو بيع',
+  // settings and frame
+  'Settings': 'الإعدادات',
+  'Display': 'العرض',
+  'Language': 'اللغة',
+  'Show prices in': 'عرض الأسعار بـ',
+  'US dollars': 'الدولار الأمريكي',
+  'Pounds': 'الجنيه الإسترليني',
+  'Euros': 'اليورو',
+  'Qatari riyals': 'الريال القطري',
+  'UAE dirhams': 'الدرهم الإماراتي',
+  'Saudi riyals': 'الريال السعودي',
+  'Conversions use fixed approximate exchange rates.': 'التحويل يتم بأسعار صرف ثابتة تقريبية.',
+  'Show distances in': 'عرض المسافات بـ',
+  'Account': 'الحساب',
+  'Signed in as {email}. Your garage is saved to your account and follows you to any device.': 'تم تسجيل الدخول باسم {email}. مرآبك محفوظ في حسابك ويظهر على أي جهاز.',
+  'Sign out': 'تسجيل الخروج',
+  'Cars saved on this device': 'سيارات محفوظة على هذا الجهاز',
+  'Cars saved on this device before accounts existed: {n}.': 'سيارات محفوظة على هذا الجهاز قبل توفر الحسابات: {n}.',
+  'Add them to my account': 'أضفها إلى حسابي',
+  'Cars added to your account': 'تمت إضافة السيارات إلى حسابك',
+  'Sections': 'الأقسام',
+  'Home': 'الرئيسية',
+  'Model not found': 'الطراز غير موجود',
+  'Built {a} to {b}': 'صُنع من {a} إلى {b}',
+  'Add this car to my garage': 'أضف هذه السيارة إلى مرآبي',
+  '356 and early sports cars': '356 والسيارات الرياضية الأولى',
+  '911 early (1964-1973)': '911 الأولى (1964-1973)',
+  '911 G-series (1974-1989)': '911 الفئة G (1974-1989)',
+  '912 and 914': '912 و 914',
+  '924, 944 and 968': '924 و 944 و 968',
+  '928 and 959': '928 و 959',
+  'Boxster': 'بوكستر'
+};
+/* ===== Screens. Every visible string goes through t() so it can be shown in Arabic (see i18n.js). ===== */
+const CLOUD = window.g197cloud;
 const $ = (id) => document.getElementById(id);
-const el = (tag, attrs, ...kids) => { const n = document.createElement(tag); for (const k in (attrs || {})) { if (k === 'class') n.className = attrs[k]; else if (k === 'text') n.textContent = attrs[k]; else n.setAttribute(k, attrs[k]); } n.append(...kids.filter((k) => k != null)); return n; };
-const CLOUD = window.g197cloud || null;
-const S = { sales: null, salesError: false, cars: [], currentId: null, db: null, cur: 'USD', dbReady: false, pickedFirst: false, dirty: false };
-try { const c = localStorage.getItem('g197-cur'); if (c && FX[c]) S.cur = c; } catch (e) {}
-$('f-cur').value = S.cur;
-
-const money = (gbp) => gbp == null ? '—' : new Intl.NumberFormat(S.cur === 'USD' ? 'en-US' : 'en-GB', { style: 'currency', currency: S.cur, maximumFractionDigits: 0 }).format(Math.round(gbp / FX[S.cur] / 100) * 100);
-const num = (n) => new Intl.NumberFormat('en-GB').format(n);
-const fmtDate = (d) => new Date(d + 'T00:00:00Z').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
-const shortModel = (m) => m.replace('Porsche ', '');
-const catOf = (name) => CATALOG.find((m) => m.name === name) || null;
-
-function readForm() {
-  return { name: $('f-name').value.trim(), vin: $('f-vin').value.toUpperCase().replace(/[\s-]/g, ''), year: $('f-year').value, miles: $('f-miles').value, unit: $('f-unit').value, condition: $('f-cond').value, model: $('f-model').value, colour: $('f-colour').value.trim(), interior: $('f-interior').value.trim(), reg: $('f-reg').value.trim(), acquired: $('f-acq').value, paid: $('f-paid').value, paidCur: $('f-paidcur').value };
-}
-function fillForm(c) {
-  $('f-name').value = c.name || ''; $('f-vin').value = c.vin || ''; $('f-year').value = c.year || ''; $('f-miles').value = c.miles || '';
-  $('f-unit').value = c.unit || 'mi'; $('f-cond').value = c.condition || '';
-  $('f-colour').value = c.colour || ''; $('f-interior').value = c.interior || ''; $('f-reg').value = c.reg || ''; $('f-acq').value = c.acquired || ''; $('f-paid').value = c.paid || ''; $('f-paidcur').value = c.paidCur || 'USD';
-  $('f-model').value = [...$('f-model').options].some((o) => o.value === c.model) ? c.model : 'auto';
-}
-function carMiles(c) { const n = Number(c.miles); if (!n) return null; return c.unit === 'km' ? Math.round(n * 0.621371) : n; }
-
-function renderGarage() {
-  const g = $('garage'); g.replaceChildren();
-  for (const c of S.cars) {
-    const b = el('button', { type: 'button', class: 'car-btn', 'aria-current': c.id === S.currentId ? 'true' : 'false' }, el('span', { text: c.name || 'Unnamed car' }), el('span', { text: c.vin || 'No chassis number' }));
-    b.addEventListener('click', () => { S.currentId = c.id; S.dirty = false; fillForm(c); endDelete(); renderAll(); });
-    g.append(b);
+const el = (tag, attrs, ...kids) => {
+  const n = document.createElement(tag);
+  for (const k in (attrs || {})) {
+    const v = attrs[k];
+    if (v == null || v === false) continue;
+    if (k === 'class') n.className = v; else if (k === 'text') n.textContent = v;
+    else if (k.slice(0, 2) === 'on' && typeof v === 'function') n.addEventListener(k.slice(2), v);
+    else if (k === 'value') n.value = v; else n.setAttribute(k, v === true ? '' : v);
   }
-  $('garage-empty').hidden = S.cars.length > 0;
-  if (!S.db && S.dbReady) $('garage-empty').textContent = 'Saving isn’t available in this view. Lookups still work.';
+  n.append(...kids.flat().filter((k) => k != null && k !== false));
+  return n;
+};
+const ls = { get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : v; } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} } };
+const S = { sales: null, salesError: false, counts: {}, cars: [], db: null, cur: ls.get('g197-cur', 'USD'), unit: ls.get('g197-unit', 'mi'), lang: ls.get('g197-lang', 'en'), mode: 'signin', loginMsg: '', filter: 'all', rec: null, remOpen: false };
+if (!FX[S.cur]) S.cur = 'USD';
+
+function t(s, v) { let o = (S.lang === 'ar' && AR[s]) || s; if (v) for (const k in v) o = o.split('{' + k + '}').join(v[k]); return o; }
+const CURS = ['USD', 'GBP', 'EUR', 'QAR', 'AED', 'SAR'];
+const cash = (n, cur) => { try { return new Intl.NumberFormat('en-US', { style: 'currency', currency: cur || 'USD', maximumFractionDigits: 0 }).format(n); } catch (e) { return n + ' ' + cur; } };
+const money = (gbp) => gbp == null ? '—' : cash(Math.round(gbp / FX[S.cur] / 100) * 100, S.cur);
+const num = (n) => new Intl.NumberFormat('en-US').format(n);
+const fmtDate = (d) => { try { return new Date(d + 'T00:00:00Z').toLocaleDateString(S.lang === 'ar' ? 'ar-u-nu-latn' : 'en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }); } catch (e) { return d; } };
+const today = () => new Date().toISOString().slice(0, 10);
+const shortModel = (m) => (m || '').replace('Porsche ', '');
+const catOf = (name) => CATALOG.find((m) => m.name === name) || null;
+const unitName = (u) => t((u || S.unit) === 'km' ? 'km' : 'mi');
+const dist = (mi) => S.unit === 'km' ? Math.round(mi * 1.609344) : Math.round(mi);
+const distText = (mi) => num(dist(mi)) + ' ' + unitName();
+const carMiles = (c) => { const n = Number(c.miles); if (!n) return null; return c.unit === 'km' ? Math.round(n * 0.621371) : n; };
+const carOdo = (c) => c.miles ? num(+c.miles) + ' ' + unitName(c.unit || 'mi') : '';
+const pct = (d) => (d >= 0 ? '+' : '−') + Math.abs(d * 100).toFixed(0) + '%';
+function toast(msg) { const b = $('toast'); b.firstChild.textContent = msg; b.hidden = false; clearTimeout(toast.h); toast.h = setTimeout(() => { b.hidden = true; }, 2200); }
+
+function modelOf(car) { if (car.model && car.model !== 'auto' && car.model !== 'other') return car.model; if (car.model === 'other') return null; return suggestModel(car, decodeVin(car.vin)).model; }
+function estimate(car) {
+  if (!S.sales) return null;
+  const model = modelOf(car); if (!model) return null;
+  const m = marketFor(S.sales, model, carMiles(car), today()); if (!m.total) return null;
+  if (m.enoughComps) return { gbp: m.compMedian, low: m.compLow, high: m.compHigh, basis: 'similar', n: m.comps.length, model };
+  if (m.n12 >= 3) return { gbp: m.median12, low: m.low12, high: m.high12, basis: 'year', n: m.n12, model };
+  return { gbp: m.medianAll, basis: 'all', n: m.total, model };
+}
+function remStatus(car, r) {
+  const now = today(), soon = new Date(Date.now() + 30 * 864e5).toISOString().slice(0, 10), odo = +car.miles || 0;
+  if ((r.date && r.date < now) || (r.odo && odo && odo >= +r.odo)) return 'overdue';
+  if ((r.date && r.date <= soon) || (r.odo && odo && +r.odo - odo <= 500)) return 'soon';
+  return 'later';
+}
+const dueOf = (car) => (car.reminders || []).map((r) => ({ r, car, st: remStatus(car, r) })).filter((x) => x.st !== 'later');
+
+/* ----- routing ----- */
+function route() { const p = (location.hash || '#/home').replace(/^#\/?/, '').split('/').map(decodeURIComponent); return { name: p[0] || 'home', a: p[1], b: p[2] }; }
+function nav(h) { if (location.hash === h) render(); else location.hash = h; window.scrollTo(0, 0); }
+window.addEventListener('hashchange', () => { S.rec = null; S.remOpen = false; render(); });
+
+/* ----- small builders ----- */
+const panel = (title, note, ...kids) => el('section', { class: 'panel' }, title ? el('h2', { text: title }) : null, note ? el('p', { class: 'muted small', text: note }) : null, ...kids);
+const stat = (label, value, note, cls) => el('div', { class: 'stat' }, el('span', { class: 'label', text: label }), el('b', { class: cls || '', text: value }), note ? el('span', { class: 'muted small', text: note }) : null);
+const table = (heads, rows) => el('div', { class: 'tablebox' }, el('table', {}, el('thead', {}, el('tr', {}, heads.map((h) => el('th', { class: h[1] || '', text: h[0] })))), el('tbody', {}, rows)));
+const field = (label, input, hint) => { const id = input.id || (input.id = 'f' + Math.random().toString(36).slice(2, 8)); return el('div', { class: 'field' }, el('label', { for: id, text: label }), input, hint ? el('span', { class: 'hint', text: hint }) : null); };
+const select = (opts, value, attrs) => { const s = el('select', attrs || {}, opts.map((o) => el('option', { value: o[0], text: o[1] }))); s.value = value; return s; };
+const CAR_SVG = '<svg viewBox="0 0 64 32" fill="currentColor" aria-hidden="true"><path d="M4 22c0-4 3-6 9-7l6-7c2-2 4-3 8-3h9c6 0 10 3 14 8l6 2c3 1 4 3 4 6v2h-5a6 6 0 0 0-12 0H23a6 6 0 0 0-12 0H4zm19-8h11V8h-6c-2 0-3 1-4 2zm14 0h9c-3-4-5-6-9-6z"/><circle cx="17" cy="24" r="4.5"/><circle cx="49" cy="24" r="4.5"/></svg>';
+function photoBox(car) {
+  const box = el('div', { class: 'photo' }); box.innerHTML = CAR_SVG;
+  if (car && car.photo && car.photo.path) CLOUD.fileUrl(car.photo.path).then((url) => { const im = el('img', { src: url, alt: car.name || '' }); im.addEventListener('error', () => { box.innerHTML = CAR_SVG; }); box.replaceChildren(im); }).catch(() => {});
+  return box;
+}
+async function shrink(file) {
+  try {
+    const bmp = await createImageBitmap(file), k = Math.min(1, 1600 / Math.max(bmp.width, bmp.height));
+    const c = document.createElement('canvas'); c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k);
+    c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
+    const blob = await new Promise((res) => c.toBlob(res, 'image/jpeg', 0.85));
+    return blob ? new File([blob], 'photo.jpg', { type: 'image/jpeg' }) : file;
+  } catch (e) { return file; }
+}
+async function saveCar(car, patch) { const { id, ...body } = car; await S.db.collection('cars').doc(id).set({ ...body, ...patch, updatedAt: new Date().toISOString() }); }
+const mlink = (model) => el('a', { href: '#/model/' + encodeURIComponent(model), text: shortModel(model) });
+
+/* ----- login ----- */
+function langToggle() { return el('button', { type: 'button', class: 'linkbtn', text: S.lang === 'ar' ? 'English' : 'العربية', onclick: () => { S.lang = S.lang === 'ar' ? 'en' : 'ar'; ls.set('g197-lang', S.lang); render(); } }); }
+function viewLogin() {
+  const status = el('p', { class: 'status', role: 'status', text: S.loginMsg }); S.loginMsg = '';
+  const email = el('input', { type: 'email', autocomplete: 'email', inputmode: 'email', id: 'a-email' });
+  const pass = el('input', { type: 'password', autocomplete: S.mode === 'newpass' ? 'new-password' : 'current-password', id: 'a-pass' });
+  const say = (m) => { status.textContent = m; };
+  const friendly = (e, create) => {
+    const m = ((e && e.message) || '').toLowerCase() + ' ' + ((e && e.code) || '');
+    if (/invalid login|invalid_credentials/.test(m)) return t('That email and password don’t match an account. Check them, or press Create account.');
+    if (/already registered|user_already_exists/.test(m)) return t('That email already has an account. Press Sign in instead.');
+    if (/rate limit|over_email_send_rate_limit/.test(m)) return t('Too many emails have been requested. Wait a few minutes and try again.');
+    if (/failed to fetch|networkerror|load failed/.test(m)) return t('Couldn’t reach the server. Check your connection and try again.');
+    return t(create ? 'Couldn’t create the account: {m}' : 'Couldn’t sign in: {m}', { m: (e && e.message) || '' });
+  };
+  let body;
+  if (S.mode === 'newpass') {
+    body = el('form', { novalidate: true, onsubmit: async (ev) => {
+      ev.preventDefault(); if (pass.value.length < 8) { say(t('Use a password of at least 8 characters.')); return; }
+      say(t('Saving…'));
+      try { await CLOUD.setPassword(pass.value); S.mode = 'signin'; toast(t('Password changed')); nav('#/home'); render(); } catch (e) { say(t('Couldn’t change the password: {m}', { m: e.message })); }
+    } }, el('p', { class: 'small', text: t('Choose a new password for {email}.', { email: CLOUD.user ? CLOUD.user.email : '' }) }), field(t('New password'), pass), el('div', { class: 'row' }, el('button', { type: 'submit', class: 'btn primary', text: t('Save new password') })));
+  } else if (S.mode === 'forgot') {
+    body = el('form', { novalidate: true, onsubmit: async (ev) => {
+      ev.preventDefault(); const e = email.value.trim(); if (!/^\S+@\S+\.\S+$/.test(e)) { say(t('Enter your email address.')); return; }
+      say(t('Sending…'));
+      try { await CLOUD.recover(e); say(t('If that email has an account, a reset link is on its way. Open it on this device to choose a new password.')); } catch (err) { say(friendly(err)); }
+    } }, el('p', { class: 'small', text: t('Enter your email and we will send you a link to choose a new password.') }), field(t('Email'), email),
+      el('div', { class: 'row' }, el('button', { type: 'submit', class: 'btn primary', text: t('Send reset link') }), el('button', { type: 'button', class: 'btn', text: t('Back to sign in'), onclick: () => { S.mode = 'signin'; render(); } })));
+  } else {
+    const go = async (create) => {
+      const e = email.value.trim();
+      if (!/^\S+@\S+\.\S+$/.test(e)) { say(t('Enter your email address.')); email.focus(); return; }
+      if (pass.value.length < 8) { say(t('Use a password of at least 8 characters.')); pass.focus(); return; }
+      say(t(create ? 'Creating your account…' : 'Signing in…'));
+      try { const r = await CLOUD.sign(e, pass.value, create); if (r.confirm) say(t('Account created. Open the confirmation email we sent, then sign in here.')); else { location.hash = '#/home'; render(); } }
+      catch (err) { say(friendly(err, create)); }
+    };
+    body = el('form', { novalidate: true, onsubmit: (ev) => { ev.preventDefault(); go(false); } }, field(t('Email'), email), field(t('Password'), pass),
+      el('div', { class: 'row' }, el('button', { type: 'submit', class: 'btn primary', id: 'b-signin', text: t('Sign in') }), el('button', { type: 'button', class: 'btn', id: 'b-signup', text: t('Create account'), onclick: () => go(true) })),
+      el('button', { type: 'button', class: 'linkbtn small', id: 'b-forgot', text: t('Forgot your password?'), onclick: () => { S.mode = 'forgot'; render(); } }));
+  }
+  return el('div', { class: 'login' },
+    el('div', { class: 'row between' }, el('h1', { text: 'Garage 197' }), langToggle()),
+    el('p', { class: 'muted', text: t('Track what classic Porsches sell for, keep your cars and their history in one place, and see how your garage sits against the market.') }),
+    panel(t(S.mode === 'newpass' ? 'Choose a new password' : S.mode === 'forgot' ? 'Reset your password' : 'Sign in'), null, body, status),
+    S.mode === 'signin' ? el('p', { class: 'muted small', text: t('New here? Enter your email, choose a password of at least 8 characters and press Create account.') }) : null);
 }
 
-function renderVin(car) {
-  const box = $('vin-out'); box.replaceChildren();
-  const d = decodeVin(car.vin);
-  if (!d.vin) { box.append(el('p', { class: 'empty', text: 'Type a chassis number to decode the maker, model year, plant and, for Porsches, the model type.' })); return d; }
-  const wrap = el('div', { style: 'display:flex;flex-direction:column;gap:12px' });
-  if (d.full) {
-    const plate = el('div', { class: 'plate' });
-    for (const s of d.segs) plate.append(el('div', { class: 'seg' }, el('span', { class: 'label', text: s.label }), el('b', { text: s.chars }), el('em', { text: s.value || ' ' })));
-    wrap.append(plate);
-    if (d.year && car.year && Number(car.year) !== d.year) d.flags.push({ kind: 'warn', text: 'The chassis number says model year ' + d.year + ', but you entered ' + car.year + '.' });
-    if (!d.maker) d.flags.push({ kind: 'warn', text: 'Maker code ' + d.vin.slice(0, 3) + ' isn’t in this draft’s list yet.' });
-  } else wrap.append(el('div', { class: 'plate' }, el('div', { class: 'seg' }, el('span', { class: 'label', text: 'As entered' }), el('b', { text: d.vin }))));
-  const flags = el('div', { class: 'flags' });
-  for (const f of d.flags) flags.append(el('span', { class: 'flag ' + f.kind, text: f.text }));
-  wrap.append(flags);
-  box.append(wrap);
-  return d;
+/* ----- market read-out ----- */
+function searchLinks(q) {
+  const mk = (label, site, extra) => el('a', { href: 'https://www.google.com/search?q=' + encodeURIComponent(q + ' ' + (extra || 'sold') + ' site:' + site), target: '_blank', rel: 'noopener', text: label });
+  return el('div', { class: 'links' }, mk(t('Classic.com results'), 'classic.com'), mk(t('The Classic Valuer results'), 'theclassicvaluer.com'), mk(t('Bring a Trailer results'), 'bringatrailer.com'), mk(t('Collecting Cars results'), 'collectingcars.com'), mk(t('For sale on Dubizzle'), 'dubizzle.com', 'for sale'));
 }
-
-function searchLinks(car) {
-  const q = [car.year, car.name].filter(Boolean).join(' ') || 'classic car';
-  const mk = (label, site) => el('a', { href: 'https://www.google.com/search?q=' + encodeURIComponent(q + ' sold site:' + site), target: '_blank', rel: 'noopener', text: label });
-  return el('div', { class: 'links' }, mk('Classic.com results', 'classic.com'), mk('The Classic Valuer results', 'theclassicvaluer.com'), mk('Bring a Trailer results', 'bringatrailer.com'), mk('Collecting Cars results', 'collectingcars.com'), el('a', { href: 'https://www.google.com/search?q=' + encodeURIComponent(q + ' for sale site:dubizzle.com'), target: '_blank', rel: 'noopener', text: 'For sale on Dubizzle' }));
-}
-
 function drawChart(host, m, miles) {
   host.replaceChildren();
   const pts = m.points; if (pts.length < 2) return;
-  const W = Math.max(300, host.clientWidth || 600), H = 250, ml = 58, mr = 14, mt = 20, mb = 36;
-  const xMax = Math.max(...pts.map((p) => p.miles), miles || 0) * 1.06, yVals = pts.map((p) => p.gbp / FX[S.cur]);
+  const W = Math.max(300, host.clientWidth || 600), H = 250, ml = 58, mr = 14, mt = 20, mb = 36, u = S.unit === 'km' ? 1.609344 : 1;
+  const xMax = Math.max(...pts.map((p) => p.miles), miles || 0) * u * 1.06, yVals = pts.map((p) => p.gbp / FX[S.cur]);
   const step = (max, n) => { const raw = max / n, p = Math.pow(10, Math.floor(Math.log10(raw))); return [1, 2, 2.5, 5, 10].map((k) => k * p).find((s) => s >= raw); };
-  const ys = step(Math.max(...yVals) * 1.05, 4), yTop = Math.ceil(Math.max(...yVals) * 1.05 / ys) * ys;
-  const xs = step(xMax, W < 420 ? 3 : 5);
-  const x = (v) => ml + (v / xMax) * (W - ml - mr), y = (v) => H - mb - (v / yTop) * (H - mt - mb);
+  const ys = step(Math.max(...yVals) * 1.05, 4), yTop = Math.ceil(Math.max(...yVals) * 1.05 / ys) * ys, xs = step(xMax, W < 420 ? 3 : 5);
+  const x = (v) => ml + (v * u / xMax) * (W - ml - mr), y = (v) => H - mb - (v / yTop) * (H - mt - mb);
   const NS = 'http://www.w3.org/2000/svg';
   const s = (tag, a, text) => { const n = document.createElementNS(NS, tag); for (const k in a) n.setAttribute(k, a[k]); if (text != null) n.textContent = text; return n; };
-  const svg = s('svg', { viewBox: '0 0 ' + W + ' ' + H, role: 'img', 'aria-label': 'Sold price against mileage for recent sales' });
-  const sym = { USD: '$', GBP: '£', EUR: '€' }[S.cur];
-  for (let v = 0; v <= yTop + 1; v += ys) {
-    svg.append(s('line', { x1: ml, x2: W - mr, y1: y(v), y2: y(v), stroke: 'var(--line)', 'stroke-width': 1 }));
-    svg.append(s('text', { x: ml - 8, y: y(v) + 4, 'text-anchor': 'end', fill: 'var(--muted)', 'font-size': 11 }, sym + Math.round(v / 1000) + 'k'));
-  }
-  for (let v = 0; v <= xMax; v += xs) svg.append(s('text', { x: x(v), y: H - mb + 16, 'text-anchor': 'middle', fill: 'var(--muted)', 'font-size': 11 }, Math.round(v / 1000) + 'k'));
-  svg.append(s('text', { x: W - mr, y: H - 4, 'text-anchor': 'end', fill: 'var(--muted)', 'font-size': 11 }, 'Miles at sale'));
+  const svg = s('svg', { viewBox: '0 0 ' + W + ' ' + H, role: 'img', 'aria-label': t('Sold price against distance driven for recent sales') });
+  const kfmt = (v) => v >= 1e6 ? (v / 1e6).toFixed(1) + 'M' : Math.round(v / 1000) + 'k';
+  for (let v = 0; v <= yTop + 1; v += ys) { svg.append(s('line', { x1: ml, x2: W - mr, y1: y(v), y2: y(v), stroke: 'var(--line)', 'stroke-width': 1 })); svg.append(s('text', { x: ml - 8, y: y(v) + 4, 'text-anchor': 'end', fill: 'var(--muted)', 'font-size': 11 }, kfmt(v))); }
+  for (let v = 0; v <= xMax; v += xs) svg.append(s('text', { x: ml + (v / xMax) * (W - ml - mr), y: H - mb + 16, 'text-anchor': 'middle', fill: 'var(--muted)', 'font-size': 11 }, Math.round(v / 1000) + 'k'));
+  svg.append(s('text', { x: W - mr, y: H - 4, 'text-anchor': 'end', fill: 'var(--muted)', 'font-size': 11 }, t('Distance at sale ({u})', { u: unitName() })));
   if (m.band && miles) {
-    svg.append(s('rect', { x: x(m.band[0]), y: mt, width: Math.max(0, x(Math.min(m.band[1], xMax)) - x(m.band[0])), height: H - mt - mb, fill: 'var(--accent-soft)', opacity: .7 }));
+    svg.append(s('rect', { x: x(m.band[0]), y: mt, width: Math.max(0, x(Math.min(m.band[1], xMax / u)) - x(m.band[0])), height: H - mt - mb, fill: 'var(--accent-soft)', opacity: .7 }));
     svg.append(s('line', { x1: x(miles), x2: x(miles), y1: mt, y2: H - mb, stroke: 'var(--accent)', 'stroke-width': 2, 'stroke-dasharray': '4 3' }));
-    const right = x(miles) > W - 110;
-    svg.append(s('text', { x: x(miles) + (right ? -6 : 6), y: mt - 6, 'text-anchor': right ? 'end' : 'start', fill: 'var(--accent)', 'font-size': 11, 'font-weight': 600 }, 'This car, ' + num(miles) + ' mi'));
+    const right = x(miles) > W - 120;
+    svg.append(s('text', { x: x(miles) + (right ? -6 : 6), y: mt - 6, 'text-anchor': right ? 'end' : 'start', fill: 'var(--accent)', 'font-size': 11, 'font-weight': 600 }, t('This car')));
   }
-  const tip = el('div', { class: 'tip' }); tip.hidden = true;
+  const tip = el('div', { class: 'tip', hidden: true });
   for (const p of pts) {
     const c = s('circle', { cx: x(p.miles), cy: y(p.gbp / FX[S.cur]), r: 5, fill: 'var(--ink)', 'fill-opacity': .55, stroke: 'var(--panel)', 'stroke-width': 1.5, tabindex: 0 });
     const show = () => {
-      tip.replaceChildren(el('div', { class: 'muted', text: fmtDate(p.date) + (p.platform && p.platform !== 'Unknown' ? ' · ' + p.platform : '') }), el('div', { style: 'font-weight:600', text: money(p.gbp) + ' · ' + num(p.miles) + ' mi' }), p.location ? el('div', { text: p.location }) : null, p.flag ? el('div', { class: 'muted', text: p.flag }) : null);
-      tip.hidden = false;
-      const k = host.clientWidth / W; let left = x(p.miles) * k + 10; const top = Math.max(0, y(p.gbp / FX[S.cur]) * k - 12);
+      tip.replaceChildren(el('div', { class: 'muted', text: fmtDate(p.date) + (p.platform && p.platform !== 'Unknown' ? ' · ' + p.platform : '') }), el('div', { style: 'font-weight:600', text: money(p.gbp) + ' · ' + distText(p.miles) }), p.location ? el('div', { text: p.location }) : null);
+      tip.hidden = false; const k = host.clientWidth / W; let left = x(p.miles) * k + 10;
       if (left + tip.offsetWidth > host.clientWidth) left = Math.max(0, x(p.miles) * k - tip.offsetWidth - 10);
-      tip.style.left = left + 'px'; tip.style.top = top + 'px'; c.setAttribute('r', 7);
+      tip.style.left = left + 'px'; tip.style.top = Math.max(0, y(p.gbp / FX[S.cur]) * k - 12) + 'px'; c.setAttribute('r', 7);
     };
     const hide = () => { tip.hidden = true; c.setAttribute('r', 5); };
     c.addEventListener('pointerenter', show); c.addEventListener('pointerleave', hide); c.addEventListener('focus', show); c.addEventListener('blur', hide);
@@ -630,375 +890,359 @@ function drawChart(host, m, miles) {
   }
   host.append(svg, tip);
 }
-
-function renderMarket(car, vin) {
-  const out = $('market-out'); out.replaceChildren();
-  const hint = $('model-hint');
-  if (S.salesError) { out.append(el('p', { class: 'empty', text: 'The sold results didn’t load. Reload the page to try again.' })); return; }
-  if (!S.sales) { out.append(el('p', { class: 'empty', text: 'Loading sold results…' })); return; }
-  let model = car.model, sug = { model: null, reason: '' };
-  if (model === 'auto' || !model) { sug = suggestModel(car, vin); model = sug.model; hint.textContent = model ? 'Matched to ' + shortModel(model) + ': ' + sug.reason + '.' : sug.reason; }
-  else hint.textContent = '';
-  if (!car.name && !car.vin) { out.append(el('p', { class: 'empty', text: 'Enter a car on the left, or pick one from the garage, to see its market.' })); return; }
-  if (!model || model === 'other') {
-    out.append(el('p', { class: 'empty', text: 'There are no sold results on file for this car’s model yet. The catalogue covers Porsche models built before 2003: pick one under “Market to compare against” if the match wasn’t automatic. You can still save the car. Meanwhile these searches open public results:' }), searchLinks(car));
-    return;
-  }
-  const miles = carMiles(car), cat = catOf(model);
-  const m = marketFor(S.sales, model, miles, new Date().toISOString().slice(0, 10));
-  if (!m.total) {
-    out.append(el('p', { class: 'empty', text: 'No sold results are on file yet for the ' + shortModel(model) + (cat ? ' (built ' + cat.from + ' to ' + cat.to + ')' : '') + '. It is in the catalogue, so sales will show here as soon as they are added. Meanwhile these searches open public results:' }), searchLinks(car));
-    S.redraw = null; return;
-  }
-  const head = el('div', { class: 'headline' });
-  if (m.enoughComps) {
-    head.append(el('div', {}, el('div', { class: 'label', text: 'Similar-mileage cars sold for' }), el('div', { class: 'big', text: money(m.compLow) + ' to ' + money(m.compHigh) })),
-      el('p', { class: 'muted small', style: 'max-width:44ch', text: 'The middle half of ' + m.comps.length + ' ' + shortModel(model) + ' sales in the last two years with ' + num(m.band[0]) + ' to ' + num(m.band[1]) + ' miles. Their median is ' + money(m.compMedian) + '.' }));
-  } else {
+function marketView(model, car) {
+  const out = el('div', { class: 'col' }), q = [car && car.year, (car && car.name) || model].filter(Boolean).join(' ') || 'classic car';
+  if (S.salesError) return el('p', { class: 'empty', text: t('The sold results didn’t load. Reload the page to try again.') });
+  if (!S.sales) return el('p', { class: 'empty', text: t('Loading sold results…') });
+  if (!model) { out.append(el('p', { class: 'empty', text: t('We couldn’t match this car to a model in the catalogue, which covers Porsche models built before 2003. Edit the car and pick the model under “More details”. Meanwhile these searches open public results:') }), searchLinks(q)); return out; }
+  const miles = car ? carMiles(car) : null, cat = catOf(model), m = marketFor(S.sales, model, miles, today()), name = shortModel(model);
+  if (!m.total) { out.append(el('p', { class: 'empty', text: t('No sold results are on file yet for the {model}. It is in the catalogue, so sales will show here as soon as they are added. Meanwhile these searches open public results:', { model: name }) }), searchLinks(q)); return out; }
+  const head = el('div', { class: 'col', style: 'gap:6px' });
+  if (m.enoughComps) head.append(el('span', { class: 'label', text: t('Cars like yours sold for') }), el('div', { class: 'big', text: money(m.compLow) + ' – ' + money(m.compHigh) }),
+    el('p', { class: 'muted small', text: t('Based on {n} {model} sales in the last two years with {a} to {b} {u} on the clock. Their typical price was {p}.', { n: m.comps.length, model: name, a: num(dist(m.band[0])), b: num(dist(m.band[1])), u: unitName(), p: money(m.compMedian) }) }));
+  else {
     const few = m.n12 < 3;
-    head.append(el('div', {}, el('div', { class: 'label', text: shortModel(model) + (few ? ', all sales on file' : ', last 12 months') }), el('div', { class: 'big', text: money(few ? m.medianAll : m.median12) })),
-      few ? el('p', { class: 'muted small', style: 'max-width:44ch', text: 'Median of the ' + m.total + ' sales on file since ' + fmtDate(m.firstDate) + '. Only ' + m.n12 + ' sold in the last 12 months, so this is a longer-run figure.' }) :
-      el('p', { class: 'muted small', style: 'max-width:44ch', text: miles && !m.points.length ? 'Median of ' + m.n12 + ' sales at any mileage. The sales on file for this model don’t record mileage yet, so there is no similar-mileage range.' : miles ? 'Median of ' + m.n12 + ' sales at any mileage. Fewer than three recent sales have mileage close to this car’s, so there is no similar-mileage range yet.' : 'Median of ' + m.n12 + ' sales at any mileage. Add the odometer reading to narrow this to similar cars.' }));
+    head.append(el('span', { class: 'label', text: t(few ? 'Typical price, all sales on file' : 'Typical price, last 12 months') }), el('div', { class: 'big', text: money(few ? m.medianAll : m.median12) }),
+      el('p', { class: 'muted small', text: few ? t('From the {n} sales on file since {d}. Only {k} sold in the last 12 months, so this is a longer-run figure.', { n: m.total, d: fmtDate(m.firstDate), k: m.n12 }) : !car ? t('From {n} sales at any mileage.', { n: m.n12 }) : miles && !m.points.length ? t('From {n} sales at any mileage. The sales on file for this model don’t record mileage yet, so we can’t narrow it to cars like yours.', { n: m.n12 }) : miles ? t('From {n} sales at any mileage. Too few recent sales have mileage close to this car’s to narrow it further.', { n: m.n12 }) : t('From {n} sales at any mileage. Add the odometer reading to narrow this to cars like yours.', { n: m.n12 }) }));
   }
   out.append(head);
-  const stats = el('div', { class: 'stats' });
-  const stat = (label, value, note, cls) => el('div', { class: 'stat' }, el('span', { class: 'label', text: label }), el('b', { class: cls || '', text: value }), el('span', { class: 'muted small', text: note }));
-  stats.append(stat('Median this year', money(m.medianYtd), m.nYtd + ' sales'));
-  stats.append(stat('Against last year', m.change == null ? '—' : (m.change > 0 ? '+' : '−') + Math.abs(m.change * 100).toFixed(1) + '%', m.change == null ? 'Needs at least three sales in each year. Last year has ' + m.nPrev + ' on file' : 'Last year ' + money(m.medianPrev) + ' from ' + m.nPrev + ' sales' + (m.thin ? '. Thin data: treat as a pointer' : ''), m.change == null ? '' : m.change > 0 ? 'up' : 'down'));
-  stats.append(stat('Last 12 months', money(m.median12), m.n12 + ' sales, ' + money(m.low12) + ' to ' + money(m.high12)));
-  if (cat && cat.median2020) { const d = m.median12 ? (m.median12 - cat.median2020) / cat.median2020 : null; stats.append(stat('Median since 2020', money(cat.median2020), 'All sales since 2020, as published by The Classic Valuer' + (d == null ? '' : '. The last 12 months are ' + Math.abs(d * 100).toFixed(0) + '% ' + (d >= 0 ? 'above' : 'below') + ' it'))); }
+  const stats = el('div', { class: 'stats' },
+    stat(t('This year'), money(m.medianYtd), t('{n} sales', { n: m.nYtd })),
+    stat(t('Against last year'), m.change == null ? '—' : pct(m.change), m.change == null ? t('Not enough sales in both years to compare') : t('Last year {p} from {n} sales', { p: money(m.medianPrev), n: m.nPrev }), m.change == null ? '' : m.change > 0 ? 'up' : 'down'),
+    stat(t('Last 12 months'), money(m.median12), m.n12 ? t('{n} sales, from {a} to {b}', { n: m.n12, a: money(m.low12), b: money(m.high12) }) : t('No sales')));
+  if (cat && cat.median2020) { const d = m.median12 ? (m.median12 - cat.median2020) / cat.median2020 : null; stats.append(stat(t('Since 2020'), money(cat.median2020), d == null ? '' : t('The last 12 months are {p} against it', { p: pct(d) }))); }
   out.append(stats);
-  if (m.points.length >= 2) {
-    const ch = el('div', { class: 'chart' });
-    out.append(el('div', { style: 'display:flex;flex-direction:column;gap:6px' }, el('span', { class: 'label', text: 'Price against mileage, last two years' }), ch, el('span', { class: 'muted small', text: 'Each dot is one sale that published its mileage' + (miles ? '. The shaded band is the similar-mileage range.' : '.') })));
-    drawChart(ch, m, miles); S.redraw = () => drawChart(ch, m, miles);
-  } else S.redraw = null;
-  const tb = el('tbody');
-  for (const r of m.nearest) tb.append(el('tr', {}, el('td', { text: fmtDate(r.date) }), el('td', { class: 'num', text: money(r.gbp) }), el('td', { class: 'num', text: r.miles == null ? '' : num(r.miles) }), el('td', { text: [r.year, r.platform !== 'Unknown' ? r.platform : '', r.location].filter(Boolean).join(' · ') }), el('td', { class: 'muted', text: r.flag || '' })));
-  out.append(el('div', { style: 'display:flex;flex-direction:column;gap:6px' }, el('span', { class: 'label', text: m.byMiles ? 'Closest sales by mileage' : 'Most recent sales' }),
-    el('div', { class: 'tablebox' }, el('table', {}, el('thead', {}, el('tr', {}, el('th', { text: 'Sold' }), el('th', { class: 'num', text: 'Price' }), el('th', { class: 'num', text: 'Miles' }), el('th', { text: 'Car and venue' }), el('th', { text: 'Note' }))), tb))));
-  out.append(searchLinks(car));
+  if (m.points.length >= 2) { const ch = el('div', { class: 'chart' }); out.append(el('div', { class: 'col', style: 'gap:6px' }, el('span', { class: 'label', text: t('Price against distance driven, last two years') }), ch)); setTimeout(() => drawChart(ch, m, miles), 0); S.redraw = () => drawChart(ch, m, miles); } else S.redraw = null;
+  out.append(el('div', { class: 'col', style: 'gap:6px' }, el('span', { class: 'label', text: t(m.byMiles ? 'Closest sales by mileage' : 'Most recent sales') }),
+    table([[t('Sold')], [t('Price'), 'num'], [unitName(), 'num'], [t('Car and venue')]], m.nearest.map((r) => el('tr', {}, el('td', { text: fmtDate(r.date) }), el('td', { class: 'num', text: money(r.gbp) }), el('td', { class: 'num', text: r.miles == null ? '' : num(dist(r.miles)) }), el('td', { text: [r.year, r.platform !== 'Unknown' ? r.platform : '', r.location].filter(Boolean).join(' · ') }))))));
+  out.append(el('details', { class: 'more' }, el('summary', { text: t('How this is worked out') }), el('div', {}, el('p', { class: 'small muted', text: t('The typical price is the middle sale: half the cars sold for more and half for less, so one unusual car doesn’t distort it. “Cars like yours” uses sales with between half and one and a half times your car’s mileage and shows the middle half of them. Prices come from public auction results copied by hand, converted at fixed approximate exchange rates. This is market research, not a formal valuation.') }))));
+  out.append(searchLinks(q));
+  return out;
 }
 
-function buildModelList() {
-  const sel = $('f-model'), keep = sel.value, q = nameTokens($('f-find').value);
-  sel.replaceChildren(el('option', { value: 'auto', text: 'Work it out from the details' }));
-  const names = CATALOG.map((m) => m.name), extra = Object.keys(S.counts || {}).filter((n) => !names.includes(n)).map((n) => ({ name: n, family: 'Other', from: '', to: '' }));
-  const groups = {};
-  for (const m of CATALOG.concat(extra)) {
-    const hay = (m.name + ' ' + m.family).toLowerCase();
-    if (m.name !== keep && !q.every((w) => hay.includes(w))) continue;
-    const n = (S.counts || {})[m.name] || 0;
-    (groups[m.family] = groups[m.family] || el('optgroup', { label: m.family })).append(el('option', { value: m.name, text: shortModel(m.name) + (m.from ? ', ' + m.from + '–' + String(m.to).slice(2) : '') + (n ? ' · ' + n + ' sales' : ' · no sales yet') }));
+/* ----- home ----- */
+function garageValue() {
+  const ests = S.cars.map((c) => ({ c, e: estimate(c) })), valued = ests.filter((x) => x.e);
+  const total = valued.reduce((a, x) => a + x.e.gbp, 0);
+  const paidCars = valued.filter((x) => +x.c.paid && FX[x.c.paidCur || 'USD']), paid = paidCars.reduce((a, x) => a + +x.c.paid * FX[x.c.paidCur || 'USD'], 0), nowPaid = paidCars.reduce((a, x) => a + x.e.gbp, 0);
+  return { total, valued: valued.length, paidN: paidCars.length, paid, nowPaid };
+}
+function valueHistory(total) {
+  if (!CLOUD.user || !total) return null;
+  const k = 'g197-val-' + CLOUD.user.id; let h = []; try { h = JSON.parse(ls.get(k, '[]')) || []; } catch (e) {}
+  const d = today(); if (h.length && h[h.length - 1].d === d) h[h.length - 1].v = total; else h.push({ d, v: total });
+  ls.set(k, JSON.stringify(h.slice(-400)));
+  return h.length > 1 && h[0].d < d ? h[0] : null;
+}
+function viewHome() {
+  const out = el('div', { class: 'col' });
+  if (!CLOUD.loaded) { out.append(el('p', { class: 'empty', text: t('Loading your garage…') })); return out; }
+  if (CLOUD.setupError) out.append(panel(null, null, el('p', { style: 'color:var(--bad)', text: t('Your garage could not be loaded from the cloud. Check your connection and reload the page.') })));
+  if (!S.cars.length) out.append(panel(t('Welcome to Garage 197'), null, el('p', { text: t('Start by adding your first car. It takes a minute: give its name, year and mileage, and you will see what cars like it sell for and can start its logbook.') }), el('div', { class: 'row' }, el('a', { class: 'btn primary', href: '#/car/new', text: t('Add your first car') }))));
+  else {
+    const g = garageValue(), first = valueHistory(g.total);
+    const notes = [t('{a} of {b} cars valued from recent sales.', { a: g.valued, b: S.cars.length })];
+    const stats = [];
+    if (g.paidN) { const d = g.nowPaid - g.paid; stats.push(stat(t('Against what you paid'), (d >= 0 ? '+' : '−') + money(Math.abs(d)), t('Cars with a purchase price: {n}', { n: g.paidN }), d >= 0 ? 'up' : 'down')); }
+    if (first && first.v) { const d = g.total - first.v; stats.push(stat(t('Since {d}', { d: fmtDate(first.d) }), (d >= 0 ? '+' : '−') + money(Math.abs(d)), t('Change in the estimate since you first opened the app'), d >= 0 ? 'up' : 'down')); }
+    out.append(panel(t('Your garage is worth about'), null, el('div', { class: 'big', text: g.valued ? money(g.total) : '—' }), el('p', { class: 'muted small', text: notes.join(' ') + ' ' + t('An estimate from public sales, not a formal valuation.') }), stats.length ? el('div', { class: 'stats' }, stats) : null, el('div', { class: 'row' }, el('a', { class: 'btn', href: '#/garage', text: t('Open my garage') }))));
+    const due = S.cars.flatMap(dueOf);
+    if (due.length) out.append(panel(t('Coming up'), null, el('ul', { class: 'due-list' }, due.map((x) => el('li', {}, el('span', {}, el('a', { href: '#/car/' + x.car.id + '/logbook', text: x.r.title }), el('span', { class: 'muted', text: ' · ' + (x.car.name || '') })), el('span', { class: 'tag s-' + x.st, text: remText(x.car, x.r, x.st) }))))));
   }
-  for (const f in groups) sel.append(groups[f]);
-  sel.append(el('option', { value: 'other', text: 'Another model (not in the catalogue)' }));
-  sel.value = [...sel.options].some((o) => o.value === keep) ? keep : 'auto';
-}
-$('f-find').addEventListener('input', (ev) => { ev.stopPropagation(); buildModelList(); });
-
-/* Logbook: each saved car carries its own history records inside its saved document. */
-const REC_TYPES = { service: 'Service', condition: 'Condition', tyres: 'Tyres', document: 'Document', purchase: 'Purchase', note: 'Note' };
-const L = { editing: null, open: false, filter: 'all', carId: null, files: [], removed: [] };
-const cash = (n, cur) => { try { return new Intl.NumberFormat('en-US', { style: 'currency', currency: cur || 'USD', maximumFractionDigits: 0 }).format(n); } catch (e) { return n + ' ' + cur; } };
-function currentCar() { return S.cars.find((c) => c.id === S.currentId) || null; }
-function recForm(on, rec) {
-  L.open = on; L.editing = rec ? rec.id : null;
-  $('rec-form').hidden = !on; $('rec-status').textContent = '';
-  if (!on) return;
-  const car = currentCar() || {}, r = rec || { type: 'service', date: new Date().toISOString().slice(0, 10), cur: car.lastCur || S.cur };
-  $('r-type').value = r.type || 'note'; $('r-date').value = r.date || ''; $('r-title').value = r.title || ''; $('r-odo').value = r.odometer || '';
-  $('r-by').value = r.by || ''; $('r-cost').value = r.cost || ''; $('r-cur').value = r.cur || 'USD'; $('r-status').value = r.status || ''; $('r-notes').value = r.notes || '';
-  $('b-rec-save').textContent = rec ? 'Save record' : 'Add to logbook'; $('b-rec-del').hidden = !rec; $('b-rec-del').dataset.sure = ''; $('b-rec-del').textContent = 'Delete record';
-  L.files = (r.files || []).slice(); L.removed = []; $('r-files').value = ''; renderRecFiles();
-  $('r-title').focus();
-}
-async function saveRecords(car, records, extra) {
-  const { id, ...body } = car;
-  await S.db.collection('cars').doc(id).set({ ...body, ...(extra || {}), records, updatedAt: new Date().toISOString() });
-}
-function renderRecFiles() {
-  const box = $('r-files-list'); box.replaceChildren();
-  for (const f of L.files) {
-    const rm = el('button', { type: 'button', class: 'linkbtn', text: 'Remove' });
-    rm.addEventListener('click', () => { L.files = L.files.filter((x) => x !== f); L.removed.push(f.path); renderRecFiles(); });
-    box.append(el('span', { class: 'small' }, el('span', { text: f.name + ' ' }), rm));
-  }
-  const on = !!(CLOUD && CLOUD.user);
-  $('r-files').disabled = !on;
-  $('r-files-hint').textContent = on ? 'Photos or PDFs, up to 10 MB each. They are private to your account.' : 'Sign in under Account to attach photos and documents.';
-}
-async function openFile(f, btn) {
-  const w = window.open('', '_blank');
-  try { const url = await CLOUD.fileUrl(f.path); if (w) w.location = url; else location.href = url; }
-  catch (e) { if (w) w.close(); btn.textContent = f.name + ' (couldn’t open)'; }
-}
-function renderLog() {
-  const out = $('log-out'), car = currentCar(); out.replaceChildren();
-  if (L.carId !== S.currentId) { L.carId = S.currentId; L.filter = 'all'; if (L.open) recForm(false); }
-  $('b-rec-new').hidden = !car || !S.db || L.open;
-  if (!car) { out.append(el('p', { class: 'empty', text: S.db ? 'Save the car to your garage, then keep its history here: services, condition checks, tyres, documents and what it cost.' : 'The logbook needs saving, which isn’t available in this view.' })); return; }
-  const recs = [...(car.records || [])].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
-  const prof = [['Colour', car.colour], ['Interior', car.interior], ['Registration', car.reg], ['Acquired', car.acquired ? fmtDate(car.acquired) : ''], ['Paid', car.paid ? cash(+car.paid, car.paidCur) : '']].filter((p) => p[1]);
-  if (prof.length) out.append(el('div', { class: 'stats' }, ...prof.map((p) => el('div', { class: 'stat' }, el('span', { class: 'label', text: p[0] }), el('span', { text: p[1] })))));
-  if (!recs.length) { out.append(el('p', { class: 'empty', text: 'No records yet for ' + (car.name || 'this car') + '. Press “Add a record” to log its first service, condition check or document.' + (prof.length ? '' : ' Colour, registration and purchase details go under “Profile details” on the left.') })); return; }
-  const spend = {}; for (const r of recs) if (+r.cost && r.type !== 'purchase') spend[r.cur || 'USD'] = (spend[r.cur || 'USD'] || 0) + +r.cost;
-  const lastSvc = recs.find((r) => r.type === 'service'), odo = Math.max(0, ...recs.map((r) => +r.odometer || 0));
-  const flagged = recs.filter((r) => r.status === 'attention').length;
-  const stat = (label, value, note) => el('div', { class: 'stat' }, el('span', { class: 'label', text: label }), el('b', { text: value }), note ? el('span', { class: 'muted small', text: note }) : null);
-  out.append(el('div', { class: 'stats' },
-    stat('Records', String(recs.length), 'Since ' + fmtDate(recs[recs.length - 1].date || recs[0].date)),
-    stat('Spent on the car', Object.keys(spend).length ? Object.keys(spend).map((c) => cash(spend[c], c)).join(' + ') : '—', 'Services, tyres and other costs, excluding purchase'),
-    stat('Last service', lastSvc && lastSvc.date ? fmtDate(lastSvc.date) : '—', lastSvc ? lastSvc.title : 'None logged yet'),
-    stat('Highest odometer logged', odo ? num(odo) + ' ' + (car.unit || 'mi') : '—', flagged ? flagged + (flagged === 1 ? ' record needs attention' : ' records need attention') : 'Nothing flagged for attention')));
-  const used = ['all', ...Object.keys(REC_TYPES).filter((t) => recs.some((r) => r.type === t))];
-  if (!used.includes(L.filter)) L.filter = 'all';
-  if (used.length > 2) {
-    const chips = el('div', { class: 'chips', role: 'group', 'aria-label': 'Filter records' });
-    for (const t of used) { const b = el('button', { type: 'button', class: 'chip', 'aria-pressed': String(L.filter === t), text: t === 'all' ? 'All' : REC_TYPES[t] }); b.addEventListener('click', () => { L.filter = t; renderLog(); }); chips.append(b); }
-    out.append(chips);
-  }
-  const ul = el('ul', { class: 'log' });
-  for (const r of recs.filter((x) => L.filter === 'all' || x.type === L.filter)) {
-    const edit = el('button', { type: 'button', class: 'linkbtn', text: 'Edit' }); edit.addEventListener('click', () => { recForm(true, r); renderLog(); });
-    ul.append(el('li', {},
-      el('div', { class: 'when' }, el('span', { text: r.date ? fmtDate(r.date) : 'No date' }), r.odometer ? el('span', { text: num(+r.odometer) + ' ' + (car.unit || 'mi') }) : null),
-      el('div', { class: 'what' },
-        el('span', {}, el('span', { class: 'tag', text: REC_TYPES[r.type] || 'Note' }), r.status ? el('span', { class: 'tag s-' + r.status, text: ' · ' + ({ good: 'Good', fair: 'Fair', attention: 'Needs attention' })[r.status] }) : null),
-        el('b', { text: r.title || 'Untitled record' }),
-        (r.by || +r.cost) ? el('span', { class: 'muted small', text: [r.by, +r.cost ? cash(+r.cost, r.cur) : ''].filter(Boolean).join(' · ') }) : null,
-        r.notes ? el('span', { class: 'small', style: 'white-space:pre-wrap', text: r.notes }) : null,
-        r.files && r.files.length ? el('span', { style: 'display:flex;flex-wrap:wrap;gap:4px 12px' }, ...r.files.map((f) => { const b = el('button', { type: 'button', class: 'linkbtn', text: f.name }); if (CLOUD && CLOUD.user) b.addEventListener('click', () => openFile(f, b)); else b.disabled = true; return b; })) : null,
-        S.db ? el('span', {}, edit) : null)));
-  }
-  out.append(ul);
-}
-$('b-rec-new').addEventListener('click', () => { recForm(true); renderLog(); });
-$('b-rec-cancel').addEventListener('click', () => { recForm(false); renderLog(); });
-$('rec-form').addEventListener('submit', async (ev) => {
-  ev.preventDefault();
-  const car = currentCar(); if (!car || !S.db) return;
-  const r = { id: L.editing || 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), type: $('r-type').value, date: $('r-date').value, title: $('r-title').value.trim(), odometer: $('r-odo').value, by: $('r-by').value.trim(), cost: $('r-cost').value, cur: $('r-cur').value, status: $('r-status').value, notes: $('r-notes').value.trim() };
-  if (!r.title) { $('rec-status').textContent = 'Say what happened first.'; $('r-title').focus(); return; }
-  if (!r.date) { $('rec-status').textContent = 'Add the date.'; $('r-date').focus(); return; }
-  const picked = [...$('r-files').files];
-  if (picked.some((f) => f.size > 10 * 1024 * 1024)) { $('rec-status').textContent = 'One of the files is over 10 MB. Choose smaller files.'; return; }
-  $('b-rec-save').disabled = true;
-  try {
-    if (picked.length && CLOUD && CLOUD.user) { let n = 0; for (const f of picked) { $('rec-status').textContent = 'Uploading file ' + (++n) + ' of ' + picked.length + '…'; L.files.push(await CLOUD.upload(car.id, f)); } $('r-files').value = ''; }
-    r.files = L.files.slice();
-    const records = (car.records || []).filter((x) => x.id !== r.id).concat(r);
-    const gone = L.removed.slice();
-    await saveRecords(car, records, { lastCur: r.cur }); recForm(false);
-    if (gone.length && CLOUD) CLOUD.removeFiles(gone);
-  } catch (e) { renderRecFiles(); $('rec-status').textContent = 'Couldn’t save the record' + (e && e.message ? ': ' + e.message : '') + '. Try again in a moment.'; }
-  $('b-rec-save').disabled = false;
-  renderLog();
-});
-$('b-rec-del').addEventListener('click', async () => {
-  const car = currentCar(); if (!car || !S.db || !L.editing) return;
-  if ($('b-rec-del').dataset.sure !== '1') { $('b-rec-del').dataset.sure = '1'; $('b-rec-del').textContent = 'Yes, delete it'; return; }
-  const dead = (car.records || []).find((x) => x.id === L.editing);
-  try { await saveRecords(car, (car.records || []).filter((x) => x.id !== L.editing)); recForm(false); if (CLOUD && dead && dead.files) CLOUD.removeFiles(dead.files.map((f) => f.path)); } catch (e) { $('rec-status').textContent = 'Couldn’t delete it. Try again in a moment.'; }
-  renderLog();
-});
-$('rec-form').addEventListener('input', () => { $('b-rec-del').dataset.sure = ''; if (L.editing) $('b-rec-del').textContent = 'Delete record'; });
-
-/* Views: login page, then Home and garage tabs */
-function showView() {
-  const signed = !!(CLOUD && CLOUD.user), v = S.view || 'home';
-  $('v-login').hidden = signed; $('v-head').hidden = !signed;
-  $('v-home').hidden = !signed || v !== 'home'; $('v-garage').hidden = !signed || v !== 'garage';
-  $('t-home').setAttribute('aria-current', v === 'home' ? 'page' : 'false'); $('t-garage').setAttribute('aria-current', v === 'garage' ? 'page' : 'false');
-}
-function go(view) { S.view = view; showView(); if (view === 'garage') renderAll(); else renderHome(); window.scrollTo(0, 0); }
-$('t-home').addEventListener('click', () => go('home'));
-$('t-garage').addEventListener('click', () => go('garage'));
-function explore(model) {
-  S.currentId = null; S.dirty = false; fillForm({ name: model, model: model }); endDelete(); setStatus('');
-  go('garage');
-}
-function renderHome() {
-  const out = $('v-home'); if (!out) return; out.replaceChildren();
-  if (S.salesError) { out.append(el('p', { class: 'empty', text: 'The sold results didn’t load. Reload the page to try again.' })); return; }
-  if (!S.sales) { out.append(el('p', { class: 'empty', text: 'Loading the market…' })); return; }
-  const today = new Date().toISOString().slice(0, 10), y1 = (+today.slice(0, 4) - 1) + today.slice(4);
-  const d90 = new Date(Date.now() - 90 * 864e5).toISOString().slice(0, 10);
+  // search
+  const q = el('input', { type: 'search', list: 'dl-models', placeholder: t('e.g. 993 Turbo or 356 Speedster'), id: 'q-model', autocomplete: 'off' });
+  const find = () => { const v = q.value.trim().toLowerCase(); if (!v) return; const hit = CATALOG.find((m) => shortModel(m.name).toLowerCase() === v || m.name.toLowerCase() === v) || suggestHit(v) || CATALOG.find((m) => v.split(/\s+/).every((w) => m.name.toLowerCase().includes(w))); if (hit) nav('#/model/' + encodeURIComponent(hit.name || hit)); else toast(t('No model matches that. Try the list.')); };
+  q.addEventListener('change', find);
+  out.append(panel(t('Look up any model'), null, el('form', { onsubmit: (ev) => { ev.preventDefault(); find(); } }, el('div', { class: 'row' }, el('div', { style: 'flex:1;min-width:12rem' }, q), el('button', { type: 'submit', class: 'btn primary', text: t('See its market') }))), el('datalist', { id: 'dl-models' }, CATALOG.map((m) => el('option', { value: shortModel(m.name) })))));
+  if (S.salesError) { out.append(el('p', { class: 'empty', text: t('The sold results didn’t load. Reload the page to try again.') })); return out; }
+  if (!S.sales) { out.append(el('p', { class: 'empty', text: t('Loading the market…') })); return out; }
+  const d = today(), y1 = (+d.slice(0, 4) - 1) + d.slice(4), d90 = new Date(Date.now() - 90 * 864e5).toISOString().slice(0, 10);
   const last12 = S.sales.filter((r) => r.date >= y1), byModel = {};
   for (const r of last12) (byModel[r.model] = byModel[r.model] || []).push(r.gbp);
-  const top = last12.reduce((a, r) => (!a || r.gbp > a.gbp ? r : a), null);
-  const latest = [...S.sales].sort((a, b) => b.date.localeCompare(a.date));
-  const stat = (label, value, note) => el('div', { class: 'stat' }, el('span', { class: 'label', text: label }), el('b', { text: value }), note ? el('span', { class: 'muted small', text: note }) : null);
-  const mlink = (model) => { const b = el('button', { type: 'button', class: 'linkbtn', text: shortModel(model) }); b.addEventListener('click', () => explore(model)); return b; };
-  const panel = (title, note, ...kids) => el('section', { class: 'panel' }, el('h2', { text: title }), note ? el('p', { class: 'muted small', text: note }) : null, ...kids);
-  const table = (heads, rows) => el('div', { class: 'tablebox' }, el('table', {}, el('thead', {}, el('tr', {}, ...heads.map((h) => el('th', { class: h[1] || '', text: h[0] })))), el('tbody', {}, ...rows)));
-
-  // Overview
-  out.append(panel('Market at a glance', 'Classic Porsche models built before 2003, from public auction results.', el('div', { class: 'stats' },
-    stat('Sold results on file', num(S.sales.length), Object.keys(S.counts || {}).length + ' models covered'),
-    stat('Sold in the last 90 days', num(S.sales.filter((r) => r.date >= d90).length), 'Latest on ' + fmtDate(latest[0].date)),
-    stat('Top sale, last 12 months', top ? money(top.gbp) : '—', top ? shortModel(top.model) + ', ' + fmtDate(top.date) : ''),
-    stat('Your garage', String(S.cars.length) + (S.cars.length === 1 ? ' car' : ' cars'), S.cars.length ? 'Open the garage tab for each car’s market and logbook' : 'Add your first car under the garage tab'))));
-
-  // Latest sales
-  const rows = latest.slice(0, 12).map((r) => el('tr', {}, el('td', { text: fmtDate(r.date) }), el('td', {}, mlink(r.model)), el('td', { class: 'num', text: money(r.gbp) }), el('td', { class: 'muted', text: [r.year, r.platform !== 'Unknown' ? r.platform : ''].filter(Boolean).join(' · ') })));
-  const latestPanel = panel('Latest sales', 'The most recent sold results on file. Press a model to see its market. Live for-sale listings will appear here once a listings feed is licensed.', table([['Sold'], ['Model'], ['Price', 'num'], ['Car and venue']], rows));
-
-  // Movers against the long-run median
+  const top = last12.reduce((a, r) => (!a || r.gbp > a.gbp ? r : a), null), latest = [...S.sales].sort((a, b) => b.date.localeCompare(a.date));
+  out.append(panel(t('Market at a glance'), t('Classic Porsche models built before 2003, from public auction results.'), el('div', { class: 'stats' },
+    stat(t('Sold results on file'), num(S.sales.length), t('{n} models covered', { n: Object.keys(S.counts).length })),
+    stat(t('Sold in the last 90 days'), num(S.sales.filter((r) => r.date >= d90).length), t('Latest on {d}', { d: fmtDate(latest[0].date) })),
+    stat(t('Top sale, last 12 months'), top ? money(top.gbp) : '—', top ? shortModel(top.model) + ', ' + fmtDate(top.date) : ''))));
+  const latestPanel = panel(t('Latest sales'), t('The most recent sold results on file. Press a model to see its market. Live for-sale listings will appear here once a listings feed is licensed.'),
+    table([[t('Sold')], [t('Model')], [t('Price'), 'num'], [t('Car and venue')]], latest.slice(0, 12).map((r) => el('tr', {}, el('td', { text: fmtDate(r.date) }), el('td', {}, mlink(r.model)), el('td', { class: 'num', text: money(r.gbp) }), el('td', { class: 'muted', text: [r.year, r.platform !== 'Unknown' ? r.platform : ''].filter(Boolean).join(' · ') })))));
   const movers = CATALOG.filter((m) => m.median2020 && (byModel[m.name] || []).length >= 5).map((m) => { const med = median(byModel[m.name]); return { m, med, d: (med - m.median2020) / m.median2020, n: byModel[m.name].length }; }).sort((a, b) => b.d - a.d);
-  const mrow = (x) => el('tr', {}, el('td', {}, mlink(x.m.name)), el('td', { class: 'num', text: money(x.med) }), el('td', { class: 'num ' + (x.d >= 0 ? 'up' : 'down'), text: (x.d >= 0 ? '+' : '−') + Math.abs(x.d * 100).toFixed(0) + '%' }), el('td', { class: 'num muted', text: String(x.n) }));
-  const heads = [['Model'], ['Median, 12 months', 'num'], ['Against since 2020', 'num'], ['Sales', 'num']];
+  const mrow = (x) => el('tr', {}, el('td', {}, mlink(x.m.name)), el('td', { class: 'num', text: money(x.med) }), el('td', { class: 'num ' + (x.d >= 0 ? 'up' : 'down'), text: pct(x.d) }), el('td', { class: 'num muted', text: String(x.n) }));
+  const heads = [[t('Model')], [t('Typical price, 12 months'), 'num'], [t('Against since 2020'), 'num'], [t('Sales'), 'num']];
   const up = movers.filter((x) => x.d > 0).slice(0, 6), down = movers.filter((x) => x.d < 0).slice(-6).reverse();
-  const moverPanel = panel('Running hot and cold', 'Each model’s median over the last 12 months against its median since 2020. Based on 5 to 20 sales per model, so read it as a pointer.',
-    el('span', { class: 'label', text: 'Above their long-run level' }), up.length ? table(heads, up.map(mrow)) : el('p', { class: 'empty', text: 'None at the moment.' }),
-    el('span', { class: 'label', text: 'Below their long-run level' }), down.length ? table(heads, down.map(mrow)) : el('p', { class: 'empty', text: 'None at the moment.' }));
-  out.append(el('div', { class: 'home2' }, latestPanel, moverPanel));
-
-  // Families
-  const fams = {};
-  for (const r of last12) { const c = catOf(r.model); const f = c ? c.family : 'Other'; (fams[f] = fams[f] || []).push(r.gbp); }
+  const moverPanel = panel(t('Running hot and cold'), t('Each model’s typical price over the last 12 months against its typical price since 2020. Based on 5 to 20 sales per model, so read it as a pointer.'),
+    el('span', { class: 'label', text: t('Above their long-run level') }), up.length ? table(heads, up.map(mrow)) : el('p', { class: 'empty', text: t('None at the moment.') }),
+    el('span', { class: 'label', text: t('Below their long-run level') }), down.length ? table(heads, down.map(mrow)) : el('p', { class: 'empty', text: t('None at the moment.') }));
+  out.append(el('div', { class: 'grid2' }, latestPanel, moverPanel));
+  const fams = {}; for (const r of last12) { const c = catOf(r.model), f = c ? c.family : 'Other'; (fams[f] = fams[f] || []).push(r.gbp); }
   const order = [...new Set(CATALOG.map((m) => m.family))].filter((f) => fams[f]);
-  out.append(panel('By model family, last 12 months', 'Median and range of every sale on file in each family. Families mix cheap and expensive variants, so compare like with like inside the garage view.',
-    table([['Family'], ['Sales', 'num'], ['Median', 'num'], ['Lowest', 'num'], ['Highest', 'num']], order.map((f) => el('tr', {}, el('td', { text: f }), el('td', { class: 'num', text: String(fams[f].length) }), el('td', { class: 'num', text: money(median(fams[f])) }), el('td', { class: 'num', text: money(Math.min(...fams[f])) }), el('td', { class: 'num', text: money(Math.max(...fams[f])) }))))));
-  out.append(el('p', { class: 'muted small', text: 'Sold prices are public auction results copied by hand from The Classic Valuer and Classic.com. This is market research, not a formal valuation.' }));
+  out.append(panel(t('By model family, last 12 months'), t('Typical price and range of every sale on file in each family. Families mix cheap and expensive variants, so compare like with like on a model’s own page.'),
+    table([[t('Family')], [t('Sales'), 'num'], [t('Typical price'), 'num'], [t('Lowest'), 'num'], [t('Highest'), 'num']], order.map((f) => el('tr', {}, el('td', { text: t(f) }), el('td', { class: 'num', text: String(fams[f].length) }), el('td', { class: 'num', text: money(median(fams[f])) }), el('td', { class: 'num', text: money(Math.min(...fams[f])) }), el('td', { class: 'num', text: money(Math.max(...fams[f])) }))))));
+  out.append(el('p', { class: 'muted small', text: t('Sold prices are public auction results copied by hand from The Classic Valuer and Classic.com. This is market research, not a formal valuation.') }));
+  return out;
 }
-showView();
+function suggestHit(v) { const m = suggestModel({ name: v }, decodeVin('')).model; return m ? catOf(m) : null; }
+function remText(car, r, st) {
+  const bits = []; if (r.date) bits.push(fmtDate(r.date)); if (r.odo) bits.push(num(+r.odo) + ' ' + unitName(car.unit || 'mi'));
+  return t(st === 'overdue' ? 'Due now' : st === 'soon' ? 'Due soon' : 'Planned') + (bits.length ? ' · ' + bits.join(' · ') : '');
+}
 
-function renderAll() {
-  const car = readForm();
-  renderGarage();
-  const vin = renderVin(car);
-  renderMarket(car, vin);
-  renderLog();
-  const editing = !!S.currentId;
-  $('b-save').textContent = editing ? 'Save changes' : 'Save to garage';
-  $('b-save').disabled = !S.db;
-  if (!S.deleting) $('b-del').hidden = !editing || !S.db;
+/* ----- garage ----- */
+function viewGarage() {
+  const out = el('div', { class: 'col' }), name = CLOUD.garageName || t('My garage');
+  let head;
+  if (S.renaming) {
+    const inp = el('input', { type: 'text', maxlength: 40, value: CLOUD.garageName || '', placeholder: t('My garage'), 'aria-label': t('Garage name'), style: 'flex:1;min-width:10rem' });
+    head = el('form', { class: 'row', style: 'flex-direction:row', onsubmit: async (ev) => { ev.preventDefault(); const v = inp.value.trim().slice(0, 40); try { await CLOUD.saveGarageName(v); toast(t('Saved')); } catch (e) { toast(t('Couldn’t save. Try again.')); } S.renaming = false; render(); } }, inp, el('button', { type: 'submit', class: 'btn primary', text: t('Save name') }), el('button', { type: 'button', class: 'btn', text: t('Cancel'), onclick: () => { S.renaming = false; render(); } }));
+    setTimeout(() => inp.focus(), 0);
+  } else head = el('div', { class: 'row between' }, el('div', { class: 'row' }, el('h1', { text: name, style: 'overflow-wrap:anywhere' }), el('button', { type: 'button', class: 'btn sm', id: 'b-rename', text: t('Rename'), onclick: () => { S.renaming = true; render(); } })), el('a', { class: 'btn primary', href: '#/car/new', text: t('Add a car') }));
+  out.append(head);
+  if (!CLOUD.loaded) { out.append(el('p', { class: 'empty', text: t('Loading your garage…') })); return out; }
+  if (!S.cars.length) { out.append(panel(null, null, el('p', { class: 'empty', text: t('Your garage is empty. Add your first car to see what it is worth and start its logbook.') }))); return out; }
+  out.append(el('div', { class: 'cards' }, S.cars.map((c) => {
+    const e = estimate(c), due = dueOf(c).length;
+    return el('a', { class: 'card', href: '#/car/' + c.id + '/overview' }, photoBox(c), el('div', { class: 'body' },
+      el('b', { text: c.name || t('Unnamed car') }), el('span', { class: 'muted small', text: [c.year, carOdo(c)].filter(Boolean).join(' · ') }),
+      el('span', { class: 'small', text: e ? t('Worth about {p}', { p: money(e.gbp) }) : t('No market data yet') }),
+      due ? el('span', {}, el('span', { class: 'badge due', text: t('{n} due', { n: due }) })) : null));
+  })));
+  return out;
 }
-function endDelete() { S.deleting = false; $('b-del-yes').hidden = true; $('b-del-no').hidden = true; }
-function setStatus(t) { $('status').textContent = t; }
 
-$('car-form').addEventListener('input', () => { S.dirty = true; setStatus(''); renderAll(); });
-$('f-cur').addEventListener('change', () => { S.cur = $('f-cur').value; try { localStorage.setItem('g197-cur', S.cur); } catch (e) {} renderAll(); renderHome(); });
-const GKEY = 'g197-garage-name';
-function garageName() { try { return (localStorage.getItem(GKEY) || '').trim(); } catch (e) { return ''; } }
-function showGarageName() { $('h-garage').textContent = garageName() || 'My garage'; $('t-garage').textContent = garageName() || 'My garage'; }
-function nameEdit(on) { const f = $('name-form'); f.hidden = !on; f.style.display = on ? 'flex' : 'none'; $('b-rename').hidden = on; if (on) { $('g-name').value = garageName(); $('g-name').focus(); } }
-$('b-rename').addEventListener('click', () => nameEdit(true));
-$('b-name-cancel').addEventListener('click', () => nameEdit(false));
-$('name-form').addEventListener('submit', (ev) => { ev.preventDefault(); const v = $('g-name').value.trim().slice(0, 40); try { if (v) localStorage.setItem(GKEY, v); else localStorage.removeItem(GKEY); } catch (e) {} showGarageName(); nameEdit(false); if (window.g197cloud && window.g197cloud.user) window.g197cloud.saveGarageName(v).catch(() => {}); });
-showGarageName();
-
-/* Accounts and cloud files */
-let importSkipped = false;
-function renderAccount() {
-  if (!CLOUD) return;
-  const u = CLOUD.user;
-  $('acct-in').hidden = !u; $('acct-in').style.display = u ? 'flex' : 'none';
-  showView();
-  if (!u) return;
-  $('who-email').textContent = u.email || '';
-  $('acct-email').textContent = u.email || '';
-  $('acct-setup').hidden = !CLOUD.setupError; $('acct-setup').textContent = CLOUD.setupError;
-  const n = CLOUD.localCount(), show = n > 0 && !importSkipped && !CLOUD.setupError;
-  $('acct-import').hidden = !show; $('acct-import').style.display = show ? 'flex' : 'none';
-  $('acct-import-text').textContent = n + (n === 1 ? ' car is' : ' cars are') + ' saved on this device from before you signed in.';
-}
-async function doSign(create) {
-  const email = $('a-email').value.trim(), pass = $('a-pass').value, st = $('login-status');
-  if (!/^\S+@\S+\.\S+$/.test(email)) { st.textContent = 'Enter your email address.'; $('a-email').focus(); return; }
-  if (pass.length < 8) { st.textContent = 'Use a password of at least 8 characters.'; $('a-pass').focus(); return; }
-  st.textContent = create ? 'Creating your account…' : 'Signing in…'; $('b-signin').disabled = $('b-signup').disabled = true;
-  try {
-    const r = await CLOUD.sign(email, pass, create);
-    if (r.confirm) st.textContent = 'Account created. Open the confirmation email we sent, then sign in here.';
-    else { st.textContent = ''; $('a-pass').value = ''; }
-  } catch (e) {
-    const m = (e.message || '').toLowerCase();
-    st.textContent = /invalid login|invalid_credentials/.test(m + (e.code || '')) ? 'That email and password don’t match an account. Check them, or press Create account.' : /already registered|user_already_exists/.test(m + (e.code || '')) ? 'That email already has an account. Press Sign in instead.' : /failed to fetch|networkerror|load failed/.test(m) ? 'Couldn’t reach the server. Check your connection and try again.' : 'Couldn’t ' + (create ? 'create the account' : 'sign in') + ': ' + e.message;
-  }
-  $('b-signin').disabled = $('b-signup').disabled = false;
-}
-if (CLOUD) {
-  $('acct-form').addEventListener('submit', (ev) => { ev.preventDefault(); doSign(false); });
-  $('b-signup').addEventListener('click', () => doSign(true));
-  $('b-signout').addEventListener('click', async () => { $('acct-status').textContent = ''; $('login-status').textContent = ''; S.view = 'home'; await CLOUD.signOut(); });
-  $('b-import-skip').addEventListener('click', () => { importSkipped = true; renderAccount(); });
-  $('b-import').addEventListener('click', async () => {
-    $('b-import').disabled = true;
-    try { const n = await CLOUD.importLocal(); $('acct-status').textContent = n + (n === 1 ? ' car' : ' cars') + ' added to your account.'; }
-    catch (e) { $('acct-status').textContent = 'Couldn’t add them: ' + e.message; }
-    $('b-import').disabled = false; renderAccount();
-  });
-  let lastUser = CLOUD.user ? CLOUD.user.id : null;
-  CLOUD.onAuth(() => {
-    const id = CLOUD.user ? CLOUD.user.id : null, changed = id !== lastUser;
-    if (changed) { lastUser = id; S.currentId = null; S.pickedFirst = false; S.dirty = false; fillForm({}); endDelete(); setStatus(''); }
-    if (!S.currentId && !S.dirty && S.cars.length) { S.currentId = S.cars[0].id; fillForm(S.cars[0]); S.pickedFirst = true; }
+/* ----- car form ----- */
+function carForm(car) {
+  const isNew = !car, c = car || { unit: S.unit, paidCur: S.cur, name: S.prefill || '' }; S.prefill = '';
+  const f = {
+    name: el('input', { type: 'text', value: c.name || '', list: 'dl-names', placeholder: t('e.g. Porsche 964 Turbo'), autocomplete: 'off', id: 'f-name' }),
+    year: el('input', { type: 'number', min: 1900, max: 2030, inputmode: 'numeric', value: c.year || '', placeholder: '1991', id: 'f-year' }),
+    miles: el('input', { type: 'number', min: 0, inputmode: 'numeric', value: c.miles || '', id: 'f-miles' }),
+    unit: select([['mi', t('Miles')], ['km', t('Kilometres')]], c.unit || 'mi', { id: 'f-unit' }),
+    vin: el('input', { type: 'text', class: 'mono', value: c.vin || '', maxlength: 24, spellcheck: 'false', autocomplete: 'off', style: 'text-transform:uppercase', dir: 'ltr', id: 'f-vin' }),
+    condition: select([['', t('Not graded')], ['1', t('1 Concours')], ['2', t('2 Excellent')], ['3', t('3 Good')], ['4', t('4 Fair')]], c.condition || ''),
+    colour: el('input', { type: 'text', value: c.colour || '', autocomplete: 'off', id: 'f-colour' }), interior: el('input', { type: 'text', value: c.interior || '', autocomplete: 'off' }),
+    reg: el('input', { type: 'text', value: c.reg || '', autocomplete: 'off' }), acquired: el('input', { type: 'date', value: c.acquired || '' }),
+    paid: el('input', { type: 'number', min: 0, inputmode: 'numeric', value: c.paid || '', id: 'f-paid' }), paidCur: select(CURS.map((x) => [x, x]), c.paidCur || 'USD'),
+    photo: el('input', { type: 'file', accept: 'image/*', id: 'f-photo' })
+  };
+  const groups = {}; for (const m of CATALOG) (groups[m.family] = groups[m.family] || []).push(m);
+  f.model = el('select', { id: 'f-model' }, el('option', { value: 'auto', text: t('Work it out from the name') }), Object.keys(groups).map((g) => el('optgroup', { label: t(g) }, groups[g].map((m) => el('option', { value: m.name, text: shortModel(m.name) + ', ' + m.from + '–' + String(m.to).slice(2) })))), el('option', { value: 'other', text: t('Another model (not in the catalogue)') }));
+  f.model.value = [...f.model.options].some((o) => o.value === c.model) ? c.model : 'auto';
+  const vinHint = el('span', { class: 'hint' }), status = el('p', { class: 'status', role: 'status' });
+  const hint = () => { const d = decodeVin(f.vin.value); vinHint.textContent = !d.vin ? t('Optional. On cars built from 1981 it has 17 characters and tells us the exact model.') : d.full ? [d.maker, d.year, d.type ? t('type {x}', { x: d.type }) : ''].filter(Boolean).join(' · ') + (d.checkOk === false ? ' · ' + t('check digit fails, one character may be mistyped') : '') : t('{n} characters so far', { n: d.length }); };
+  f.vin.addEventListener('input', hint); hint();
+  const save = el('button', { type: 'submit', class: 'btn primary', id: 'b-save', text: t(isNew ? 'Add to my garage' : 'Save changes') });
+  const form = el('form', { novalidate: true, id: 'car-form', onsubmit: async (ev) => {
+    ev.preventDefault();
+    const body = { name: f.name.value.trim(), year: f.year.value, miles: f.miles.value, unit: f.unit.value, vin: f.vin.value.toUpperCase().replace(/[\s-]/g, ''), condition: f.condition.value, model: f.model.value, colour: f.colour.value.trim(), interior: f.interior.value.trim(), reg: f.reg.value.trim(), acquired: f.acquired.value, paid: f.paid.value, paidCur: f.paidCur.value };
+    if (!body.name) { status.textContent = t('Give the car a name first, for example its model.'); f.name.focus(); return; }
+    save.disabled = true; status.textContent = t('Saving…');
     try {
-      if (CLOUD.user && CLOUD.garageName) localStorage.setItem(GKEY, CLOUD.garageName);
-      else if (CLOUD.user && changed && garageName() && !CLOUD.setupError) CLOUD.saveGarageName(garageName()).catch(() => {});
-      else if (!CLOUD.user && changed) localStorage.removeItem(GKEY);
-    } catch (e) {}
-    if (changed) S.view = 'home';
-    showGarageName(); renderAccount(); renderAll(); renderHome();
-  });
-  renderAccount();
+      const id = isNew ? CLOUD.newId() : car.id, pic = f.photo.files[0];
+      if (pic) { const old = car && car.photo; body.photo = await CLOUD.upload(id, await shrink(pic)); if (old) CLOUD.removeFiles([old.path]); }
+      await saveCar({ ...(car || { records: [], reminders: [] }), id }, body);
+      toast(t(isNew ? 'Car added' : 'Saved')); nav('#/car/' + id + '/overview');
+    } catch (e) { status.textContent = t('Couldn’t save: {m}', { m: (e && e.message) || '' }); save.disabled = false; }
+  } },
+    field(t('Car name'), f.name), el('datalist', { id: 'dl-names' }, CATALOG.map((m) => el('option', { value: m.name }))),
+    el('div', { class: 'row2' }, field(t('Model year'), f.year), el('div', { class: 'row2' }, field(t('Odometer'), f.miles), field(t('Unit'), f.unit))),
+    field(t('Photo'), f.photo, car && car.photo ? t('Choose a file to replace the current photo.') : t('Optional. One photo to show on the car’s card.')),
+    el('details', { class: 'more', open: !isNew }, el('summary', { text: t('More details') }), el('div', {},
+      el('div', { class: 'field' }, el('label', { for: 'f-vin', text: t('Chassis number (VIN)') }), f.vin, vinHint),
+      el('div', { class: 'row2' }, field(t('Colour'), f.colour), field(t('Interior'), f.interior)),
+      el('div', { class: 'row2' }, field(t('Registration'), f.reg), field(t('Date acquired'), f.acquired)),
+      el('div', { class: 'row2' }, field(t('Purchase price'), f.paid), field(t('Currency'), f.paidCur)),
+      el('div', { class: 'row2' }, field(t('Condition'), f.condition), field(t('Model to compare against'), f.model)))),
+    el('div', { class: 'row' }, save, el('a', { class: 'btn', href: isNew ? '#/garage' : '#/car/' + car.id + '/overview', text: t('Cancel') })), status);
+  const out = el('div', { class: 'col', style: 'max-width:40rem' }, el('h1', { text: t(isNew ? 'Add a car' : 'Edit {name}', { name: c.name || '' }) }), isNew ? el('p', { class: 'muted', text: t('Three things are enough to start: the name, the year and the mileage. Everything else can wait.') }) : null, panel(null, null, form));
+  if (!isNew) {
+    let sure = false; const del = el('button', { type: 'button', class: 'btn danger', id: 'b-del', text: t('Remove this car') });
+    del.addEventListener('click', async () => {
+      if (!sure) { sure = true; del.textContent = t('Yes, remove it and its logbook'); return; }
+      const paths = (car.records || []).flatMap((r) => (r.files || []).map((x) => x.path)).concat(car.photo ? [car.photo.path] : []);
+      try { await S.db.collection('cars').doc(car.id).delete(); CLOUD.removeFiles(paths); toast(t('Car removed')); nav('#/garage'); } catch (e) { toast(t('Couldn’t remove it. Try again.')); }
+    });
+    out.append(el('div', { class: 'row' }, del));
+  }
+  return out;
 }
-$('b-new').addEventListener('click', () => { S.currentId = null; S.dirty = false; fillForm({}); endDelete(); setStatus(''); renderAll(); $('f-name').focus(); });
-$('car-form').addEventListener('submit', async (ev) => {
-  ev.preventDefault();
-  if (!S.db) return;
-  const car = readForm();
-  if (!car.name && !car.vin) { setStatus('Enter a car name or chassis number first.'); return; }
-  const prev = currentCar();
-  const body = { ...car, records: (prev && prev.records) || [], updatedAt: new Date().toISOString() };
-  $('b-save').disabled = true;
-  try {
-    const ref = S.currentId ? S.db.collection('cars').doc(S.currentId) : S.db.collection('cars').doc();
-    await ref.set(body); S.currentId = ref.id; S.dirty = false; setStatus('Saved.');
-  } catch (e) { setStatus(e && e.code === 'invalid_argument' ? 'You can view this page but not save to it.' : 'Couldn’t save. Try again in a moment.'); }
-  renderAll();
-});
-$('b-del').addEventListener('click', () => { S.deleting = true; $('b-del').hidden = true; $('b-del-yes').hidden = false; $('b-del-no').hidden = false; });
-$('b-del-no').addEventListener('click', () => { endDelete(); renderAll(); });
-$('b-del-yes').addEventListener('click', async () => {
-  if (!S.db || !S.currentId) return;
-  const goneCar = currentCar(), paths = goneCar ? (goneCar.records || []).flatMap((r) => (r.files || []).map((f) => f.path)) : [];
-  try { await S.db.collection('cars').doc(S.currentId).delete(); if (window.g197cloud) window.g197cloud.removeFiles(paths); S.currentId = null; S.dirty = false; fillForm({}); setStatus('Removed.'); }
-  catch (e) { setStatus('Couldn’t remove it. Try again in a moment.'); }
-  endDelete(); renderAll();
-});
+
+/* ----- car page ----- */
+function trFlag(x) {
+  let m;
+  if ((m = /^(\d+) characters\. Cars built/.exec(x))) return t('{n} characters. Cars built before 1981 have shorter chassis numbers that can’t be decoded automatically; newer cars have 17.', { n: m[1] });
+  if ((m = /^(\d+) characters\. A modern/.exec(x))) return t('{n} characters. A modern chassis number has 17.', { n: m[1] });
+  if ((m = /^Check digit should be (.), not (.)/.exec(x))) return t('Check digit should be {a}, not {b}. One character is probably mistyped.', { a: m[1], b: m[2] });
+  return t(x);
+}
+function vinPlate(car) {
+  const d = decodeVin(car.vin); if (!d.vin) return null;
+  const wrap = el('div', { class: 'col', style: 'gap:10px' });
+  wrap.append(el('div', { class: 'plate' }, d.full ? d.segs.map((s) => el('div', { class: 'seg' }, el('span', { class: 'label', text: t(s.label) }), el('b', { text: s.chars }), el('em', { text: t(s.value) || ' ' }))) : el('div', { class: 'seg' }, el('b', { text: d.vin }))));
+  if (d.full && d.year && car.year && Number(car.year) !== d.year) d.flags.push({ kind: 'warn', text: t('The chassis number says model year {a}, but the car is saved as {b}.', { a: d.year, b: car.year }) });
+  wrap.append(el('div', { class: 'flags' }, d.flags.map((f) => el('span', { class: 'flag ' + f.kind, text: trFlag(f.text) }))));
+  return wrap;
+}
+function viewCar(car, sub) {
+  const base = '#/car/' + car.id + '/', tabs = [['overview', t('Overview')], ['market', t('Market')], ['logbook', t('Logbook')]];
+  const out = el('div', { class: 'col' },
+    el('div', { class: 'col', style: 'gap:6px' }, el('a', { class: 'small', href: '#/garage', text: '‹ ' + (CLOUD.garageName || t('My garage')) }), el('h1', { text: car.name || t('Unnamed car'), style: 'overflow-wrap:anywhere' })),
+    el('nav', { class: 'subtabs', 'aria-label': t('Car sections') }, tabs.map((x) => el('a', { class: 'tab', href: base + x[0], 'aria-current': sub === x[0] ? 'page' : 'false', text: x[1] }))));
+  if (sub === 'market') out.append(panel(null, null, marketView(modelOf(car), car)));
+  else if (sub === 'logbook') out.append(logbookView(car));
+  else {
+    const e = estimate(car), facts = [[t('Model year'), car.year], [t('Odometer'), carOdo(car)], [t('Colour'), car.colour], [t('Interior'), car.interior], [t('Registration'), car.reg], [t('Acquired'), car.acquired ? fmtDate(car.acquired) : ''], [t('Paid'), car.paid ? cash(+car.paid, car.paidCur) : ''], [t('Condition'), car.condition ? t({ 1: '1 Concours', 2: '2 Excellent', 3: '3 Good', 4: '4 Fair' }[car.condition]) : ''], [t('Compared against'), e ? shortModel(e.model) : '']].filter((x) => x[1]);
+    const basis = !e ? t('We couldn’t value this car yet. Open the Market tab to see why.') : e.basis === 'similar' ? t('From {n} recent sales of cars with similar mileage, which ranged from {a} to {b}.', { n: e.n, a: money(e.low), b: money(e.high) }) : e.basis === 'year' ? t('The typical price of {n} sales in the last 12 months, which ranged from {a} to {b}.', { n: e.n, a: money(e.low), b: money(e.high) }) : t('The typical price of the {n} sales on file. Few are recent, so treat it as a rough guide.', { n: e.n });
+    const value = el('div', { class: 'col', style: 'gap:6px' }, el('span', { class: 'label', text: t('Worth about') }), el('div', { class: 'big', text: e ? money(e.gbp) : '—' }), el('p', { class: 'muted small', text: basis }));
+    if (e && +car.paid && FX[car.paidCur || 'USD']) { const d = e.gbp - +car.paid * FX[car.paidCur || 'USD']; value.append(el('p', { class: 'small ' + (d >= 0 ? 'up' : 'down'), text: t('{d} against the {p} you paid', { d: (d >= 0 ? '+' : '−') + money(Math.abs(d)), p: cash(+car.paid, car.paidCur) }) })); }
+    const due = dueOf(car);
+    out.append(el('div', { class: 'hero' }, photoBox(car), el('div', { class: 'col' }, panel(null, null, value, el('div', { class: 'row' }, el('a', { class: 'btn', href: base + 'market', text: t('See the market') }), el('a', { class: 'btn', href: base + 'logbook', text: t('Open the logbook') }))),
+      due.length ? panel(t('Coming up'), null, el('ul', { class: 'due-list' }, due.map((x) => el('li', {}, el('span', { text: x.r.title }), el('span', { class: 'tag s-' + x.st, text: remText(car, x.r, x.st) }))))) : null)));
+    out.append(panel(t('Details'), null, facts.length ? el('dl', { class: 'facts' }, facts.map((x) => el('div', {}, el('dt', { text: x[0] }), el('dd', { text: x[1] })))) : el('p', { class: 'empty', text: t('No details yet.') }), vinPlate(car), el('div', { class: 'row' }, el('a', { class: 'btn', id: 'b-edit', href: base + 'edit', text: t('Edit details') }))));
+  }
+  return out;
+}
+
+/* ----- logbook ----- */
+const REC_TYPES = { service: 'Service', condition: 'Condition', tyres: 'Tyres', document: 'Document', purchase: 'Purchase', note: 'Note' };
+const STATUS = { good: 'Good', fair: 'Fair', attention: 'Needs attention' };
+function logbookView(car) {
+  const out = el('div', { class: 'col' }), recs = [...(car.records || [])].sort((a, b) => (b.date || '').localeCompare(a.date || '')), rems = car.reminders || [];
+  // reminders
+  const remPanel = panel(t('Coming up'), null);
+  if (rems.length) remPanel.append(el('ul', { class: 'due-list' }, [...rems].sort((a, b) => (a.date || '9').localeCompare(b.date || '9')).map((r) => { const st = remStatus(car, r); return el('li', {}, el('span', { text: r.title }), el('span', { class: 'row' }, el('span', { class: 'tag s-' + st, text: remText(car, r, st) }), el('button', { type: 'button', class: 'linkbtn small', text: t('Done'), onclick: async () => { try { await saveCar(car, { reminders: rems.filter((x) => x.id !== r.id) }); toast(t('Reminder cleared')); render(); } catch (e) { toast(t('Couldn’t save. Try again.')); } } }))); })));
+  else if (!S.remOpen) remPanel.append(el('p', { class: 'empty', text: t('Nothing planned. Add a reminder for the next service, inspection or insurance renewal.') }));
+  if (S.remOpen) {
+    const ti = el('input', { type: 'text', maxlength: 80, placeholder: t('e.g. Annual service'), id: 'm-title' }), da = el('input', { type: 'date', id: 'm-date' }), od = el('input', { type: 'number', min: 0, inputmode: 'numeric', id: 'm-odo' }), st = el('p', { class: 'status', role: 'status' });
+    remPanel.append(el('form', { novalidate: true, onsubmit: async (ev) => { ev.preventDefault(); if (!ti.value.trim()) { st.textContent = t('Say what is due.'); return; } if (!da.value && !od.value) { st.textContent = t('Add a date, a mileage, or both.'); return; }
+      try { await saveCar(car, { reminders: rems.concat({ id: 'm' + Date.now().toString(36), title: ti.value.trim(), date: da.value, odo: od.value }) }); S.remOpen = false; toast(t('Reminder added')); render(); } catch (e) { st.textContent = t('Couldn’t save. Try again.'); } } },
+      field(t('What is due'), ti), el('div', { class: 'row2' }, field(t('Due date'), da), field(t('Or at ({u})', { u: unitName(car.unit || 'mi') }), od)),
+      el('div', { class: 'row' }, el('button', { type: 'submit', class: 'btn primary', text: t('Add reminder') }), el('button', { type: 'button', class: 'btn', text: t('Cancel'), onclick: () => { S.remOpen = false; render(); } })), st));
+  } else remPanel.append(el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn', id: 'b-rem-new', text: t('Add a reminder'), onclick: () => { S.remOpen = true; render(); } })));
+  out.append(remPanel);
+  // records
+  const head = el('div', { class: 'row between' }, el('h2', { text: t('History') }), el('div', { class: 'row' }, recs.length ? el('button', { type: 'button', class: 'btn', id: 'b-pdf', text: t('Download as PDF'), onclick: () => printLogbook(car) }) : null, S.rec ? null : el('button', { type: 'button', class: 'btn primary', id: 'b-rec-new', text: t('Add a record'), onclick: () => { S.rec = { files: [], removed: [] }; render(); } })));
+  const hist = el('section', { class: 'panel' }, head);
+  if (S.rec) hist.append(recordForm(car));
+  if (!recs.length) { if (!S.rec) hist.append(el('p', { class: 'empty', text: t('No records yet. Add the first service, condition check or document for this car.') })); out.append(hist); return out; }
+  const spend = {}; for (const r of recs) if (+r.cost && r.type !== 'purchase') spend[r.cur || 'USD'] = (spend[r.cur || 'USD'] || 0) + +r.cost;
+  const lastSvc = recs.find((r) => r.type === 'service'), odo = Math.max(0, ...recs.map((r) => +r.odometer || 0)), flagged = recs.filter((r) => r.status === 'attention').length;
+  hist.append(el('div', { class: 'stats' },
+    stat(t('Records'), String(recs.length), t('Since {d}', { d: fmtDate(recs[recs.length - 1].date) })),
+    stat(t('Spent on the car'), Object.keys(spend).length ? Object.keys(spend).map((c) => cash(spend[c], c)).join(' + ') : '—', t('Not counting the purchase')),
+    stat(t('Last service'), lastSvc && lastSvc.date ? fmtDate(lastSvc.date) : '—', lastSvc ? lastSvc.title : t('None logged yet')),
+    stat(t('Highest odometer logged'), odo ? num(odo) + ' ' + unitName(car.unit || 'mi') : '—', flagged ? t('{n} need attention', { n: flagged }) : t('Nothing flagged'))));
+  const used = ['all', ...Object.keys(REC_TYPES).filter((x) => recs.some((r) => r.type === x))]; if (!used.includes(S.filter)) S.filter = 'all';
+  if (used.length > 2) hist.append(el('div', { class: 'chips', role: 'group', 'aria-label': t('Filter records') }, used.map((x) => el('button', { type: 'button', class: 'chip', 'aria-pressed': String(S.filter === x), text: x === 'all' ? t('All') : t(REC_TYPES[x]), onclick: () => { S.filter = x; render(); } }))));
+  hist.append(el('ul', { class: 'log' }, recs.filter((x) => S.filter === 'all' || x.type === S.filter).map((r) => el('li', {},
+    el('div', { class: 'when' }, el('span', { text: r.date ? fmtDate(r.date) : '' }), r.odometer ? el('span', { text: num(+r.odometer) + ' ' + unitName(car.unit || 'mi') }) : null),
+    el('div', { class: 'what' },
+      el('span', {}, el('span', { class: 'tag', text: t(REC_TYPES[r.type] || 'Note') }), r.status ? el('span', { class: 'tag s-' + r.status, text: ' · ' + t(STATUS[r.status]) }) : null),
+      el('b', { text: r.title || '' }),
+      (r.by || +r.cost) ? el('span', { class: 'muted small', text: [r.by, +r.cost ? cash(+r.cost, r.cur) : ''].filter(Boolean).join(' · ') }) : null,
+      r.notes ? el('span', { class: 'small', style: 'white-space:pre-wrap', text: r.notes }) : null,
+      r.files && r.files.length ? el('span', { class: 'row small' }, r.files.map((f) => { const b = el('button', { type: 'button', class: 'linkbtn', text: f.name }); b.addEventListener('click', async () => { const w = window.open('', '_blank'); try { const url = await CLOUD.fileUrl(f.path); if (w) w.location = url; else location.href = url; } catch (e) { if (w) w.close(); toast(t('Couldn’t open the file.')); } }); return b; })) : null,
+      el('span', {}, el('button', { type: 'button', class: 'linkbtn small', text: t('Edit'), onclick: () => { S.rec = { editing: r.id, files: (r.files || []).slice(), removed: [] }; render(); window.scrollTo(0, 0); } })))))));
+  out.append(hist);
+  return out;
+}
+function recordForm(car) {
+  const st0 = S.rec, r = (car.records || []).find((x) => x.id === st0.editing) || { type: 'service', date: today(), cur: car.lastCur || S.cur };
+  const f = {
+    type: select(Object.keys(REC_TYPES).map((k) => [k, t({ service: 'Service or repair', condition: 'Condition check', tyres: 'Tyres', document: 'Document', purchase: 'Purchase or sale', note: 'Note' }[k])]), r.type || 'note', { id: 'r-type' }),
+    date: el('input', { type: 'date', value: r.date || '', id: 'r-date' }), title: el('input', { type: 'text', maxlength: 120, value: r.title || '', placeholder: t('e.g. Major service and brake fluid'), id: 'r-title', autocomplete: 'off' }),
+    odo: el('input', { type: 'number', min: 0, inputmode: 'numeric', value: r.odometer || '', id: 'r-odo' }), by: el('input', { type: 'text', maxlength: 80, value: r.by || '', placeholder: t('Workshop or person'), id: 'r-by', autocomplete: 'off' }),
+    cost: el('input', { type: 'number', min: 0, inputmode: 'decimal', value: r.cost || '', id: 'r-cost' }), cur: select(CURS.map((x) => [x, x]), r.cur || 'USD', { id: 'r-cur' }),
+    status: select([['', t('Not applicable')], ['good', t('Good')], ['fair', t('Fair, keep an eye on it')], ['attention', t('Needs attention')]], r.status || '', { id: 'r-status' }),
+    notes: el('textarea', { maxlength: 2000, placeholder: t('Parts fitted, findings, where the paperwork is kept'), id: 'r-notes' }), files: el('input', { type: 'file', multiple: true, accept: 'image/*,application/pdf', id: 'r-files' })
+  };
+  f.notes.value = r.notes || '';
+  const status = el('p', { class: 'status', role: 'status' }), list = el('div', { class: 'col', style: 'gap:4px' });
+  const drawFiles = () => list.replaceChildren(...st0.files.map((x) => el('span', { class: 'small' }, el('span', { text: x.name + ' ' }), el('button', { type: 'button', class: 'linkbtn', text: t('Remove'), onclick: () => { st0.files = st0.files.filter((y) => y !== x); st0.removed.push(x.path); drawFiles(); } }))));
+  drawFiles();
+  const save = el('button', { type: 'submit', class: 'btn primary', id: 'b-rec-save', text: t(st0.editing ? 'Save record' : 'Add to logbook') });
+  let sure = false; const del = st0.editing ? el('button', { type: 'button', class: 'btn danger', id: 'b-rec-del', text: t('Delete record') }) : null;
+  if (del) del.addEventListener('click', async () => {
+    if (!sure) { sure = true; del.textContent = t('Yes, delete it'); return; }
+    try { await saveCar(car, { records: (car.records || []).filter((x) => x.id !== st0.editing) }); CLOUD.removeFiles((r.files || []).map((x) => x.path)); S.rec = null; toast(t('Record deleted')); render(); } catch (e) { status.textContent = t('Couldn’t delete it. Try again.'); }
+  });
+  return el('form', { novalidate: true, id: 'rec-form', style: 'border:1px solid var(--line);border-radius:8px;padding:14px', onsubmit: async (ev) => {
+    ev.preventDefault();
+    const rec = { id: st0.editing || 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), type: f.type.value, date: f.date.value, title: f.title.value.trim(), odometer: f.odo.value, by: f.by.value.trim(), cost: f.cost.value, cur: f.cur.value, status: f.status.value, notes: f.notes.value.trim() };
+    if (!rec.title) { status.textContent = t('Say what happened first.'); f.title.focus(); return; }
+    if (!rec.date) { status.textContent = t('Add the date.'); f.date.focus(); return; }
+    const picked = [...f.files.files];
+    if (picked.some((x) => x.size > CLOUD.maxFile)) { status.textContent = t('One of the files is over 10 MB. Choose smaller files.'); return; }
+    save.disabled = true;
+    try {
+      let n = 0; for (const x of picked) { status.textContent = t('Uploading file {a} of {b}…', { a: ++n, b: picked.length }); st0.files.push(await CLOUD.upload(car.id, x)); }
+      f.files.value = ''; rec.files = st0.files.slice();
+      const patch = { records: (car.records || []).filter((x) => x.id !== rec.id).concat(rec), lastCur: rec.cur };
+      if (+rec.odometer > (+car.miles || 0)) patch.miles = String(rec.odometer);
+      const gone = st0.removed.slice(); await saveCar(car, patch); if (gone.length) CLOUD.removeFiles(gone);
+      S.rec = null; toast(t('Saved to the logbook')); render();
+    } catch (e) { drawFiles(); status.textContent = t('Couldn’t save: {m}', { m: (e && e.message) || '' }); save.disabled = false; }
+  } },
+    el('div', { class: 'row2' }, field(t('Type'), f.type), field(t('Date'), f.date)), field(t('What happened'), f.title),
+    el('div', { class: 'row2' }, field(t('Odometer ({u})', { u: unitName(car.unit || 'mi') }), f.odo), field(t('Done by'), f.by)),
+    el('div', { class: 'row2' }, field(t('Cost'), f.cost), field(t('Currency'), f.cur)), field(t('Condition found'), f.status), field(t('Notes'), f.notes),
+    el('div', { class: 'field' }, el('label', { for: 'r-files', text: t('Photos and documents') }), list, f.files, el('span', { class: 'hint', text: t('Photos or PDFs, up to 10 MB each. They are private to your account.') })),
+    el('div', { class: 'row' }, save, el('button', { type: 'button', class: 'btn', id: 'b-rec-cancel', text: t('Cancel'), onclick: () => { S.rec = null; render(); } }), del), status);
+}
+function printLogbook(car) {
+  const recs = [...(car.records || [])].sort((a, b) => (a.date || '').localeCompare(b.date || '')), p = $('print');
+  const facts = [[t('Model year'), car.year], [t('Chassis number (VIN)'), car.vin], [t('Odometer'), carOdo(car)], [t('Colour'), car.colour], [t('Interior'), car.interior], [t('Registration'), car.reg], [t('Acquired'), car.acquired ? fmtDate(car.acquired) : '']].filter((x) => x[1]);
+  p.replaceChildren(el('h1', { text: car.name || '' }), el('p', { text: t('Logbook from {g}, printed {d}', { g: CLOUD.garageName || 'Garage 197', d: fmtDate(today()) }) }),
+    el('dl', { class: 'facts', style: 'margin-top:10pt' }, facts.map((x) => el('div', {}, el('dt', { text: x[0] }), el('dd', { text: x[1] })))),
+    el('h2', { text: t('History') }),
+    el('table', {}, el('thead', {}, el('tr', {}, [t('Date'), t('Type'), t('What happened'), t('Odometer'), t('Done by'), t('Cost')].map((h) => el('th', { text: h })))),
+      el('tbody', {}, recs.map((r) => el('tr', {}, el('td', { text: r.date ? fmtDate(r.date) : '' }), el('td', { text: t(REC_TYPES[r.type] || 'Note') + (r.status ? ' · ' + t(STATUS[r.status]) : '') }), el('td', {}, el('b', { text: r.title || '' }), r.notes ? el('div', { style: 'white-space:pre-wrap', text: r.notes }) : null, r.files && r.files.length ? el('div', { text: t('Attached: {f}', { f: r.files.map((x) => x.name).join(', ') }) }) : null), el('td', { text: r.odometer ? num(+r.odometer) + ' ' + unitName(car.unit || 'mi') : '' }), el('td', { text: r.by || '' }), el('td', { text: +r.cost ? cash(+r.cost, r.cur) : '' }))))));
+  window.print();
+}
+
+/* ----- settings ----- */
+function viewSettings() {
+  const pick = (key, lskey, opts) => select(opts, S[key], { onchange: (ev) => { S[key] = ev.target.value; ls.set(lskey, S[key]); toast(t('Saved')); render(); } });
+  const out = el('div', { class: 'col', style: 'max-width:40rem' }, el('h1', { text: t('Settings') }),
+    panel(t('Display'), null,
+      field(t('Language'), pick('lang', 'g197-lang', [['en', 'English'], ['ar', 'العربية']])),
+      field(t('Show prices in'), pick('cur', 'g197-cur', [['USD', t('US dollars')], ['GBP', t('Pounds')], ['EUR', t('Euros')], ['QAR', t('Qatari riyals')], ['AED', t('UAE dirhams')], ['SAR', t('Saudi riyals')]]), t('Conversions use fixed approximate exchange rates.')),
+      field(t('Show distances in'), pick('unit', 'g197-unit', [['mi', t('Miles')], ['km', t('Kilometres')]]))),
+    panel(t('Account'), null, el('p', { class: 'small', text: t('Signed in as {email}. Your garage is saved to your account and follows you to any device.', { email: CLOUD.user.email || '' }) }),
+      el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn', id: 'b-signout', text: t('Sign out'), onclick: async () => { await CLOUD.signOut(); location.hash = '#/home'; } }))));
+  const n = CLOUD.localCount();
+  if (n) out.append(panel(t('Cars saved on this device'), null, el('p', { class: 'small', text: t('Cars saved on this device before accounts existed: {n}.', { n }) }), el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn primary', id: 'b-import', text: t('Add them to my account'), onclick: async () => { try { await CLOUD.importLocal(); toast(t('Cars added to your account')); } catch (e) { toast(t('Couldn’t save. Try again.')); } render(); } }))));
+  return out;
+}
+
+/* ----- frame ----- */
+function render() {
+  const app = $('app'); document.documentElement.lang = S.lang; document.documentElement.dir = S.lang === 'ar' ? 'rtl' : 'ltr'; S.redraw = null;
+  if (!CLOUD.user || S.mode === 'newpass') { app.replaceChildren(viewLogin()); return; }
+  const r = route(), top = r.name === 'home' || r.name === 'model' ? 'home' : r.name === 'settings' ? 'settings' : 'garage';
+  const tab = (id, href, label) => el('a', { class: 'tab', id: 't-' + id, href, 'aria-current': top === id ? 'page' : 'false', text: label });
+  const head = el('header', { class: 'head' }, el('h1', { text: 'Garage 197', style: 'padding-block:8px' }), el('nav', { class: 'tabs', 'aria-label': t('Sections') }, tab('home', '#/home', t('Home')), tab('garage', '#/garage', CLOUD.garageName || t('My garage')), tab('settings', '#/settings', t('Settings'))));
+  let main;
+  if (r.name === 'garage') main = viewGarage();
+  else if (r.name === 'settings') main = viewSettings();
+  else if (r.name === 'model') { const m = catOf(r.a); main = el('div', { class: 'col' }, el('div', { class: 'col', style: 'gap:6px' }, el('a', { class: 'small', href: '#/home', text: '‹ ' + t('Home') }), el('h1', { text: m ? shortModel(m.name) : t('Model not found') }), m ? el('p', { class: 'muted', text: t('Built {a} to {b}', { a: m.from, b: m.to }) }) : null), m ? panel(null, null, marketView(m.name, null)) : null, m ? el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn primary', text: t('Add this car to my garage'), onclick: () => { S.prefill = m.name; nav('#/car/new'); } })) : null); }
+  else if (r.name === 'car' && r.a === 'new') main = carForm(null);
+  else if (r.name === 'car') { const car = S.cars.find((c) => c.id === r.a); main = !car ? el('p', { class: 'empty', text: t(CLOUD.loaded ? 'That car is no longer in your garage.' : 'Loading your garage…') }) : r.b === 'edit' ? carForm(car) : viewCar(car, r.b || 'overview'); }
+  else main = viewHome();
+  app.replaceChildren(head, el('main', {}, main));
+}
 let rz; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { if (S.redraw) S.redraw(); }, 150); });
 
-fetch('sales.csv').then((r) => { if (!r.ok) throw new Error('load'); return r.text(); }).then((t) => {
-  S.sales = prepSales(parseCsv(t));
-  const sel = $('f-model'), keep = sel.value;
-  S.counts = {}; for (const r of S.sales) S.counts[r.model] = (S.counts[r.model] || 0) + 1;
-  buildModelList();
-  const cur = S.cars.find((c) => c.id === S.currentId);
-  if (cur && !S.dirty) fillForm(cur); else sel.value = keep;
-  const latest = S.sales.map((r) => r.date).sort().pop();
-  $('data-asof').textContent = S.sales.length + ' sales, the latest on ' + fmtDate(latest);
-  renderAll(); renderHome();
-}).catch(() => { S.salesError = true; renderAll(); });
-
+/* ----- start ----- */
+fetch('sales.csv').then((r) => { if (!r.ok) throw new Error('load'); return r.text(); }).then((txt) => { S.sales = prepSales(parseCsv(txt)); S.counts = {}; for (const r of S.sales) S.counts[r.model] = (S.counts[r.model] || 0) + 1; render(); }).catch(() => { S.salesError = true; render(); });
 (async () => {
-  let db = null;
-  try { db = window.claude && window.claude.use ? await window.claude.use('db') : null; } catch (e) { db = null; }
-  S.db = db; S.dbReady = true;
-  if (!db) { renderAll(); return; }
-  db.collection('cars').onSnapshot((snap) => {
-    S.cars = snap.docs.map((d) => ({ id: d.id, ...d.data() })).sort((a, b) => (a.name || '').localeCompare(b.name || ''));
-    if (S.currentId && !S.cars.some((c) => c.id === S.currentId)) S.currentId = null;
-    if (!S.pickedFirst && !S.currentId && !S.dirty && S.cars.length) { S.currentId = S.cars[0].id; fillForm(S.cars[0]); }
-    S.pickedFirst = true;
-    renderAll(); renderHome();
-  }, () => { S.db = null; renderAll(); });
-  renderAll();
+  S.db = await window.claude.use('db');
+  let busy = () => { const a = document.activeElement; return !!(a && a.closest && a.closest('form') && /INPUT|TEXTAREA|SELECT/.test(a.tagName)); };
+  S.db.collection('cars').onSnapshot((snap) => { S.cars = snap.docs.map((d) => ({ id: d.id, ...d.data() })).sort((a, b) => (a.name || '').localeCompare(b.name || '')); if (!busy()) render(); });
+  CLOUD.onAuth(() => { if (!busy() || !CLOUD.user) render(); });
+  try { const k = await CLOUD.fromLink(); if (k === 'recovery') S.mode = 'newpass'; else if (k && k.error) S.loginMsg = t('That link didn’t work: {m}. Ask for a new one.', { m: k.error }); } catch (e) { S.loginMsg = t('That link has expired. Ask for a new one.'); }
+  render();
 })();
-renderAll();
+render();
 </script>
-
 </body>
 </html>

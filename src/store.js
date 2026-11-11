@@ -1,0 +1,110 @@
+// Garage store. Signed out: cars stay in this browser. Signed in: cars, logbooks and files live in the user's cloud account.
+(function () {
+  var SB = 'https://rystuaujaihcvulyettd.supabase.co', KEY = 'sb_publishable_fhBGLIojcBo9DXkJQRS01A_GXE4-uUx';
+  var LKEY = 'g197-cars', SKEY = 'g197-session', BUCKET = 'car-files';
+  var subs = [], authSubs = [], session = null, cloud = {}, urlCache = {};
+  function jget(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }
+  function jset(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  function local() { return jget(LKEY) || {}; }
+  function current() { return session ? cloud : local(); }
+  function snap() { var o = current(); return { docs: Object.keys(o).map(function (id) { return { id: id, data: function () { return o[id]; } }; }) }; }
+  function emit() { var s = snap(); subs.forEach(function (f) { f(s); }); }
+  function emitAuth() { authSubs.forEach(function (f) { f(api); }); }
+  function setSession(j) {
+    session = j && j.access_token ? { access_token: j.access_token, refresh_token: j.refresh_token, expires_at: j.expires_at || Math.floor(Date.now() / 1000) + (j.expires_in || 3600), user: { id: j.user.id, email: j.user.email } } : null;
+    jset(SKEY, session); api.user = session ? session.user : null;
+  }
+  async function parse(r) {
+    var t = await r.text(), j = null; try { j = t ? JSON.parse(t) : null; } catch (e) {}
+    if (!r.ok) { var e = new Error((j && (j.msg || j.message || j.error_description || j.error)) || ('Error ' + r.status)); e.status = r.status; e.code = j && (j.error_code || j.code); throw e; }
+    return j;
+  }
+  var refreshing = null;
+  function refresh() {
+    if (!refreshing) refreshing = (async function () {
+      var r = await fetch(SB + '/auth/v1/token?grant_type=refresh_token', { method: 'POST', headers: { apikey: KEY, 'Content-Type': 'application/json' }, body: JSON.stringify({ refresh_token: session.refresh_token }) });
+      if (!r.ok) { if (r.status >= 400 && r.status < 500) { setSession(null); cloud = {}; emit(); emitAuth(); } throw new Error('Your sign-in has expired. Sign in again.'); }
+      var j = await r.json(); setSession(j);
+    })().finally(function () { refreshing = null; });
+    return refreshing;
+  }
+  async function call(path, opt, retried) {
+    opt = opt || {};
+    if (session && session.expires_at - 60 < Date.now() / 1000) await refresh();
+    var h = Object.assign({ apikey: KEY }, opt.headers || {});
+    if (session) h.Authorization = 'Bearer ' + session.access_token;
+    var r = await fetch(SB + path, { method: opt.method || 'GET', headers: h, body: opt.body });
+    if (r.status === 401 && session && !retried) { await refresh(); return call(path, opt, true); }
+    return r;
+  }
+  var JSONH = { 'Content-Type': 'application/json' };
+  async function loadCloud() {
+    api.setupError = ''; api.loaded = false;
+    try {
+      var rows = await parse(await call('/rest/v1/cars?select=id,data'));
+      cloud = {}; rows.forEach(function (r) { cloud[r.id] = r.data; });
+    } catch (e) {
+      cloud = {};
+      api.setupError = e.status === 404 || e.code === 'PGRST205' || e.code === '42P01' ? 'You are signed in, but the cloud tables are not set up yet, so nothing can be saved. The setup text still needs to be run in Supabase.' : 'You are signed in, but your garage could not be loaded (' + e.message + '). Check the connection and reload.';
+    }
+    try { var g = await parse(await call('/rest/v1/garages?select=name')); api.garageName = g && g[0] && g[0].name ? g[0].name : ''; } catch (e) { api.garageName = ''; }
+    api.loaded = true; emit(); emitAuth();
+  }
+  function upsertCar(id, d) {
+    return call('/rest/v1/cars?on_conflict=user_id,id', { method: 'POST', headers: Object.assign({ Prefer: 'resolution=merge-duplicates,return=minimal' }, JSONH), body: JSON.stringify({ id: id, user_id: session.user.id, data: d, updated_at: new Date().toISOString() }) }).then(parse);
+  }
+  function enc(p) { return p.split('/').map(encodeURIComponent).join('/'); }
+  var col = {
+    doc: function (id) { id = id || 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+      return { id: id,
+        set: async function (d) { if (session) { await upsertCar(id, d); cloud[id] = d; emit(); } else { var o = local(); o[id] = d; jset(LKEY, o); emit(); } },
+        delete: async function () { if (session) { await parse(await call('/rest/v1/cars?id=eq.' + encodeURIComponent(id), { method: 'DELETE' })); delete cloud[id]; emit(); } else { var o = local(); delete o[id]; jset(LKEY, o); emit(); } } }; },
+    onSnapshot: function (f) { subs.push(f); setTimeout(function () { f(snap()); }, 0); return function () {}; }
+  };
+  var api = {
+    user: null, garageName: '', setupError: '', maxFile: 10 * 1024 * 1024,
+    onAuth: function (f) { authSubs.push(f); },
+    newId: function () { return 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); },
+    sign: async function (email, password, create) {
+      var j = await parse(await fetch(SB + (create ? '/auth/v1/signup' : '/auth/v1/token?grant_type=password'), { method: 'POST', headers: Object.assign({ apikey: KEY }, JSONH), body: JSON.stringify({ email: email, password: password }) }));
+      if (!j || !j.access_token) return { confirm: true };
+      setSession(j); await loadCloud(); return { ok: true };
+    },
+    signOut: async function () { try { await call('/auth/v1/logout', { method: 'POST' }); } catch (e) {} setSession(null); cloud = {}; api.garageName = ''; api.setupError = ''; emit(); emitAuth(); },
+    saveGarageName: function (name) { return call('/rest/v1/garages?on_conflict=user_id', { method: 'POST', headers: Object.assign({ Prefer: 'resolution=merge-duplicates,return=minimal' }, JSONH), body: JSON.stringify({ user_id: session.user.id, name: name, updated_at: new Date().toISOString() }) }).then(parse).then(function () { api.garageName = name; }); },
+    localCount: function () { return Object.keys(local()).length; },
+    importLocal: async function () { var o = local(), ids = Object.keys(o); for (var i = 0; i < ids.length; i++) { var id = cloud[ids[i]] ? ids[i] + '-d' : ids[i]; await upsertCar(id, o[ids[i]]); cloud[id] = o[ids[i]]; } jset(LKEY, null); emit(); return ids.length; },
+    upload: async function (carId, file) {
+      var safe = (file.name || 'file').replace(/[^A-Za-z0-9._-]+/g, '_').slice(-60);
+      var path = session.user.id + '/' + carId + '/' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6) + '-' + safe;
+      await parse(await call('/storage/v1/object/' + BUCKET + '/' + enc(path), { method: 'POST', headers: { 'Content-Type': file.type || 'application/octet-stream', 'x-upsert': 'true' }, body: file }));
+      return { path: path, name: file.name || safe, type: file.type || '', size: file.size || 0 };
+    },
+    fileUrl: async function (path) {
+      var c = urlCache[path]; if (c && c.until > Date.now()) return c.url;
+      var j = await parse(await call('/storage/v1/object/sign/' + BUCKET + '/' + enc(path), { method: 'POST', headers: JSONH, body: JSON.stringify({ expiresIn: 3600 }) }));
+      var url = SB + '/storage/v1' + (j.signedURL || j.signedUrl); urlCache[path] = { url: url, until: Date.now() + 50 * 60 * 1000 }; return url;
+    },
+    recover: async function (email) {
+      await parse(await fetch(SB + '/auth/v1/recover?redirect_to=' + encodeURIComponent(location.origin + location.pathname), { method: 'POST', headers: Object.assign({ apikey: KEY }, JSONH), body: JSON.stringify({ email: email }) }));
+    },
+    // Reads the tokens a password-reset or confirmation email link leaves in the address. Returns 'recovery', 'signin', an {error} or null.
+    fromLink: async function () {
+      var h = location.hash || ''; if (!/access_token=|error_description=/.test(h)) return null;
+      var q = new URLSearchParams(h.replace(/^#\/?/, '')); history.replaceState(null, '', location.pathname);
+      if (q.get('error_description')) return { error: q.get('error_description').replace(/\+/g, ' ') };
+      var tok = q.get('access_token');
+      var u = await parse(await fetch(SB + '/auth/v1/user', { headers: { apikey: KEY, Authorization: 'Bearer ' + tok } }));
+      setSession({ access_token: tok, refresh_token: q.get('refresh_token'), expires_in: +q.get('expires_in') || 3600, user: u });
+      await loadCloud();
+      return q.get('type') === 'recovery' ? 'recovery' : 'signin';
+    },
+    setPassword: async function (password) { await parse(await call('/auth/v1/user', { method: 'PUT', headers: JSONH, body: JSON.stringify({ password: password }) })); },
+    removeFiles: async function (paths) { if (!paths || !paths.length || !session) return; try { await call('/storage/v1/object/' + BUCKET, { method: 'DELETE', headers: JSONH, body: JSON.stringify({ prefixes: paths }) }); } catch (e) {} }
+  };
+  window.g197cloud = api;
+  window.claude = { use: async function (n) { return n === 'db' ? { collection: function () { return col; } } : null; } };
+  setSession(jget(SKEY));
+  if (session) loadCloud();
+  if ('serviceWorker' in navigator) window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });
+})();
