@@ -72,7 +72,7 @@
     onAuth: function (f) { authSubs.push(f); },
     newId: function () { return 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); },
     sign: async function (email, password, create) {
-      var j = await parse(await fetch(SB + (create ? '/auth/v1/signup' : '/auth/v1/token?grant_type=password'), { method: 'POST', headers: Object.assign({ apikey: KEY }, JSONH), body: JSON.stringify({ email: email, password: password }) }));
+      var j = await parse(await fetch(SB + (create ? '/auth/v1/signup?redirect_to=' + encodeURIComponent(location.origin + location.pathname) : '/auth/v1/token?grant_type=password'), { method: 'POST', headers: Object.assign({ apikey: KEY }, JSONH), body: JSON.stringify({ email: email, password: password }) }));
       if (!j || !j.access_token) return { confirm: true };
       setSession(j); await loadCloud(); return { ok: true };
     },
