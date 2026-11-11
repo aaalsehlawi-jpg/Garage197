@@ -288,3 +288,149 @@ revoke all on function public.is_member(uuid), public.owns_community(uuid), publ
 grant execute on function public.is_member(uuid), public.owns_community(uuid), public.can_see_event(uuid), public.display_name(uuid), public.create_community(text, text), public.list_communities(), public.list_posts(uuid), public.list_events() to authenticated;
 
 notify pgrst, 'reload schema';
+
+-- ===== Notifications, photo posts, blocking and reports. Safe to run more than once. =====
+
+alter table public.friendships add column if not exists accepted_at timestamptz;
+alter table public.garages add column if not exists seen_at timestamptz;
+alter table public.community_posts add column if not exists photo text check (char_length(photo) <= 300);
+alter table public.community_posts drop constraint if exists community_posts_body_check;
+alter table public.community_posts add constraint community_posts_body_check check (char_length(body) <= 2000 and (char_length(body) >= 1 or photo is not null));
+
+create table if not exists public.blocks (
+  blocker uuid not null default auth.uid() references auth.users (id) on delete cascade,
+  blocked uuid not null references auth.users (id) on delete cascade,
+  created_at timestamptz not null default now(),
+  primary key (blocker, blocked),
+  check (blocker <> blocked)
+);
+alter table public.blocks enable row level security;
+drop policy if exists "see own blocks" on public.blocks;
+create policy "see own blocks" on public.blocks for select to authenticated using (blocker = auth.uid());
+drop policy if exists "unblock" on public.blocks;
+create policy "unblock" on public.blocks for delete to authenticated using (blocker = auth.uid());
+
+-- Reports go to the app owner, who reads them in the Supabase table editor. Users cannot read them back.
+create table if not exists public.reports (
+  id uuid primary key default gen_random_uuid(),
+  reporter uuid not null default auth.uid() references auth.users (id) on delete cascade,
+  kind text not null check (kind in ('post', 'event', 'community', 'user')),
+  ref text not null check (char_length(ref) <= 80),
+  reason text check (char_length(reason) <= 500),
+  snapshot text check (char_length(snapshot) <= 2500),
+  created_at timestamptz not null default now()
+);
+alter table public.reports enable row level security;
+drop policy if exists "send reports" on public.reports;
+create policy "send reports" on public.reports for insert to authenticated with check (reporter = auth.uid());
+
+-- True when either person has blocked the other.
+create or replace function public.blocked_with(p_user uuid) returns boolean
+language sql stable security definer set search_path = public as $$
+  select exists (select 1 from blocks b where (b.blocker = auth.uid() and b.blocked = p_user) or (b.blocker = p_user and b.blocked = auth.uid()));
+$$;
+
+create or replace function public.block_user(p_user uuid) returns void
+language plpgsql security definer set search_path = public as $$
+begin
+  if auth.uid() is null or p_user is null or p_user = auth.uid() then return; end if;
+  insert into blocks (blocker, blocked) values (auth.uid(), p_user) on conflict do nothing;
+  delete from friendships where (requester = auth.uid() and addressee = p_user) or (requester = p_user and addressee = auth.uid());
+end $$;
+
+drop function if exists public.my_blocks();
+create function public.my_blocks() returns table (blocked uuid, name text, since timestamptz)
+language sql stable security definer set search_path = public as $$
+  select b.blocked, display_name(b.blocked), b.created_at from blocks b where b.blocker = auth.uid() order by b.created_at desc;
+$$;
+
+create or replace function public.request_friend(p_email text) returns text
+language plpgsql security definer set search_path = public as $$
+declare me uuid := auth.uid(); other uuid; f friendships;
+begin
+  if me is null then raise exception 'Sign in first'; end if;
+  select id into other from auth.users where lower(email) = lower(trim(p_email)) limit 1;
+  if other is null then return 'none'; end if;
+  if other = me then return 'self'; end if;
+  if exists (select 1 from blocks where blocker = me and blocked = other) then return 'blocked'; end if;
+  if exists (select 1 from blocks where blocker = other and blocked = me) then return 'none'; end if;
+  select * into f from friendships where (requester = me and addressee = other) or (requester = other and addressee = me) limit 1;
+  if found then
+    if f.status = 'pending' and f.addressee = me then
+      update friendships set status = 'accepted', accepted_at = now() where id = f.id; return 'accepted';
+    end if;
+    return 'exists';
+  end if;
+  insert into friendships (requester, addressee) values (me, other);
+  return 'sent';
+end $$;
+
+create or replace function public.accept_friend(p_id uuid) returns void
+language sql security definer set search_path = public as $$
+  update friendships set status = 'accepted', accepted_at = now() where id = p_id and addressee = auth.uid() and status = 'pending';
+$$;
+
+drop function if exists public.list_posts(uuid);
+create function public.list_posts(p_community uuid)
+returns table (id uuid, author text, author_id uuid, mine boolean, body text, photo text, created_at timestamptz)
+language sql stable security definer set search_path = public as $$
+  select p.id, display_name(p.user_id), p.user_id, p.user_id = auth.uid(), p.body, p.photo, p.created_at
+  from community_posts p where p.community_id = p_community and is_member(p_community) and not blocked_with(p.user_id)
+  order by p.created_at desc limit 100;
+$$;
+
+drop function if exists public.list_events();
+create function public.list_events()
+returns table (id uuid, title text, starts_at timestamptz, place text, details text, community_id uuid, community text, host text, host_id uuid, going bigint, me_going boolean, mine boolean)
+language sql stable security definer set search_path = public as $$
+  select e.id, e.title, e.starts_at, e.place, e.details, e.community_id, c.name, display_name(e.creator), e.creator,
+    (select count(*) from event_rsvps r where r.event_id = e.id),
+    exists (select 1 from event_rsvps r where r.event_id = e.id and r.user_id = auth.uid()), e.creator = auth.uid()
+  from events e left join communities c on c.id = e.community_id
+  where e.starts_at > now() - interval '12 hours' and can_see_event(e.id) and not blocked_with(e.creator)
+  order by e.starts_at limit 100;
+$$;
+
+-- Members can open photos attached to posts in their communities.
+create or replace function public.member_can_view(p_name text) returns boolean
+language sql stable security definer set search_path = public as $$
+  select exists (select 1 from community_posts p where p.photo = p_name and is_member(p.community_id));
+$$;
+drop policy if exists "community post photos" on storage.objects;
+create policy "community post photos" on storage.objects for select to authenticated
+  using (bucket_id = 'car-files' and public.member_can_view(name));
+
+-- What happened lately that this user should know about.
+drop function if exists public.my_notifications();
+create function public.my_notifications()
+returns table (kind text, at timestamptz, who text, what text, ref text)
+language sql stable security definer set search_path = public as $$
+  select * from (
+    select 'request'::text, f.created_at, u.email::text, null::text, f.id::text
+      from friendships f join auth.users u on u.id = f.requester where f.addressee = auth.uid() and f.status = 'pending'
+    union all
+    select 'accepted', f.accepted_at, u.email::text, null, f.addressee::text
+      from friendships f join auth.users u on u.id = f.addressee where f.requester = auth.uid() and f.status = 'accepted' and f.accepted_at is not null
+    union all
+    select 'car', c.created_at, coalesce(nullif(trim(g.name), ''), u.email::text), c.data->>'name', c.user_id::text || '/' || c.id
+      from cars c join garages g on g.user_id = c.user_id and g.shared join auth.users u on u.id = c.user_id
+      where c.user_id <> auth.uid() and are_friends(auth.uid(), c.user_id)
+    union all
+    select 'post', p.created_at, display_name(p.user_id), m.name, m.id::text
+      from community_posts p join communities m on m.id = p.community_id
+      where p.user_id <> auth.uid() and is_member(p.community_id) and not blocked_with(p.user_id)
+    union all
+    select 'event', e.created_at, display_name(e.creator), e.title, e.id::text
+      from events e where e.creator <> auth.uid() and e.starts_at > now() and can_see_event(e.id) and not blocked_with(e.creator)
+    union all
+    select 'going', r.created_at, display_name(r.user_id), e.title, e.id::text
+      from event_rsvps r join events e on e.id = r.event_id where e.creator = auth.uid() and r.user_id <> auth.uid() and not blocked_with(r.user_id)
+  ) n (kind, at, who, what, ref)
+  where n.at > now() - interval '30 days'
+  order by n.at desc limit 60;
+$$;
+
+revoke all on function public.blocked_with(uuid), public.block_user(uuid), public.my_blocks(), public.member_can_view(text), public.my_notifications(), public.list_posts(uuid), public.list_events(), public.request_friend(text), public.accept_friend(uuid) from public, anon;
+grant execute on function public.blocked_with(uuid), public.block_user(uuid), public.my_blocks(), public.member_can_view(text), public.my_notifications(), public.list_posts(uuid), public.list_events(), public.request_friend(text), public.accept_friend(uuid) to authenticated;
+
+notify pgrst, 'reload schema';

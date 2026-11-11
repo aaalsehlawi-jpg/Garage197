@@ -76,7 +76,7 @@
       if (!j || !j.access_token) return { confirm: true };
       setSession(j); await loadCloud(); return { ok: true };
     },
-    signOut: async function () { try { await call('/auth/v1/logout', { method: 'POST' }); } catch (e) {} setSession(null); cloud = {}; api.garageName = ''; api.setupError = ''; api.friends = []; api.feed = []; api.communities = []; api.events = []; api.shared = false; api.links = {}; api.socialLoaded = false; emit(); emitAuth(); },
+    signOut: async function () { try { await call('/auth/v1/logout', { method: 'POST' }); } catch (e) {} setSession(null); cloud = {}; api.garageName = ''; api.setupError = ''; api.friends = []; api.feed = []; api.communities = []; api.events = []; api.notes = []; api.blocks = []; api.seenAt = ''; api.shared = false; api.links = {}; api.socialLoaded = false; emit(); emitAuth(); },
     saveGarageName: function (name) { return call('/rest/v1/garages?on_conflict=user_id', { method: 'POST', headers: Object.assign({ Prefer: 'resolution=merge-duplicates,return=minimal' }, JSONH), body: JSON.stringify({ user_id: session.user.id, name: name, updated_at: new Date().toISOString() }) }).then(parse).then(function () { api.garageName = name; }); },
     // Friends, shared garages and social links
     shared: false, links: {}, social: true, friends: [], feed: [], socialLoaded: false,
@@ -88,15 +88,23 @@
       } catch (e) { api.friends = []; api.feed = []; if (e.status === 404 || e.code === 'PGRST202') api.social = false; }
       try { var c = await Promise.all([rpc('list_communities', {}), rpc('list_events', {})]); api.communities = c[0] || []; api.events = c[1] || []; api.groups = true; }
       catch (e) { api.communities = []; api.events = []; if (e.status === 404 || e.code === 'PGRST202') api.groups = false; }
+      try { var n = await Promise.all([rpc('my_notifications', {}), rpc('my_blocks', {}), call('/rest/v1/garages?select=seen_at').then(parse)]); api.notes = n[0] || []; api.blocks = n[1] || []; api.seenAt = (n[2] && n[2][0] && n[2][0].seen_at) || ''; api.extras = true; }
+      catch (e) { api.notes = []; api.blocks = []; api.extras = false; }
       api.socialLoaded = true; emitAuth();
     },
+    notes: [], blocks: [], seenAt: '', extras: false,
+    unread: function () { var s = api.seenAt ? Date.parse(api.seenAt) : 0; return api.notes.filter(function (n) { return Date.parse(n.at) > s; }).length; },
+    markSeen: async function () { var now = new Date().toISOString(); try { await api.saveProfile({ seen_at: now }); api.seenAt = now; emitAuth(); } catch (e) {} },
+    blockUser: async function (id) { await rpc('block_user', { p_user: id }); await api.loadSocial(); },
+    unblock: async function (id) { await del('blocks?blocked=eq.' + id + '&blocker=eq.' + session.user.id); await api.loadSocial(); },
+    report: function (kind, ref, reason, snapshot) { return ins('reports', { reporter: session.user.id, kind: kind, ref: String(ref).slice(0, 80), reason: (reason || '').slice(0, 500) || null, snapshot: (snapshot || '').slice(0, 2500) || null }); },
     communities: [], events: [], groups: true,
     createCommunity: async function (name, about) { var id = await rpc('create_community', { p_name: name, p_about: about || '' }); await api.loadSocial(); return id; },
     joinCommunity: async function (id) { await ins('community_members', { community_id: id, user_id: session.user.id }); await api.loadSocial(); },
     leaveCommunity: async function (id) { await del('community_members?community_id=eq.' + id + '&user_id=eq.' + session.user.id); await api.loadSocial(); },
     deleteCommunity: async function (id) { await del('communities?id=eq.' + id); await api.loadSocial(); },
     posts: function (id) { return rpc('list_posts', { p_community: id }); },
-    post: function (id, body) { return ins('community_posts', { community_id: id, user_id: session.user.id, body: body }); },
+    post: function (id, body, photo) { var row = { community_id: id, user_id: session.user.id, body: body }; if (photo) row.photo = photo; return ins('community_posts', row); },
     deletePost: function (id) { return del('community_posts?id=eq.' + id); },
     createEvent: async function (ev) { await ins('events', Object.assign({ creator: session.user.id }, ev)); await api.loadSocial(); },
     deleteEvent: async function (id) { await del('events?id=eq.' + id); await api.loadSocial(); },

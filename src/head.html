@@ -189,6 +189,12 @@
   .posts li { border-top: 1px solid var(--line); padding: 12px 0; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
   .posts p { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
   .blank .btn, .btn { white-space: nowrap; }
+  .bell { position: relative; display: inline-grid; place-items: center; width: 2.6rem; height: 2.6rem; border-radius: 999px; color: var(--muted); margin-inline-start: auto; }
+  .bell svg { width: 1.45rem; height: 1.45rem; }
+  .bell:hover, .bell[aria-current="page"] { color: var(--strong); background: var(--soft); }
+  .bell .count { position: absolute; top: 2px; inset-inline-end: 0; min-width: 1.15rem; height: 1.15rem; padding: 0 4px; border-radius: 999px; background: var(--bad); color: #fff; font-size: .68rem; font-weight: 700; display: grid; place-items: center; }
+  .postphoto { display: block; padding: 0; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--soft); cursor: pointer; max-width: min(100%, 26rem); }
+  .postphoto img { display: block; width: 100%; height: auto; max-height: 26rem; object-fit: cover; }
   .socials { display: flex; flex-wrap: wrap; gap: 6px; }
   .check { display: flex; gap: 10px; align-items: center; font-weight: 600; cursor: pointer; }
   .check input { width: 1.2rem; height: 1.2rem; accent-color: var(--accent); }
