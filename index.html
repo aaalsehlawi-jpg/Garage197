@@ -92,6 +92,22 @@
   a { color: var(--accent); }
   .links { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: .88rem; }
   .empty { color: var(--muted); max-width: 56ch; }
+  textarea { font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 4px; padding: 8px 10px; width: 100%; box-sizing: border-box; min-height: 4.5rem; resize: vertical; }
+  details.more > summary { cursor: pointer; font-size: .85rem; font-weight: 600; color: var(--accent); }
+  details.more[open] > summary { margin-bottom: 10px; }
+  details.more > div { display: flex; flex-direction: column; gap: 12px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { font: inherit; font-size: .8rem; border: 1px solid var(--line); border-radius: 999px; padding: 3px 11px; background: transparent; color: var(--ink); cursor: pointer; }
+  .chip[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); }
+  .log { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+  .log li { display: grid; grid-template-columns: 6.2rem minmax(0, 1fr); gap: 4px 14px; padding: 12px 0; border-top: 1px solid var(--line); }
+  .log .when { font-size: .82rem; color: var(--muted); font-variant-numeric: tabular-nums; display: flex; flex-direction: column; gap: 2px; }
+  .log .what { display: flex; flex-direction: column; gap: 3px; min-width: 0; overflow-wrap: anywhere; }
+  .log .what b { font-weight: 600; }
+  .tag { display: inline-block; font-size: .68rem; letter-spacing: .06em; text-transform: uppercase; font-weight: 600; color: var(--accent); }
+  .tag.s-good { color: var(--ok); } .tag.s-fair { color: var(--warn); } .tag.s-attention { color: var(--bad); }
+  .linkbtn { font: inherit; font-size: .8rem; background: none; border: 0; padding: 0; color: var(--accent); text-decoration: underline; cursor: pointer; }
+  @media (max-width: 480px) { .log li { grid-template-columns: minmax(0, 1fr); } .log .when { flex-direction: row; gap: 10px; } }
 </style>
 <style>body{margin:0} [hidden]{display:none!important} img{max-width:100%}</style>
 </head>
@@ -139,7 +155,7 @@
           <button type="button" class="btn" id="b-name-cancel">Cancel</button>
         </form>
         <div class="garage" id="garage"></div>
-        <p class="muted small" id="garage-empty">Cars you save appear here and stay on this device. Fill in the details below and press Save to garage.</p>
+        <p class="muted small" id="garage-empty">Cars you save appear here, each with its own logbook, and stay on this device. Fill in the details below and press Save to garage.</p>
         <div class="btns"><button type="button" class="btn" id="b-new">New car</button></div>
       </section>
 
@@ -157,6 +173,23 @@
             <div class="field"><label for="f-miles">Odometer</label><input id="f-miles" type="number" min="0" inputmode="numeric" placeholder="77000"></div>
             <div class="field"><label for="f-unit">Unit</label><select id="f-unit"><option value="mi">Miles</option><option value="km">Kilometres</option></select></div>
           </div>
+          <details class="more" id="more">
+            <summary>Profile details</summary>
+            <div>
+              <div class="row2">
+                <div class="field"><label for="f-colour">Colour</label><input id="f-colour" type="text" autocomplete="off" placeholder="e.g. Amethyst"></div>
+                <div class="field"><label for="f-interior">Interior</label><input id="f-interior" type="text" autocomplete="off"></div>
+              </div>
+              <div class="row2">
+                <div class="field"><label for="f-reg">Registration</label><input id="f-reg" type="text" autocomplete="off"></div>
+                <div class="field"><label for="f-acq">Date acquired</label><input id="f-acq" type="date"></div>
+              </div>
+              <div class="row2">
+                <div class="field"><label for="f-paid">Purchase price</label><input id="f-paid" type="number" min="0" inputmode="numeric"></div>
+                <div class="field"><label for="f-paidcur">Currency</label><select id="f-paidcur"><option>USD</option><option>GBP</option><option>EUR</option><option>QAR</option><option>AED</option><option>SAR</option></select></div>
+              </div>
+            </div>
+          </details>
           <div class="field"><label for="f-model">Market to compare against</label>
             <input id="f-find" type="search" placeholder="Filter the list, e.g. 993 or Speedster" aria-label="Filter the model list" autocomplete="off" style="margin-bottom:6px">
             <select id="f-model"><option value="auto">Work it out from the details</option></select>
@@ -181,6 +214,37 @@
       <section class="panel" id="p-market" aria-labelledby="h-market">
         <h2 id="h-market">Market read-out</h2>
         <div id="market-out" style="display:flex;flex-direction:column;gap:18px"><p class="empty">Loading sold results…</p></div>
+      </section>
+
+      <section class="panel" id="p-log" aria-labelledby="h-log">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+          <h2 id="h-log">Logbook</h2>
+          <button type="button" class="btn" id="b-rec-new" hidden>Add a record</button>
+        </div>
+        <form id="rec-form" hidden novalidate>
+          <div class="row2">
+            <div class="field"><label for="r-type">Type</label><select id="r-type"><option value="service">Service or repair</option><option value="condition">Condition check</option><option value="tyres">Tyres</option><option value="document">Document</option><option value="purchase">Purchase or sale</option><option value="note">Note</option></select></div>
+            <div class="field"><label for="r-date">Date</label><input id="r-date" type="date"></div>
+          </div>
+          <div class="field"><label for="r-title">What happened</label><input id="r-title" type="text" autocomplete="off" maxlength="120" placeholder="e.g. Major service and brake fluid"></div>
+          <div class="row2">
+            <div class="field"><label for="r-odo">Odometer</label><input id="r-odo" type="number" min="0" inputmode="numeric"></div>
+            <div class="field"><label for="r-by">Done by</label><input id="r-by" type="text" autocomplete="off" maxlength="80" placeholder="Workshop or person"></div>
+          </div>
+          <div class="row2">
+            <div class="field"><label for="r-cost">Cost</label><input id="r-cost" type="number" min="0" inputmode="decimal"></div>
+            <div class="field"><label for="r-cur">Currency</label><select id="r-cur"><option>USD</option><option>GBP</option><option>EUR</option><option>QAR</option><option>AED</option><option>SAR</option></select></div>
+          </div>
+          <div class="field"><label for="r-status">Condition found</label><select id="r-status"><option value="">Not applicable</option><option value="good">Good</option><option value="fair">Fair, keep an eye on it</option><option value="attention">Needs attention</option></select></div>
+          <div class="field"><label for="r-notes">Notes</label><textarea id="r-notes" maxlength="2000" placeholder="Parts fitted, findings, where the paperwork is kept"></textarea></div>
+          <div class="btns">
+            <button type="submit" class="btn primary" id="b-rec-save">Add to logbook</button>
+            <button type="button" class="btn" id="b-rec-cancel">Cancel</button>
+            <button type="button" class="btn danger" id="b-rec-del" hidden>Delete record</button>
+          </div>
+          <p class="status" id="rec-status" role="status"></p>
+        </form>
+        <div id="log-out" style="display:flex;flex-direction:column;gap:16px"></div>
       </section>
 
       <p class="muted small">Sold prices are public auction results copied by hand from The Classic Valuer and Classic.com, <span id="data-asof"></span>, covering Porsche models built before 2003. Most models have only their 10 to 20 latest sales on file, without mileage. Prices in other currencies use fixed approximate rates ($1 = £0.75, €1 = £0.86). Condition is saved with the car but doesn’t change the figures yet. This is market research, not a formal valuation.</p>
@@ -348,11 +412,12 @@ const shortModel = (m) => m.replace('Porsche ', '');
 const catOf = (name) => CATALOG.find((m) => m.name === name) || null;
 
 function readForm() {
-  return { name: $('f-name').value.trim(), vin: $('f-vin').value.toUpperCase().replace(/[\s-]/g, ''), year: $('f-year').value, miles: $('f-miles').value, unit: $('f-unit').value, condition: $('f-cond').value, model: $('f-model').value };
+  return { name: $('f-name').value.trim(), vin: $('f-vin').value.toUpperCase().replace(/[\s-]/g, ''), year: $('f-year').value, miles: $('f-miles').value, unit: $('f-unit').value, condition: $('f-cond').value, model: $('f-model').value, colour: $('f-colour').value.trim(), interior: $('f-interior').value.trim(), reg: $('f-reg').value.trim(), acquired: $('f-acq').value, paid: $('f-paid').value, paidCur: $('f-paidcur').value };
 }
 function fillForm(c) {
   $('f-name').value = c.name || ''; $('f-vin').value = c.vin || ''; $('f-year').value = c.year || ''; $('f-miles').value = c.miles || '';
   $('f-unit').value = c.unit || 'mi'; $('f-cond').value = c.condition || '';
+  $('f-colour').value = c.colour || ''; $('f-interior').value = c.interior || ''; $('f-reg').value = c.reg || ''; $('f-acq').value = c.acquired || ''; $('f-paid').value = c.paid || ''; $('f-paidcur').value = c.paidCur || 'USD';
   $('f-model').value = [...$('f-model').options].some((o) => o.value === c.model) ? c.model : 'auto';
 }
 function carMiles(c) { const n = Number(c.miles); if (!n) return null; return c.unit === 'km' ? Math.round(n * 0.621371) : n; }
@@ -501,11 +566,90 @@ function buildModelList() {
 }
 $('f-find').addEventListener('input', (ev) => { ev.stopPropagation(); buildModelList(); });
 
+/* Logbook: each saved car carries its own history records inside its saved document. */
+const REC_TYPES = { service: 'Service', condition: 'Condition', tyres: 'Tyres', document: 'Document', purchase: 'Purchase', note: 'Note' };
+const L = { editing: null, open: false, filter: 'all', carId: null };
+const cash = (n, cur) => { try { return new Intl.NumberFormat('en-US', { style: 'currency', currency: cur || 'USD', maximumFractionDigits: 0 }).format(n); } catch (e) { return n + ' ' + cur; } };
+function currentCar() { return S.cars.find((c) => c.id === S.currentId) || null; }
+function recForm(on, rec) {
+  L.open = on; L.editing = rec ? rec.id : null;
+  $('rec-form').hidden = !on; $('rec-status').textContent = '';
+  if (!on) return;
+  const car = currentCar() || {}, r = rec || { type: 'service', date: new Date().toISOString().slice(0, 10), cur: car.lastCur || S.cur };
+  $('r-type').value = r.type || 'note'; $('r-date').value = r.date || ''; $('r-title').value = r.title || ''; $('r-odo').value = r.odometer || '';
+  $('r-by').value = r.by || ''; $('r-cost').value = r.cost || ''; $('r-cur').value = r.cur || 'USD'; $('r-status').value = r.status || ''; $('r-notes').value = r.notes || '';
+  $('b-rec-save').textContent = rec ? 'Save record' : 'Add to logbook'; $('b-rec-del').hidden = !rec; $('b-rec-del').dataset.sure = ''; $('b-rec-del').textContent = 'Delete record';
+  $('r-title').focus();
+}
+async function saveRecords(car, records, extra) {
+  const { id, ...body } = car;
+  await S.db.collection('cars').doc(id).set({ ...body, ...(extra || {}), records, updatedAt: new Date().toISOString() });
+}
+function renderLog() {
+  const out = $('log-out'), car = currentCar(); out.replaceChildren();
+  if (L.carId !== S.currentId) { L.carId = S.currentId; L.filter = 'all'; if (L.open) recForm(false); }
+  $('b-rec-new').hidden = !car || !S.db || L.open;
+  if (!car) { out.append(el('p', { class: 'empty', text: S.db ? 'Save the car to your garage, then keep its history here: services, condition checks, tyres, documents and what it cost.' : 'The logbook needs saving, which isn’t available in this view.' })); return; }
+  const recs = [...(car.records || [])].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+  const prof = [['Colour', car.colour], ['Interior', car.interior], ['Registration', car.reg], ['Acquired', car.acquired ? fmtDate(car.acquired) : ''], ['Paid', car.paid ? cash(+car.paid, car.paidCur) : '']].filter((p) => p[1]);
+  if (prof.length) out.append(el('div', { class: 'stats' }, ...prof.map((p) => el('div', { class: 'stat' }, el('span', { class: 'label', text: p[0] }), el('span', { text: p[1] })))));
+  if (!recs.length) { out.append(el('p', { class: 'empty', text: 'No records yet for ' + (car.name || 'this car') + '. Press “Add a record” to log its first service, condition check or document.' + (prof.length ? '' : ' Colour, registration and purchase details go under “Profile details” on the left.') })); return; }
+  const spend = {}; for (const r of recs) if (+r.cost && r.type !== 'purchase') spend[r.cur || 'USD'] = (spend[r.cur || 'USD'] || 0) + +r.cost;
+  const lastSvc = recs.find((r) => r.type === 'service'), odo = Math.max(0, ...recs.map((r) => +r.odometer || 0));
+  const flagged = recs.filter((r) => r.status === 'attention').length;
+  const stat = (label, value, note) => el('div', { class: 'stat' }, el('span', { class: 'label', text: label }), el('b', { text: value }), note ? el('span', { class: 'muted small', text: note }) : null);
+  out.append(el('div', { class: 'stats' },
+    stat('Records', String(recs.length), 'Since ' + fmtDate(recs[recs.length - 1].date || recs[0].date)),
+    stat('Spent on the car', Object.keys(spend).length ? Object.keys(spend).map((c) => cash(spend[c], c)).join(' + ') : '—', 'Services, tyres and other costs, excluding purchase'),
+    stat('Last service', lastSvc && lastSvc.date ? fmtDate(lastSvc.date) : '—', lastSvc ? lastSvc.title : 'None logged yet'),
+    stat('Highest odometer logged', odo ? num(odo) + ' ' + (car.unit || 'mi') : '—', flagged ? flagged + (flagged === 1 ? ' record needs attention' : ' records need attention') : 'Nothing flagged for attention')));
+  const used = ['all', ...Object.keys(REC_TYPES).filter((t) => recs.some((r) => r.type === t))];
+  if (!used.includes(L.filter)) L.filter = 'all';
+  if (used.length > 2) {
+    const chips = el('div', { class: 'chips', role: 'group', 'aria-label': 'Filter records' });
+    for (const t of used) { const b = el('button', { type: 'button', class: 'chip', 'aria-pressed': String(L.filter === t), text: t === 'all' ? 'All' : REC_TYPES[t] }); b.addEventListener('click', () => { L.filter = t; renderLog(); }); chips.append(b); }
+    out.append(chips);
+  }
+  const ul = el('ul', { class: 'log' });
+  for (const r of recs.filter((x) => L.filter === 'all' || x.type === L.filter)) {
+    const edit = el('button', { type: 'button', class: 'linkbtn', text: 'Edit' }); edit.addEventListener('click', () => { recForm(true, r); renderLog(); });
+    ul.append(el('li', {},
+      el('div', { class: 'when' }, el('span', { text: r.date ? fmtDate(r.date) : 'No date' }), r.odometer ? el('span', { text: num(+r.odometer) + ' ' + (car.unit || 'mi') }) : null),
+      el('div', { class: 'what' },
+        el('span', {}, el('span', { class: 'tag', text: REC_TYPES[r.type] || 'Note' }), r.status ? el('span', { class: 'tag s-' + r.status, text: ' · ' + ({ good: 'Good', fair: 'Fair', attention: 'Needs attention' })[r.status] }) : null),
+        el('b', { text: r.title || 'Untitled record' }),
+        (r.by || +r.cost) ? el('span', { class: 'muted small', text: [r.by, +r.cost ? cash(+r.cost, r.cur) : ''].filter(Boolean).join(' · ') }) : null,
+        r.notes ? el('span', { class: 'small', style: 'white-space:pre-wrap', text: r.notes }) : null,
+        S.db ? el('span', {}, edit) : null)));
+  }
+  out.append(ul);
+}
+$('b-rec-new').addEventListener('click', () => { recForm(true); renderLog(); });
+$('b-rec-cancel').addEventListener('click', () => { recForm(false); renderLog(); });
+$('rec-form').addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  const car = currentCar(); if (!car || !S.db) return;
+  const r = { id: L.editing || 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), type: $('r-type').value, date: $('r-date').value, title: $('r-title').value.trim(), odometer: $('r-odo').value, by: $('r-by').value.trim(), cost: $('r-cost').value, cur: $('r-cur').value, status: $('r-status').value, notes: $('r-notes').value.trim() };
+  if (!r.title) { $('rec-status').textContent = 'Say what happened first.'; $('r-title').focus(); return; }
+  if (!r.date) { $('rec-status').textContent = 'Add the date.'; $('r-date').focus(); return; }
+  const records = (car.records || []).filter((x) => x.id !== r.id).concat(r);
+  try { await saveRecords(car, records, { lastCur: r.cur }); recForm(false); } catch (e) { $('rec-status').textContent = 'Couldn’t save the record. Try again in a moment.'; }
+  renderLog();
+});
+$('b-rec-del').addEventListener('click', async () => {
+  const car = currentCar(); if (!car || !S.db || !L.editing) return;
+  if ($('b-rec-del').dataset.sure !== '1') { $('b-rec-del').dataset.sure = '1'; $('b-rec-del').textContent = 'Yes, delete it'; return; }
+  try { await saveRecords(car, (car.records || []).filter((x) => x.id !== L.editing)); recForm(false); } catch (e) { $('rec-status').textContent = 'Couldn’t delete it. Try again in a moment.'; }
+  renderLog();
+});
+$('rec-form').addEventListener('input', () => { $('b-rec-del').dataset.sure = ''; if (L.editing) $('b-rec-del').textContent = 'Delete record'; });
+
 function renderAll() {
   const car = readForm();
   renderGarage();
   const vin = renderVin(car);
   renderMarket(car, vin);
+  renderLog();
   const editing = !!S.currentId;
   $('b-save').textContent = editing ? 'Save changes' : 'Save to garage';
   $('b-save').disabled = !S.db;
@@ -530,7 +674,8 @@ $('car-form').addEventListener('submit', async (ev) => {
   if (!S.db) return;
   const car = readForm();
   if (!car.name && !car.vin) { setStatus('Enter a car name or chassis number first.'); return; }
-  const body = { ...car, updatedAt: new Date().toISOString() };
+  const prev = currentCar();
+  const body = { ...car, records: (prev && prev.records) || [], updatedAt: new Date().toISOString() };
   $('b-save').disabled = true;
   try {
     const ref = S.currentId ? S.db.collection('cars').doc(S.currentId) : S.db.collection('cars').doc();
