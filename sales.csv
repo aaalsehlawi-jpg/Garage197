@@ -1,0 +1,63 @@
+id,date,model,variant,model_year,price,currency,fx_to_gbp,mileage_mi,platform,location,data_via,flag
+s001,2026-11-05,Porsche 911 (993) Turbo,Turbo,1996,181853,GBP,1.0,,Bring a Trailer,,The Classic Valuer (GBP as published),
+s002,2026-10-31,Porsche 911 (993) Turbo,Turbo WLS1,1997,307488,GBP,1.0,,Broad Arrow,,The Classic Valuer (GBP as published),Factory power upgrade
+s003,2026-10-27,Porsche 911 (993) Turbo,Turbo,1996,297053,GBP,1.0,,Bring a Trailer,,The Classic Valuer (GBP as published),
+s004,2026-10-26,Porsche 911 (993) Turbo,Turbo WLS2,1996,256203,GBP,1.0,,Bring a Trailer,,The Classic Valuer (GBP as published),Factory power upgrade
+s005,2026-10-15,Porsche 911 (993) Turbo,Turbo,1996,199372,GBP,1.0,,Bring a Trailer,,The Classic Valuer (GBP as published),
+s006,2026-10-13,Porsche 911 (993) Turbo,Turbo,1996,186242,GBP,1.0,,Bring a Trailer,,The Classic Valuer (GBP as published),
+s007,2026-10-12,Porsche 911 (993) Turbo,Turbo,1995,171221,GBP,1.0,,Collecting Cars,DEU,The Classic Valuer (GBP as published),
+s008,2026-10-09,Porsche 911 (993) Turbo,Turbo,1995,175325,GBP,1.0,,Broad Arrow,BEL,The Classic Valuer (GBP as published),
+s009,2026-10-08,Porsche 911 (993) Turbo,Turbo,1997,226056,GBP,1.0,,Bring a Trailer,,The Classic Valuer (GBP as published),
+s010,2026-09-30,Porsche 911 (993) Turbo,Turbo,1997,294406,GBP,1.0,,Bring a Trailer,,The Classic Valuer (GBP as published),
+s011,2026-09-26,Porsche 911 (993) Turbo,Turbo (RUF-modified),1996,335410,GBP,1.0,,Bring a Trailer,,The Classic Valuer (GBP as published),Modified
+s012,2026-09-26,Porsche 911 (993) Turbo,Turbo,1997,166008,GBP,1.0,,Mecum,,The Classic Valuer (GBP as published),
+s013,2026-09-21,Porsche 911 (993) Turbo,Turbo,1996,234933,GBP,1.0,,Bring a Trailer,,The Classic Valuer (GBP as published),
+s014,2026-09-15,Porsche 911 (993) Turbo,Turbo,1996,182110,GBP,1.0,,RM Sotheby's,BEL,The Classic Valuer (GBP as published),
+s015,2025-09-11,Porsche 911 (993) Turbo,Turbo,1995,114000,GBP,1.0,109000,Unknown,"Derbyshire, UK",Classic.com (original currency),
+s016,2025-09-09,Porsche 911 (993) Turbo,Turbo,1997,262000,USD,0.75,29000,Unknown,"Emeryville, USA",Classic.com (original currency),
+s017,2025-08-14,Porsche 911 (993) Turbo,Turbo,1996,268800,USD,0.75,31000,Unknown,"Monterey, USA",Classic.com (original currency),
+s018,2025-08-14,Porsche 911 (993) Turbo,Turbo,1996,235200,USD,0.75,45000,Unknown,"Monterey, USA",Classic.com (original currency),
+s019,2025-08-13,Porsche 911 (993) Turbo,Turbo,1996,236500,USD,0.75,33000,Unknown,"Monterey, USA",Classic.com (original currency),
+s020,2025-07-29,Porsche 911 (993) Turbo,Turbo,1996,229000,USD,0.75,47000,Porsche Classic Center,"Akershus, NOR",Classic.com (original currency),Currency may be NOK converted
+s021,2026-10-31,Porsche 911 (964) Turbo 3.6,Turbo 3.6,,455261,GBP,1.0,,Bring a Trailer,,The Classic Valuer (GBP as published),
+s022,2026-10-27,Porsche 911 (964) Turbo 3.6,Turbo 3.6,,262356,GBP,1.0,,Collecting Cars,,The Classic Valuer (GBP as published),
+s023,2026-10-16,Porsche 911 (964) Turbo 3.6,Turbo 3.6,,345371,GBP,1.0,,Bring a Trailer,,The Classic Valuer (GBP as published),
+s024,2026-10-12,Porsche 911 (964) Turbo 3.6,Turbo 3.6,,302603,GBP,1.0,,Collecting Cars,,The Classic Valuer (GBP as published),
+s025,2026-08-15,Porsche 911 (964) Turbo 3.6,Turbo 3.6,,526078,GBP,1.0,,RM Sotheby's,,The Classic Valuer (GBP as published),
+s026,2026-08-14,Porsche 911 (964) Turbo 3.6,Turbo 3.6,,497511,GBP,1.0,,Broad Arrow,,The Classic Valuer (GBP as published),
+s027,2026-08-07,Porsche 911 (964) Turbo 3.6,Turbo 3.6,,576656,GBP,1.0,,Bring a Trailer,,The Classic Valuer (GBP as published),
+s028,2026-07-21,Porsche 911 (964) Turbo 3.6,Turbo 3.6,,266718,GBP,1.0,,Collecting Cars,,The Classic Valuer (GBP as published),
+s029,2026-06-18,Porsche 911 (964) Turbo 3.6,Turbo 3.6,,109728,GBP,1.0,,Collecting Cars,,The Classic Valuer (GBP as published),Outlier: check the listing before using
+s030,2026-01-30,Porsche 911 (964) Turbo 3.6,Turbo 3.6,1993,335938,GBP,1.0,101000,Bonhams,"Paris, FRA",The Classic Valuer (GBP as published),
+s031,2025-12-31,Porsche 911 (964) Turbo 3.6,Turbo 3.6,,459878,GBP,1.0,36000,Bring a Trailer,USA,The Classic Valuer (GBP as published),
+s032,2025-12-24,Porsche 911 (964) Turbo 3.6,Turbo 3.6,,668809,GBP,1.0,6000,Bring a Trailer,USA,The Classic Valuer (GBP as published),Very low mileage
+s033,2025-12-11,Porsche 911 (964) Turbo 3.6,Turbo 3.6,,634744,GBP,1.0,2000,Bring a Trailer,USA,The Classic Valuer (GBP as published),Very low mileage
+s034,2025-08-16,Porsche 911 (964) Turbo 3.6,Turbo 3.6,,470097,GBP,1.0,,RM Sotheby's,,The Classic Valuer (GBP as published),
+s035,2026-09-02,Porsche 911 (964) Turbo 3.3,Turbo 3.3,1992,192205,GBP,1.0,51100,Collecting Cars,UK,The Classic Valuer (GBP as published),
+s036,2026-05-18,Porsche 911 (964) Turbo 3.3,Turbo 3.3,1991,258700,GBP,1.0,48000,Collecting Cars,UK,The Classic Valuer (GBP as published),
+s037,2026-03-30,Porsche 911 (964) Turbo 3.3,Turbo 3.3,1991,541500,AUD,0.49,111000,Unknown,"Gladstone, AUS",Classic.com (original currency),
+s038,2026-03-10,Porsche 911 (964) Turbo 3.3,Turbo 3.3,1991,246000,USD,0.75,45000,Unknown,"Phoenix, USA",Classic.com (original currency),
+s039,2026-03-03,Porsche 911 (964) Turbo 3.3,Turbo 3.3,1991,405000,USD,0.75,16000,Unknown,USA,Classic.com (original currency),Low mileage
+s040,2026-02-24,Porsche 911 (964) Turbo 3.3,Turbo 3.3,1991,166000,EUR,0.86,57000,Unknown,"Lippe, DEU",Classic.com (original currency),
+s041,2026-02-04,Porsche 911 (964) Turbo 3.3,Turbo 3.3,1991,156000,EUR,0.86,88000,Unknown,"Deux-Sevres, FRA",Classic.com (original currency),Possibly the same car as 30 Jan
+s042,2026-01-30,Porsche 911 (964) Turbo 3.3,Turbo 3.3,1991,182500,EUR,0.86,88000,Unknown,NLD,Classic.com (original currency),
+s043,2025-12-11,Porsche 911 (964) Turbo 3.3,Turbo 3.3,1991,295000,USD,0.75,25000,Unknown,"Portland, USA",Classic.com (original currency),Modified
+s044,2025-12-04,Porsche 911 (964) Turbo 3.3,Turbo 3.3,1991,187214,USD,0.75,87000,Unknown,"Atlanta, USA",Classic.com (original currency),
+s045,2025-12-01,Porsche 911 (964) Turbo 3.3,Turbo 3.3,1991,270000,USD,0.75,18000,Unknown,"Houston, USA",Classic.com (original currency),
+s046,2025-11-19,Porsche 911 (964) Turbo 3.3,Turbo 3.3,1991,161111,EUR,0.86,64000,Unknown,"Lippe, DEU",Classic.com (original currency),
+s047,2025-10-06,Porsche 911 (964) Turbo 3.3,Turbo 3.3,,225000,USD,0.75,63000,Unknown,"Toronto, CAN",Classic.com (original currency),Currency may be CAD
+s048,2025-08-14,Porsche 911 (964) Turbo 3.3,Turbo 3.3,,275000,USD,0.75,34000,Unknown,"Monterey, USA",Classic.com (original currency),
+s049,2025-07-30,Porsche 911 (964) Turbo 3.3,Turbo 3.3,,286000,USD,0.75,61000,Unknown,"Pompano Beach, USA",Classic.com (original currency),
+s050,2025-07-26,Porsche 911 (964) Turbo 3.3,Turbo 3.3,,286000,USD,0.75,27000,Unknown,"Harrisburg, USA",Classic.com (original currency),
+s051,2025-07-25,Porsche 911 (964) Turbo 3.3,Turbo 3.3,,243000,USD,0.75,64000,Unknown,"New Orleans, USA",Classic.com (original currency),
+s052,2025-05-11,Porsche 911 (964) Turbo 3.3,Turbo 3.3,1992,237700,GBP,1.0,,Collecting Cars,UK,The Classic Valuer (GBP as published),
+s053,2024-09-15,Porsche 911 (964) Turbo 3.3,Turbo 3.3,1991,117460,GBP,1.0,,Collecting Cars,UK,The Classic Valuer (GBP as published),
+s054,2024-01-28,Porsche 911 (964) Turbo 3.3,Turbo 3.3,1991,137700,GBP,1.0,,Collecting Cars,UK,The Classic Valuer (GBP as published),
+s055,2023-07-22,Porsche 911 (964) Turbo 3.3,Turbo 3.3,1991,100000,GBP,1.0,,Manor Park,UK,The Classic Valuer (GBP as published),
+s056,2022-11-26,Porsche 911 (964) Turbo 3.3,Turbo 3.3,1992,132000,GBP,1.0,,Historics,UK,The Classic Valuer (GBP as published),
+s057,2022-11-12,Porsche 911 (964) Turbo 3.3,Turbo 3.3,1993,128250,GBP,1.0,,Silverstone Auctions,UK,The Classic Valuer (GBP as published),
+s058,2022-09-01,Porsche 911 (964) Turbo 3.3,Turbo 3.3,1991,115200,GBP,1.0,,Collecting Cars,UK,The Classic Valuer (GBP as published),
+s059,2022-06-09,Porsche 911 (964) Turbo 3.3,Turbo 3.3,1991,102376,GBP,1.0,,Collecting Cars,UK,The Classic Valuer (GBP as published),
+s060,2022-03-05,Porsche 911 (964) Turbo 3.3,Turbo 3.3,1991,106875,GBP,1.0,,Silverstone Auctions,UK,The Classic Valuer (GBP as published),
+s061,2021-12-11,Porsche 911 (964) Turbo 3.3,Turbo 3.3,1991,127200,GBP,1.0,,Collecting Cars,UK,The Classic Valuer (GBP as published),
+s062,2021-11-13,Porsche 911 (964) Turbo 3.3,Turbo 3.3,1991,99562,GBP,1.0,,Silverstone Auctions,UK,The Classic Valuer (GBP as published),

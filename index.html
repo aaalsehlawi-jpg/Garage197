@@ -1,0 +1,512 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#6a3f9e">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Garage 197 Car Lookup</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..700&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap">
+<style>
+  /* Layout: a workbench. Left rail holds the garage list and the car's details; the right side is the market read-out for that car. */
+  :root {
+    --bg: #f3f2f6; --panel: #ffffff; --ink: #1c1926; --muted: #615c70; --line: #dbd7e4;
+    --accent: #6a3f9e; --accent-ink: #ffffff; --accent-soft: #ece4f6;
+    --ok: #1d7a4c; --bad: #b3372f; --warn: #94600a;
+    --f-display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+    --f-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --f-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+    --bg: #14121a; --panel: #1d1a26; --ink: #ebe8f2; --muted: #a39db4; --line: #342f42;
+    --accent: #b794e8; --accent-ink: #1a1424; --accent-soft: #2b2340;
+    --ok: #5cc48e; --bad: #f0857c; --warn: #e0b060; color-scheme: dark } }
+  :root[data-theme="dark"] {
+    --bg: #14121a; --panel: #1d1a26; --ink: #ebe8f2; --muted: #a39db4; --line: #342f42;
+    --accent: #b794e8; --accent-ink: #1a1424; --accent-soft: #2b2340;
+    --ok: #5cc48e; --bad: #f0857c; --warn: #e0b060; color-scheme: dark }
+
+  body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.5; }
+  .wrap { max-width: 1180px; margin-inline: auto; padding-block: 28px 56px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: flex; flex-direction: column; gap: 24px; }
+  h1, h2, h3, p { margin: 0; }
+  h1 { font-family: var(--f-display); font-stretch: 112%; font-weight: 700; font-size: 1.75rem; letter-spacing: -0.01em; text-wrap: balance; }
+  h2 { font-family: var(--f-display); font-weight: 600; font-size: 1.05rem; text-wrap: balance; }
+  .top { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: end; justify-content: space-between; }
+  .top p { color: var(--muted); max-width: 62ch; }
+  .cur { display: flex; align-items: center; gap: 8px; font-size: .85rem; color: var(--muted); }
+  .bench { display: grid; grid-template-columns: minmax(0, 22rem) minmax(0, 1fr); gap: 24px; align-items: start; }
+  @media (max-width: 860px) { .bench { grid-template-columns: minmax(0, 1fr); } }
+  .rail, .out { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 18px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+  .label { font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+  .muted { color: var(--muted); } .small { font-size: .85rem; }
+
+  .garage { display: flex; flex-direction: column; gap: 6px; }
+  .car-btn { font: inherit; text-align: left; background: transparent; color: var(--ink); border: 1px solid var(--line); border-radius: 4px; padding: 9px 11px; cursor: pointer; display: flex; flex-direction: column; gap: 1px; }
+  .car-btn span:last-child { font-family: var(--f-mono); font-size: .76rem; color: var(--muted); overflow-wrap: anywhere; }
+  .car-btn[aria-current="true"] { border-color: var(--accent); background: var(--accent-soft); }
+  .car-btn:hover { border-color: var(--accent); }
+
+  form { display: flex; flex-direction: column; gap: 12px; }
+  .field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+  .field label { font-size: .82rem; font-weight: 500; }
+  .row2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  input, select { font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 4px; padding: 8px 10px; min-width: 0; width: 100%; box-sizing: border-box; }
+  #f-vin { font-family: var(--f-mono); text-transform: uppercase; letter-spacing: .04em; }
+  .hint { font-size: .78rem; color: var(--muted); }
+  .btns { display: flex; flex-wrap: wrap; gap: 8px; }
+  .btn { font: inherit; font-weight: 600; border-radius: 4px; padding: 8px 14px; cursor: pointer; border: 1px solid var(--line); background: transparent; color: var(--ink); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  .btn.danger { color: var(--bad); }
+  .btn:disabled { opacity: .5; cursor: default; }
+  :is(.btn, .car-btn, input, select, a):focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .status { font-size: .82rem; color: var(--muted); min-height: 1.2em; }
+
+  .plate { display: flex; flex-wrap: wrap; gap: 6px; }
+  .seg { border: 1px solid var(--line); border-radius: 4px; padding: 6px 9px 7px; display: flex; flex-direction: column; gap: 2px; background: var(--bg); min-width: 0; }
+  .seg b { font-family: var(--f-mono); font-weight: 500; font-size: 1.15rem; letter-spacing: .12em; }
+  .seg .label { font-size: .64rem; }
+  .seg em { font-style: normal; font-size: .8rem; color: var(--ink); }
+  .flag { display: inline-flex; align-items: center; gap: 6px; font-size: .82rem; border: 1px solid var(--line); border-radius: 999px; padding: 2px 10px; }
+  .flag::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--muted); }
+  .flag.ok::before { background: var(--ok); } .flag.bad::before { background: var(--bad); } .flag.warn::before { background: var(--warn); }
+  .flags { display: flex; flex-wrap: wrap; gap: 6px; }
+
+  .headline { display: flex; flex-wrap: wrap; gap: 6px 28px; align-items: end; }
+  .big { font-family: var(--f-display); font-stretch: 110%; font-weight: 700; font-size: clamp(1.7rem, 5vw, 2.5rem); line-height: 1.05; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr)); gap: 14px 20px; }
+  .stat { display: flex; flex-direction: column; gap: 2px; border-top: 1px solid var(--line); padding-top: 10px; }
+  .stat b { font-family: var(--f-display); font-weight: 600; font-size: 1.2rem; font-variant-numeric: tabular-nums; }
+  .up { color: var(--ok); } .down { color: var(--bad); }
+  .chart { position: relative; }
+  .chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .tip { position: absolute; pointer-events: none; background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 6px 9px; font-size: .8rem; box-shadow: 0 4px 14px rgb(0 0 0 / .14); max-width: 15rem; }
+  .tablebox { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: .85rem; font-variant-numeric: tabular-nums; }
+  th { text-align: left; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 600; white-space: nowrap; }
+  th, td { padding: 7px 10px 7px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+  td.num, th.num { text-align: right; }
+  td:first-child { white-space: nowrap; }
+  a { color: var(--accent); }
+  .links { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: .88rem; }
+  .empty { color: var(--muted); max-width: 56ch; }
+</style>
+<style>body{margin:0} [hidden]{display:none!important} img{max-width:100%}</style>
+</head>
+<body>
+<script>
+// Local garage store: keeps saved cars in this browser until accounts are added.
+(function () {
+  var KEY = 'g197-cars', subs = [];
+  function load() { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { return {}; } }
+  function save(o) { try { localStorage.setItem(KEY, JSON.stringify(o)); } catch (e) {} emit(); }
+  function snap() { var o = load(); return { docs: Object.keys(o).map(function (id) { return { id: id, data: function () { return o[id]; } }; }) }; }
+  function emit() { var s = snap(); subs.forEach(function (f) { f(s); }); }
+  var col = {
+    doc: function (id) { id = id || 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+      return { id: id, set: async function (d) { var o = load(); o[id] = d; save(o); }, delete: async function () { var o = load(); delete o[id]; save(o); } }; },
+    onSnapshot: function (f) { subs.push(f); setTimeout(function () { f(snap()); }, 0); return function () {}; }
+  };
+  window.claude = { use: async function (n) { return n === 'db' ? { collection: function () { return col; } } : null; } };
+  if ('serviceWorker' in navigator) window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });
+})();
+</script>
+
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Garage 197 Car Lookup</h1>
+      <p>Enter a car and its chassis number to decode it and see what cars like it have sold for. Draft version: it knows three Porsche models so far.</p>
+    </div>
+    <div class="cur"><label for="f-cur">Show prices in</label>
+      <select id="f-cur" style="width:auto"><option value="USD">US dollars</option><option value="GBP">Pounds</option><option value="EUR">Euros</option></select>
+    </div>
+  </header>
+
+  <div class="bench">
+    <div class="rail">
+      <section class="panel" aria-labelledby="h-garage">
+        <h2 id="h-garage">Garage</h2>
+        <div class="garage" id="garage"></div>
+        <p class="muted small" id="garage-empty">Cars you save appear here and stay on this device. Fill in the details below and press Save to garage.</p>
+        <div class="btns"><button type="button" class="btn" id="b-new">New car</button></div>
+      </section>
+
+      <section class="panel" aria-labelledby="h-car">
+        <h2 id="h-car">Car details</h2>
+        <form id="car-form" novalidate>
+          <div class="field"><label for="f-name">Car name</label><input id="f-name" type="text" placeholder="e.g. Porsche 964 Turbo" autocomplete="off"></div>
+          <div class="field"><label for="f-vin">Chassis number (VIN)</label><input id="f-vin" type="text" placeholder="17 characters on 1981-on cars" autocomplete="off" spellcheck="false" maxlength="24"></div>
+          <div class="row2">
+            <div class="field"><label for="f-year">Model year</label><input id="f-year" type="number" min="1900" max="2030" inputmode="numeric" placeholder="1991"></div>
+            <div class="field"><label for="f-cond">Condition</label>
+              <select id="f-cond"><option value="">Not graded</option><option value="1">1 Concours</option><option value="2">2 Excellent</option><option value="3">3 Good</option><option value="4">4 Fair</option></select></div>
+          </div>
+          <div class="row2">
+            <div class="field"><label for="f-miles">Odometer</label><input id="f-miles" type="number" min="0" inputmode="numeric" placeholder="77000"></div>
+            <div class="field"><label for="f-unit">Unit</label><select id="f-unit"><option value="mi">Miles</option><option value="km">Kilometres</option></select></div>
+          </div>
+          <div class="field"><label for="f-model">Market to compare against</label>
+            <select id="f-model"><option value="auto">Work it out from the details</option></select>
+            <span class="hint" id="model-hint"></span></div>
+          <div class="btns">
+            <button type="submit" class="btn primary" id="b-save">Save to garage</button>
+            <button type="button" class="btn danger" id="b-del" hidden>Remove</button>
+            <button type="button" class="btn danger" id="b-del-yes" hidden>Yes, remove it</button>
+            <button type="button" class="btn" id="b-del-no" hidden>Keep it</button>
+          </div>
+          <p class="status" id="status" role="status"></p>
+        </form>
+      </section>
+    </div>
+
+    <div class="out">
+      <section class="panel" id="p-vin" aria-labelledby="h-vin">
+        <h2 id="h-vin">Chassis number</h2>
+        <div id="vin-out"><p class="empty">Type a chassis number to decode the maker, model year, plant and, for Porsches, the model type.</p></div>
+      </section>
+
+      <section class="panel" id="p-market" aria-labelledby="h-market">
+        <h2 id="h-market">Market read-out</h2>
+        <div id="market-out" style="display:flex;flex-direction:column;gap:18px"><p class="empty">Loading sold results…</p></div>
+      </section>
+
+      <p class="muted small">Sold prices are public auction results copied by hand from The Classic Valuer and Classic.com, <span id="data-asof"></span>. Prices in other currencies use fixed approximate rates ($1 = £0.75, €1 = £0.86). Condition is saved with the car but doesn’t change the figures yet. This is market research, not a formal valuation.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+/*PURE-START*/
+const FX = { GBP: 1, USD: 0.75, EUR: 0.86 };
+const WMI = { WP0: 'Porsche', WP1: 'Porsche', ZFF: 'Ferrari', WDB: 'Mercedes-Benz', WDD: 'Mercedes-Benz', WBA: 'BMW', WBS: 'BMW M', SCF: 'Aston Martin', ZHW: 'Lamborghini', ZA9: 'Lamborghini', SAJ: 'Jaguar', ZAM: 'Maserati', SCC: 'Lotus', JN1: 'Nissan', JT2: 'Toyota', JH4: 'Acura', JHM: 'Honda', WAU: 'Audi', WVW: 'Volkswagen', ZAR: 'Alfa Romeo', SAL: 'Land Rover', SCA: 'Rolls-Royce', SCB: 'Bentley', '1G1': 'Chevrolet', '1FA': 'Ford', ZLA: 'Lancia', VF1: 'Renault', VF7: 'Citroën', SAR: 'Rover' };
+const PLANTS = { S: 'Stuttgart-Zuffenhausen', N: 'Neckarsulm', L: 'Leipzig', U: 'Uusikaupunki', K: 'Osnabrück' };
+const YEAR_CODES = 'ABCDEFGHJKLMNPRSTVWXY123456789';
+function vinYear(c) { const i = YEAR_CODES.indexOf(c); return i < 0 ? null : 1980 + i; }
+function vinCheck(v) {
+  const val = (ch) => /\d/.test(ch) ? +ch : ({ A: 1, B: 2, C: 3, D: 4, E: 5, F: 6, G: 7, H: 8, J: 1, K: 2, L: 3, M: 4, N: 5, P: 7, R: 9, S: 2, T: 3, U: 4, V: 5, W: 6, X: 7, Y: 8, Z: 9 })[ch];
+  const w = [8, 7, 6, 5, 4, 3, 2, 10, 0, 9, 8, 7, 6, 5, 4, 3, 2];
+  let sum = 0;
+  for (let i = 0; i < 17; i++) { const x = val(v[i]); if (x == null) return null; sum += x * w[i]; }
+  const r = sum % 11; return r === 10 ? 'X' : String(r);
+}
+function decodeVin(raw) {
+  const v = (raw || '').toUpperCase().replace(/[\s-]/g, '');
+  const out = { vin: v, length: v.length, full: false, flags: [], segs: [] };
+  if (!v) return out;
+  if (/[IOQ]/.test(v)) out.flags.push({ kind: 'bad', text: 'Contains I, O or Q, which chassis numbers never use. Check for 1 or 0.' });
+  if (v.length !== 17) {
+    out.flags.push({ kind: 'warn', text: v.length < 17 ? v.length + ' characters. Cars built before 1981 have shorter chassis numbers that can’t be decoded automatically; newer cars have 17.' : v.length + ' characters. A modern chassis number has 17.' });
+    return out;
+  }
+  if (!/^[A-HJ-NPR-Z0-9]{17}$/.test(v)) return out;
+  out.full = true;
+  out.maker = WMI[v.slice(0, 3)] || null;
+  out.year = vinYear(v[9]);
+  const row = v.slice(3, 6) === 'ZZZ';
+  out.market = row ? 'Rest of world' : 'USA / Canada';
+  if (row || v[8] === 'Z') out.flags.push({ kind: 'ok', text: 'Rest-of-world format, which has no check digit to verify.' });
+  else {
+    const c = vinCheck(v);
+    out.checkOk = c === v[8];
+    out.flags.push(out.checkOk ? { kind: 'ok', text: 'Check digit is valid, so the number is typed correctly.' } : { kind: 'bad', text: 'Check digit should be ' + c + ', not ' + v[8] + '. One character is probably mistyped.' });
+  }
+  const isPorsche = out.maker === 'Porsche';
+  if (isPorsche) {
+    out.type = v[6] + v[7] + v[11];
+    out.plant = PLANTS[v[10]] || null;
+    out.variantCode = v[12];
+    if (out.type === '964' && (v[12] === '7' || v[12] === '8')) out.variant = 'Turbo';
+    if (out.type === '993' && v[12] === '7') out.variant = 'Turbo';
+  }
+  out.segs = [
+    { chars: v.slice(0, 3), label: 'Maker', value: out.maker || 'Not recognised' },
+    { chars: v.slice(3, 6), label: 'Spec', value: out.market },
+    { chars: v.slice(6, 8), label: isPorsche ? 'Type' : 'Model', value: isPorsche ? out.type.slice(0, 2) + '…' : '' },
+    { chars: v[8], label: 'Check', value: row ? 'None' : (out.checkOk ? 'Valid' : 'Fails') },
+    { chars: v[9], label: 'Year', value: out.year ? String(out.year) : '?' },
+    { chars: v[10], label: 'Plant', value: isPorsche ? (out.plant || '') : '' },
+    { chars: v.slice(11), label: 'Serial', value: isPorsche ? 'Type ' + out.type + (out.variant ? ' ' + out.variant : '') : '' }
+  ];
+  return out;
+}
+const M33 = 'Porsche 911 (964) Turbo 3.3', M36 = 'Porsche 911 (964) Turbo 3.6', M993 = 'Porsche 911 (993) Turbo';
+function suggestModel(car, vin) {
+  const year = Number(car.year) || (vin && vin.year) || null;
+  const name = (car.name || '').toLowerCase();
+  const reasons = [];
+  let type = null, turbo = false;
+  if (vin && vin.full && vin.maker === 'Porsche') { type = vin.type; turbo = vin.variant === 'Turbo'; if (turbo) reasons.push('chassis number is a ' + type + ' Turbo'); }
+  if (!turbo && /turbo/.test(name)) { turbo = true; if (!type) { if (/964|965/.test(name)) type = '964'; else if (/993/.test(name)) type = '993'; } if (type) reasons.push('name says ' + type + ' Turbo'); }
+  if (!turbo || !type) return { model: null, reason: '' };
+  if (type === '993') return { model: M993, reason: reasons.join(', ') };
+  if (type === '964') {
+    if (/3\.6/.test(name)) return { model: M36, reason: reasons.concat('name says 3.6').join(', ') };
+    if (/3\.3/.test(name)) return { model: M33, reason: reasons.concat('name says 3.3').join(', ') };
+    if (year && year <= 1992) return { model: M33, reason: reasons.concat(year + ' cars are the 3.3').join(', ') };
+    if (year && year >= 1993) return { model: M36, reason: reasons.concat(year + ' cars are usually the 3.6 (a few 1993 cars are the 3.3 Turbo S)').join(', ') };
+    return { model: null, reason: 'Add the model year to tell a 3.3 from a 3.6.' };
+  }
+  return { model: null, reason: '' };
+}
+function parseCsv(text) {
+  const rows = []; let row = [], cell = '', q = false;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (q) { if (ch === '"') { if (text[i + 1] === '"') { cell += '"'; i++; } else q = false; } else cell += ch; }
+    else if (ch === '"') q = true;
+    else if (ch === ',') { row.push(cell); cell = ''; }
+    else if (ch === '\n') { row.push(cell); rows.push(row); row = []; cell = ''; }
+    else if (ch !== '\r') cell += ch;
+  }
+  if (cell !== '' || row.length) { row.push(cell); rows.push(row); }
+  const head = rows.shift();
+  return rows.filter((r) => r.length === head.length).map((r) => Object.fromEntries(head.map((h, i) => [h, r[i]])));
+}
+function prepSales(rows) {
+  return rows.map((r) => ({ id: r.id, date: r.date, model: r.model, variant: r.variant, year: r.model_year, price: +r.price, currency: r.currency, gbp: Math.round(+r.price * +r.fx_to_gbp), miles: r.mileage_mi === '' ? null : +r.mileage_mi, platform: r.platform, location: r.location, flag: r.flag }));
+}
+function median(a) { if (!a.length) return null; const s = [...a].sort((x, y) => x - y), m = s.length >> 1; return s.length % 2 ? s[m] : Math.round((s[m - 1] + s[m]) / 2); }
+function marketFor(sales, model, carMiles, today) {
+  const rs = sales.filter((r) => r.model === model);
+  const y = +today.slice(0, 4);
+  const back = (n) => (y - n) + today.slice(4);
+  const inYear = (yr) => rs.filter((r) => r.date.startsWith(String(yr))).map((r) => r.gbp);
+  const ytd = inYear(y), prev = inYear(y - 1);
+  const last12 = rs.filter((r) => r.date >= back(1)).map((r) => r.gbp);
+  const recent = rs.filter((r) => r.date >= back(2));
+  const withMiles = recent.filter((r) => r.miles != null);
+  let comps = [], band = null;
+  if (carMiles) {
+    band = [Math.round(carMiles * 0.5), Math.round(carMiles * 1.5)];
+    comps = withMiles.filter((r) => r.miles >= band[0] && r.miles <= band[1]);
+  }
+  const cp = comps.map((r) => r.gbp).sort((a, b) => a - b);
+  const quart = (p) => cp[Math.min(cp.length - 1, Math.max(0, Math.round((cp.length - 1) * p)))];
+  const mY = median(ytd), mP = median(prev);
+  return {
+    total: rs.length, medianYtd: mY, nYtd: ytd.length, medianPrev: mP, nPrev: prev.length,
+    change: mY != null && mP ? (mY - mP) / mP : null, thin: ytd.length < 10 || prev.length < 10,
+    median12: median(last12), n12: last12.length, low12: last12.length ? Math.min(...last12) : null, high12: last12.length ? Math.max(...last12) : null,
+    band, comps, enoughComps: comps.length >= 3,
+    compMedian: median(cp), compLow: cp.length ? quart(0.25) : null, compHigh: cp.length ? quart(0.75) : null,
+    points: withMiles,
+    nearest: carMiles ? [...withMiles].sort((a, b) => Math.abs(a.miles - carMiles) - Math.abs(b.miles - carMiles)).slice(0, 8) : [...recent].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 8)
+  };
+}
+/*PURE-END*/
+
+const $ = (id) => document.getElementById(id);
+const el = (tag, attrs, ...kids) => { const n = document.createElement(tag); for (const k in (attrs || {})) { if (k === 'class') n.className = attrs[k]; else if (k === 'text') n.textContent = attrs[k]; else n.setAttribute(k, attrs[k]); } n.append(...kids.filter((k) => k != null)); return n; };
+const S = { sales: null, salesError: false, cars: [], currentId: null, db: null, cur: 'USD', dbReady: false, pickedFirst: false, dirty: false };
+try { const c = localStorage.getItem('g197-cur'); if (c && FX[c]) S.cur = c; } catch (e) {}
+$('f-cur').value = S.cur;
+
+const money = (gbp) => gbp == null ? '—' : new Intl.NumberFormat(S.cur === 'USD' ? 'en-US' : 'en-GB', { style: 'currency', currency: S.cur, maximumFractionDigits: 0 }).format(Math.round(gbp / FX[S.cur] / 100) * 100);
+const num = (n) => new Intl.NumberFormat('en-GB').format(n);
+const fmtDate = (d) => new Date(d + 'T00:00:00Z').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
+const shortModel = (m) => m.replace('Porsche 911 ', '');
+
+function readForm() {
+  return { name: $('f-name').value.trim(), vin: $('f-vin').value.toUpperCase().replace(/[\s-]/g, ''), year: $('f-year').value, miles: $('f-miles').value, unit: $('f-unit').value, condition: $('f-cond').value, model: $('f-model').value };
+}
+function fillForm(c) {
+  $('f-name').value = c.name || ''; $('f-vin').value = c.vin || ''; $('f-year').value = c.year || ''; $('f-miles').value = c.miles || '';
+  $('f-unit').value = c.unit || 'mi'; $('f-cond').value = c.condition || '';
+  $('f-model').value = [...$('f-model').options].some((o) => o.value === c.model) ? c.model : 'auto';
+}
+function carMiles(c) { const n = Number(c.miles); if (!n) return null; return c.unit === 'km' ? Math.round(n * 0.621371) : n; }
+
+function renderGarage() {
+  const g = $('garage'); g.replaceChildren();
+  for (const c of S.cars) {
+    const b = el('button', { type: 'button', class: 'car-btn', 'aria-current': c.id === S.currentId ? 'true' : 'false' }, el('span', { text: c.name || 'Unnamed car' }), el('span', { text: c.vin || 'No chassis number' }));
+    b.addEventListener('click', () => { S.currentId = c.id; S.dirty = false; fillForm(c); endDelete(); renderAll(); });
+    g.append(b);
+  }
+  $('garage-empty').hidden = S.cars.length > 0;
+  if (!S.db && S.dbReady) $('garage-empty').textContent = 'Saving isn’t available in this view. Lookups still work.';
+}
+
+function renderVin(car) {
+  const box = $('vin-out'); box.replaceChildren();
+  const d = decodeVin(car.vin);
+  if (!d.vin) { box.append(el('p', { class: 'empty', text: 'Type a chassis number to decode the maker, model year, plant and, for Porsches, the model type.' })); return d; }
+  const wrap = el('div', { style: 'display:flex;flex-direction:column;gap:12px' });
+  if (d.full) {
+    const plate = el('div', { class: 'plate' });
+    for (const s of d.segs) plate.append(el('div', { class: 'seg' }, el('span', { class: 'label', text: s.label }), el('b', { text: s.chars }), el('em', { text: s.value || ' ' })));
+    wrap.append(plate);
+    if (d.year && car.year && Number(car.year) !== d.year) d.flags.push({ kind: 'warn', text: 'The chassis number says model year ' + d.year + ', but you entered ' + car.year + '.' });
+    if (!d.maker) d.flags.push({ kind: 'warn', text: 'Maker code ' + d.vin.slice(0, 3) + ' isn’t in this draft’s list yet.' });
+  } else wrap.append(el('div', { class: 'plate' }, el('div', { class: 'seg' }, el('span', { class: 'label', text: 'As entered' }), el('b', { text: d.vin }))));
+  const flags = el('div', { class: 'flags' });
+  for (const f of d.flags) flags.append(el('span', { class: 'flag ' + f.kind, text: f.text }));
+  wrap.append(flags);
+  box.append(wrap);
+  return d;
+}
+
+function searchLinks(car) {
+  const q = [car.year, car.name].filter(Boolean).join(' ') || 'classic car';
+  const mk = (label, site) => el('a', { href: 'https://www.google.com/search?q=' + encodeURIComponent(q + ' sold site:' + site), target: '_blank', rel: 'noopener', text: label });
+  return el('div', { class: 'links' }, mk('Classic.com results', 'classic.com'), mk('The Classic Valuer results', 'theclassicvaluer.com'), mk('Bring a Trailer results', 'bringatrailer.com'), mk('Collecting Cars results', 'collectingcars.com'));
+}
+
+function drawChart(host, m, miles) {
+  host.replaceChildren();
+  const pts = m.points; if (pts.length < 2) return;
+  const W = Math.max(300, host.clientWidth || 600), H = 250, ml = 58, mr = 14, mt = 20, mb = 36;
+  const xMax = Math.max(...pts.map((p) => p.miles), miles || 0) * 1.06, yVals = pts.map((p) => p.gbp / FX[S.cur]);
+  const step = (max, n) => { const raw = max / n, p = Math.pow(10, Math.floor(Math.log10(raw))); return [1, 2, 2.5, 5, 10].map((k) => k * p).find((s) => s >= raw); };
+  const ys = step(Math.max(...yVals) * 1.05, 4), yTop = Math.ceil(Math.max(...yVals) * 1.05 / ys) * ys;
+  const xs = step(xMax, W < 420 ? 3 : 5);
+  const x = (v) => ml + (v / xMax) * (W - ml - mr), y = (v) => H - mb - (v / yTop) * (H - mt - mb);
+  const NS = 'http://www.w3.org/2000/svg';
+  const s = (tag, a, text) => { const n = document.createElementNS(NS, tag); for (const k in a) n.setAttribute(k, a[k]); if (text != null) n.textContent = text; return n; };
+  const svg = s('svg', { viewBox: '0 0 ' + W + ' ' + H, role: 'img', 'aria-label': 'Sold price against mileage for recent sales' });
+  const sym = { USD: '$', GBP: '£', EUR: '€' }[S.cur];
+  for (let v = 0; v <= yTop + 1; v += ys) {
+    svg.append(s('line', { x1: ml, x2: W - mr, y1: y(v), y2: y(v), stroke: 'var(--line)', 'stroke-width': 1 }));
+    svg.append(s('text', { x: ml - 8, y: y(v) + 4, 'text-anchor': 'end', fill: 'var(--muted)', 'font-size': 11 }, sym + Math.round(v / 1000) + 'k'));
+  }
+  for (let v = 0; v <= xMax; v += xs) svg.append(s('text', { x: x(v), y: H - mb + 16, 'text-anchor': 'middle', fill: 'var(--muted)', 'font-size': 11 }, Math.round(v / 1000) + 'k'));
+  svg.append(s('text', { x: W - mr, y: H - 4, 'text-anchor': 'end', fill: 'var(--muted)', 'font-size': 11 }, 'Miles at sale'));
+  if (m.band && miles) {
+    svg.append(s('rect', { x: x(m.band[0]), y: mt, width: Math.max(0, x(Math.min(m.band[1], xMax)) - x(m.band[0])), height: H - mt - mb, fill: 'var(--accent-soft)', opacity: .7 }));
+    svg.append(s('line', { x1: x(miles), x2: x(miles), y1: mt, y2: H - mb, stroke: 'var(--accent)', 'stroke-width': 2, 'stroke-dasharray': '4 3' }));
+    const right = x(miles) > W - 110;
+    svg.append(s('text', { x: x(miles) + (right ? -6 : 6), y: mt - 6, 'text-anchor': right ? 'end' : 'start', fill: 'var(--accent)', 'font-size': 11, 'font-weight': 600 }, 'This car, ' + num(miles) + ' mi'));
+  }
+  const tip = el('div', { class: 'tip' }); tip.hidden = true;
+  for (const p of pts) {
+    const c = s('circle', { cx: x(p.miles), cy: y(p.gbp / FX[S.cur]), r: 5, fill: 'var(--ink)', 'fill-opacity': .55, stroke: 'var(--panel)', 'stroke-width': 1.5, tabindex: 0 });
+    const show = () => {
+      tip.replaceChildren(el('div', { class: 'muted', text: fmtDate(p.date) + (p.platform && p.platform !== 'Unknown' ? ' · ' + p.platform : '') }), el('div', { style: 'font-weight:600', text: money(p.gbp) + ' · ' + num(p.miles) + ' mi' }), p.location ? el('div', { text: p.location }) : null, p.flag ? el('div', { class: 'muted', text: p.flag }) : null);
+      tip.hidden = false;
+      const k = host.clientWidth / W; let left = x(p.miles) * k + 10; const top = Math.max(0, y(p.gbp / FX[S.cur]) * k - 12);
+      if (left + tip.offsetWidth > host.clientWidth) left = Math.max(0, x(p.miles) * k - tip.offsetWidth - 10);
+      tip.style.left = left + 'px'; tip.style.top = top + 'px'; c.setAttribute('r', 7);
+    };
+    const hide = () => { tip.hidden = true; c.setAttribute('r', 5); };
+    c.addEventListener('pointerenter', show); c.addEventListener('pointerleave', hide); c.addEventListener('focus', show); c.addEventListener('blur', hide);
+    svg.append(c);
+  }
+  host.append(svg, tip);
+}
+
+function renderMarket(car, vin) {
+  const out = $('market-out'); out.replaceChildren();
+  const hint = $('model-hint');
+  if (S.salesError) { out.append(el('p', { class: 'empty', text: 'The sold results didn’t load. Reload the page to try again.' })); return; }
+  if (!S.sales) { out.append(el('p', { class: 'empty', text: 'Loading sold results…' })); return; }
+  let model = car.model, sug = { model: null, reason: '' };
+  if (model === 'auto' || !model) { sug = suggestModel(car, vin); model = sug.model; hint.textContent = model ? 'Matched to ' + shortModel(model) + ': ' + sug.reason + '.' : sug.reason; }
+  else hint.textContent = '';
+  if (!car.name && !car.vin) { out.append(el('p', { class: 'empty', text: 'Enter a car on the left, or pick one from the garage, to see its market.' })); return; }
+  if (!model || model === 'other') {
+    out.append(el('p', { class: 'empty', text: 'There are no sold results on file for this car’s model yet. This draft tracks the 964 Turbo 3.3, 964 Turbo 3.6 and 993 Turbo. You can still save the car, and ask Claude to add its model. Meanwhile these searches open public results:' }), searchLinks(car));
+    return;
+  }
+  const miles = carMiles(car);
+  const m = marketFor(S.sales, model, miles, new Date().toISOString().slice(0, 10));
+  const head = el('div', { class: 'headline' });
+  if (m.enoughComps) {
+    head.append(el('div', {}, el('div', { class: 'label', text: 'Similar-mileage cars sold for' }), el('div', { class: 'big', text: money(m.compLow) + ' to ' + money(m.compHigh) })),
+      el('p', { class: 'muted small', style: 'max-width:44ch', text: 'The middle half of ' + m.comps.length + ' ' + shortModel(model) + ' sales in the last two years with ' + num(m.band[0]) + ' to ' + num(m.band[1]) + ' miles. Their median is ' + money(m.compMedian) + '.' }));
+  } else {
+    head.append(el('div', {}, el('div', { class: 'label', text: shortModel(model) + ', last 12 months' }), el('div', { class: 'big', text: money(m.median12) })),
+      el('p', { class: 'muted small', style: 'max-width:44ch', text: miles ? 'Median of ' + m.n12 + ' sales at any mileage. Fewer than three recent sales have mileage close to this car’s, so there is no similar-mileage range yet.' : 'Median of ' + m.n12 + ' sales at any mileage. Add the odometer reading to narrow this to similar cars.' }));
+  }
+  out.append(head);
+  const stats = el('div', { class: 'stats' });
+  const stat = (label, value, note, cls) => el('div', { class: 'stat' }, el('span', { class: 'label', text: label }), el('b', { class: cls || '', text: value }), el('span', { class: 'muted small', text: note }));
+  stats.append(stat('Median this year', money(m.medianYtd), m.nYtd + ' sales'));
+  stats.append(stat('Against last year', m.change == null ? '—' : (m.change > 0 ? '+' : '−') + Math.abs(m.change * 100).toFixed(1) + '%', 'Last year ' + money(m.medianPrev) + ' from ' + m.nPrev + ' sales' + (m.thin ? '. Thin data: treat as a pointer' : ''), m.change == null ? '' : m.change > 0 ? 'up' : 'down'));
+  stats.append(stat('Last 12 months', money(m.median12), m.n12 + ' sales, ' + money(m.low12) + ' to ' + money(m.high12)));
+  out.append(stats);
+  if (m.points.length >= 2) {
+    const ch = el('div', { class: 'chart' });
+    out.append(el('div', { style: 'display:flex;flex-direction:column;gap:6px' }, el('span', { class: 'label', text: 'Price against mileage, last two years' }), ch, el('span', { class: 'muted small', text: 'Each dot is one sale that published its mileage' + (miles ? '. The shaded band is the similar-mileage range.' : '.') })));
+    drawChart(ch, m, miles); S.redraw = () => drawChart(ch, m, miles);
+  } else S.redraw = null;
+  const tb = el('tbody');
+  for (const r of m.nearest) tb.append(el('tr', {}, el('td', { text: fmtDate(r.date) }), el('td', { class: 'num', text: money(r.gbp) }), el('td', { class: 'num', text: r.miles == null ? '' : num(r.miles) }), el('td', { text: [r.year, r.platform !== 'Unknown' ? r.platform : '', r.location].filter(Boolean).join(' · ') }), el('td', { class: 'muted', text: r.flag || '' })));
+  out.append(el('div', { style: 'display:flex;flex-direction:column;gap:6px' }, el('span', { class: 'label', text: miles ? 'Closest sales by mileage' : 'Most recent sales' }),
+    el('div', { class: 'tablebox' }, el('table', {}, el('thead', {}, el('tr', {}, el('th', { text: 'Sold' }), el('th', { class: 'num', text: 'Price' }), el('th', { class: 'num', text: 'Miles' }), el('th', { text: 'Car and venue' }), el('th', { text: 'Note' }))), tb))));
+  out.append(searchLinks(car));
+}
+
+function renderAll() {
+  const car = readForm();
+  renderGarage();
+  const vin = renderVin(car);
+  renderMarket(car, vin);
+  const editing = !!S.currentId;
+  $('b-save').textContent = editing ? 'Save changes' : 'Save to garage';
+  $('b-save').disabled = !S.db;
+  if (!S.deleting) $('b-del').hidden = !editing || !S.db;
+}
+function endDelete() { S.deleting = false; $('b-del-yes').hidden = true; $('b-del-no').hidden = true; }
+function setStatus(t) { $('status').textContent = t; }
+
+$('car-form').addEventListener('input', () => { S.dirty = true; setStatus(''); renderAll(); });
+$('f-cur').addEventListener('change', () => { S.cur = $('f-cur').value; try { localStorage.setItem('g197-cur', S.cur); } catch (e) {} renderAll(); });
+$('b-new').addEventListener('click', () => { S.currentId = null; S.dirty = false; fillForm({}); endDelete(); setStatus(''); renderAll(); $('f-name').focus(); });
+$('car-form').addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  if (!S.db) return;
+  const car = readForm();
+  if (!car.name && !car.vin) { setStatus('Enter a car name or chassis number first.'); return; }
+  const body = { ...car, updatedAt: new Date().toISOString() };
+  $('b-save').disabled = true;
+  try {
+    const ref = S.currentId ? S.db.collection('cars').doc(S.currentId) : S.db.collection('cars').doc();
+    await ref.set(body); S.currentId = ref.id; S.dirty = false; setStatus('Saved.');
+  } catch (e) { setStatus(e && e.code === 'invalid_argument' ? 'You can view this page but not save to it.' : 'Couldn’t save. Try again in a moment.'); }
+  renderAll();
+});
+$('b-del').addEventListener('click', () => { S.deleting = true; $('b-del').hidden = true; $('b-del-yes').hidden = false; $('b-del-no').hidden = false; });
+$('b-del-no').addEventListener('click', () => { endDelete(); renderAll(); });
+$('b-del-yes').addEventListener('click', async () => {
+  if (!S.db || !S.currentId) return;
+  try { await S.db.collection('cars').doc(S.currentId).delete(); S.currentId = null; S.dirty = false; fillForm({}); setStatus('Removed.'); }
+  catch (e) { setStatus('Couldn’t remove it. Try again in a moment.'); }
+  endDelete(); renderAll();
+});
+let rz; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { if (S.redraw) S.redraw(); }, 150); });
+
+fetch('sales.csv').then((r) => { if (!r.ok) throw new Error('load'); return r.text(); }).then((t) => {
+  S.sales = prepSales(parseCsv(t));
+  const sel = $('f-model'), keep = sel.value;
+  for (const m of [...new Set(S.sales.map((r) => r.model))].sort()) sel.append(el('option', { value: m, text: shortModel(m) }));
+  sel.append(el('option', { value: 'other', text: 'Another model (not tracked yet)' }));
+  const cur = S.cars.find((c) => c.id === S.currentId);
+  if (cur && !S.dirty) fillForm(cur); else sel.value = keep;
+  const latest = S.sales.map((r) => r.date).sort().pop();
+  $('data-asof').textContent = S.sales.length + ' sales, the latest on ' + fmtDate(latest);
+  renderAll();
+}).catch(() => { S.salesError = true; renderAll(); });
+
+(async () => {
+  let db = null;
+  try { db = window.claude && window.claude.use ? await window.claude.use('db') : null; } catch (e) { db = null; }
+  S.db = db; S.dbReady = true;
+  if (!db) { renderAll(); return; }
+  db.collection('cars').onSnapshot((snap) => {
+    S.cars = snap.docs.map((d) => ({ id: d.id, ...d.data() })).sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+    if (S.currentId && !S.cars.some((c) => c.id === S.currentId)) S.currentId = null;
+    if (!S.pickedFirst && !S.currentId && !S.dirty && S.cars.length) { S.currentId = S.cars[0].id; fillForm(S.cars[0]); }
+    S.pickedFirst = true;
+    renderAll();
+  }, () => { S.db = null; renderAll(); });
+  renderAll();
+})();
+renderAll();
+</script>
+
+</body>
+</html>
