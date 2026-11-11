@@ -11,23 +11,32 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap">
 <style>
   /* Garage 197. Built from src/ by build.py: edit the parts there, not index.html. */
+  /* Palette: white ground, Amethyst text (from the 964's paint), brass kept for highlights only. */
   :root {
-    --bg: #f3f2f6; --panel: #ffffff; --ink: #1c1926; --muted: #615c70; --line: #dbd7e4;
-    --accent: #6a3f9e; --accent-ink: #ffffff; --accent-soft: #ece4f6;
-    --ok: #1d7a4c; --bad: #b3372f; --warn: #94600a;
+    --bg: #ffffff; --panel: #ffffff; --soft: #f7f3fc; --ink: #4a2a7a; --strong: #35195e; --muted: #77689a; --line: #e4dcf0;
+    --accent: #6a3f9e; --accent-ink: #ffffff; --accent-soft: #efe7f9; --hi: #9a6410;
+    --ok: #1d7a4c; --bad: #b3372f; --warn: #94600a; --shadow: 0 1px 2px rgb(74 42 122 / .06), 0 6px 18px rgb(74 42 122 / .05);
     --f-display: "Archivo", "IBM Plex Sans Arabic", "Helvetica Neue", Arial, sans-serif;
     --f-body: "Inter", "IBM Plex Sans Arabic", system-ui, -apple-system, "Segoe UI", sans-serif;
     --f-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
   }
-  @media (prefers-color-scheme: dark) { :root {
-    --bg: #14121a; --panel: #1d1a26; --ink: #ebe8f2; --muted: #a39db4; --line: #342f42;
-    --accent: #b794e8; --accent-ink: #1a1424; --accent-soft: #2b2340;
-    --ok: #5cc48e; --bad: #f0857c; --warn: #e0b060; color-scheme: dark } }
+  :root[data-theme="dark"] {
+    --bg: #120d1c; --panel: #1b1429; --soft: #241a38; --ink: #e6dcf6; --strong: #f4eefc; --muted: #a99bc4; --line: #34284c;
+    --accent: #b794e8; --accent-ink: #1a1424; --accent-soft: #2e2247; --hi: #e0b060;
+    --ok: #5cc48e; --bad: #f0857c; --warn: #e0b060; --shadow: none; color-scheme: dark }
+  @media (prefers-color-scheme: dark) { :root[data-theme="auto"] {
+    --bg: #120d1c; --panel: #1b1429; --soft: #241a38; --ink: #e6dcf6; --strong: #f4eefc; --muted: #a99bc4; --line: #34284c;
+    --accent: #b794e8; --accent-ink: #1a1424; --accent-soft: #2e2247; --hi: #e0b060;
+    --ok: #5cc48e; --bad: #f0857c; --warn: #e0b060; --shadow: none; color-scheme: dark } }
+  html[lang="ar"] { --f-display: "IBM Plex Sans Arabic", "Archivo", sans-serif; --f-body: "IBM Plex Sans Arabic", "Inter", system-ui, sans-serif; }
+  html[lang="ar"] body { line-height: 1.75; }
+  html[lang="ar"] :is(.label, th, .tag, dl.facts dt) { letter-spacing: 0; font-size: .8rem; }
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.5; }
   [hidden] { display: none !important; }
   img { max-width: 100%; }
   h1, h2, h3, p { margin: 0; }
+  h1, h2, .big, .stat b, .card b { color: var(--strong); }
   h1 { font-family: var(--f-display); font-stretch: 112%; font-weight: 700; font-size: 1.6rem; letter-spacing: -0.01em; text-wrap: balance; }
   h2 { font-family: var(--f-display); font-weight: 600; font-size: 1.05rem; text-wrap: balance; }
   a { color: var(--accent); }
@@ -35,7 +44,7 @@
   .col { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
   .row { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; }
   .between { justify-content: space-between; }
-  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 18px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow); padding: 18px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
   .label { font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
   .muted { color: var(--muted); } .small { font-size: .85rem; }
   .empty { color: var(--muted); max-width: 56ch; }
@@ -44,12 +53,16 @@
   /* header and tabs */
   .head { display: flex; flex-wrap: wrap; gap: 8px 20px; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line); }
   .tabs { display: flex; gap: 4px; }
-  .tab { font: inherit; font-weight: 600; background: transparent; color: var(--muted); border: 0; border-bottom: 3px solid transparent; padding: 10px 14px; cursor: pointer; white-space: nowrap; max-width: 14rem; overflow: hidden; text-overflow: ellipsis; text-decoration: none; }
+  .tab { font: inherit; font-weight: 600; background: transparent; color: var(--muted); border: 0; border-bottom: 3px solid transparent; padding: 10px 14px; cursor: pointer; white-space: nowrap; max-width: 14rem; overflow: hidden; text-overflow: ellipsis; text-decoration: none; display: inline-flex; align-items: center; gap: 7px; }
+  .tab svg, .btn svg { width: 1.15em; height: 1.15em; flex: none; }
+  .tab[aria-current="page"] { color: var(--strong); }
   .tab[aria-current="page"] { color: var(--ink); border-bottom-color: var(--accent); }
   .subtabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); }
   @media (max-width: 640px) {
     .head .tabs { position: fixed; inset-inline: 0; bottom: 0; z-index: 20; background: var(--panel); border-top: 1px solid var(--line); justify-content: space-around; padding-bottom: env(safe-area-inset-bottom, 0px); }
-    .head .tab { flex: 1; text-align: center; border-bottom: 0; border-top: 3px solid transparent; padding: 12px 6px; max-width: none; }
+    .head .tab { flex: 1; flex-direction: column; gap: 2px; justify-content: center; font-size: .72rem; border-bottom: 0; border-top: 3px solid transparent; padding: 8px 4px 9px; max-width: none; min-width: 0; }
+    .head .tab svg { width: 1.5rem; height: 1.5rem; }
+    .head .tab span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
     .head .tab[aria-current="page"] { border-top-color: var(--accent); }
     .head { border-bottom: 0; }
     .wrap { padding-bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
@@ -60,11 +73,11 @@
   .field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
   .field label { font-size: .82rem; font-weight: 500; }
   .row2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-  input, select, textarea { font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 9px 10px; min-width: 0; width: 100%; }
+  input, select, textarea { font: inherit; color: var(--ink); background: var(--soft); border: 1px solid var(--line); border-radius: 6px; padding: 9px 10px; min-width: 0; width: 100%; }
   textarea { min-height: 4.5rem; resize: vertical; }
   .mono { font-family: var(--f-mono); letter-spacing: .04em; }
   .hint { font-size: .78rem; color: var(--muted); }
-  .btn { font: inherit; font-weight: 600; border-radius: 6px; padding: 9px 14px; cursor: pointer; border: 1px solid var(--line); background: transparent; color: var(--ink); text-decoration: none; display: inline-block; }
+  .btn { font: inherit; font-weight: 600; border-radius: 6px; padding: 9px 14px; cursor: pointer; border: 1px solid var(--line); background: transparent; color: var(--ink); text-decoration: none; display: inline-flex; align-items: center; gap: 7px; }
   .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
   .btn.danger { color: var(--bad); }
   .btn.sm { padding: 5px 10px; font-size: .85rem; }
@@ -78,10 +91,10 @@
   .login { max-width: 26rem; margin: 5vh auto 0; display: flex; flex-direction: column; gap: 18px; width: 100%; }
 
   /* garage cards */
-  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr)); gap: 16px; }
-  .card { font: inherit; color: inherit; text-align: start; text-decoration: none; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; cursor: pointer; display: flex; flex-direction: column; padding: 0; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr)); gap: 18px; }
+  .card { font: inherit; color: inherit; text-align: start; text-decoration: none; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow); overflow: hidden; cursor: pointer; display: flex; flex-direction: column; padding: 0; }
   .card:hover { border-color: var(--accent); }
-  .photo { aspect-ratio: 16 / 10; background: var(--accent-soft); display: grid; place-items: center; color: var(--accent); overflow: hidden; }
+  .photo { aspect-ratio: 4 / 3; background: linear-gradient(160deg, var(--accent-soft), var(--soft)); display: grid; place-items: center; color: var(--accent); overflow: hidden; }
   .photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .photo svg { width: 38%; height: auto; opacity: .55; }
   .card .body { padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 3px; }
@@ -115,7 +128,7 @@
 
   /* chassis plate */
   .plate { display: flex; flex-wrap: wrap; gap: 6px; direction: ltr; }
-  .seg { border: 1px solid var(--line); border-radius: 4px; padding: 6px 9px 7px; display: flex; flex-direction: column; gap: 2px; background: var(--bg); min-width: 0; }
+  .seg { border: 1px solid var(--line); border-radius: 4px; padding: 6px 9px 7px; display: flex; flex-direction: column; gap: 2px; background: var(--soft); min-width: 0; }
   .seg b { font-family: var(--f-mono); font-weight: 500; font-size: 1.1rem; letter-spacing: .12em; }
   .seg em { font-style: normal; font-size: .8rem; }
   .flags { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -137,8 +150,50 @@
   .due-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
   .due-list li { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline; justify-content: space-between; padding: 9px 0; border-top: 1px solid var(--line); }
 
+  /* brand, login, hero, charts, motion */
+  .brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; color: var(--strong); padding-block: 8px; }
+  .brand svg { width: 2.2rem; height: 2.2rem; color: var(--accent); flex: none; }
+  .brand b { font-family: var(--f-display); font-stretch: 112%; font-weight: 700; font-size: 1.35rem; letter-spacing: -0.01em; }
+  .signin { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 0; border: 1px solid var(--line); border-radius: 16px; overflow: hidden; box-shadow: var(--shadow); margin-top: 3vh; background: var(--panel); }
+  .signin .art { background: linear-gradient(150deg, #35195e, #6a3f9e 60%, #8f5fc4); color: #fff; padding: 32px; display: flex; flex-direction: column; justify-content: space-between; gap: 24px; min-height: 26rem; background-size: cover; background-position: center; }
+  .signin .art h1, .signin .art b { color: #fff; } .signin .art .brand svg { color: #fff; }
+  .signin .art p { font-size: 1.15rem; line-height: 1.45; max-width: 26ch; text-wrap: balance; }
+  .signin .art .car { width: 100%; opacity: .9; }
+  .signin .form { padding: 32px; display: flex; flex-direction: column; gap: 16px; justify-content: center; }
+  @media (max-width: 760px) { .signin { grid-template-columns: minmax(0, 1fr); margin-top: 0; } .signin .art { min-height: 0; padding: 22px; } .signin .art .car { max-width: 15rem; } .signin .form { padding: 22px; } }
+  .banner { position: relative; border-radius: 16px; overflow: hidden; aspect-ratio: 21 / 9; background: linear-gradient(150deg, #35195e, #6a3f9e 60%, #8f5fc4); display: grid; place-items: center; color: #fff; }
+  @media (max-width: 760px) { .banner { aspect-ratio: 4 / 3; } }
+  .banner > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .banner > svg { width: 34%; opacity: .5; }
+  .banner .over { position: absolute; inset-inline: 0; bottom: 0; padding: 48px 20px 16px; background: linear-gradient(to top, rgb(20 8 40 / .82), rgb(20 8 40 / 0)); display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 6px 20px; }
+  .banner .over h1 { color: #fff; overflow-wrap: anywhere; } .banner .over .v { color: #fff; font-family: var(--f-display); font-weight: 700; font-size: 1.5rem; font-variant-numeric: tabular-nums; }
+  .banner .over small { display: block; font-size: .75rem; opacity: .85; font-weight: 500; font-family: var(--f-body); }
+  .range { display: flex; flex-direction: column; gap: 4px; }
+  .range .track { position: relative; height: 8px; border-radius: 999px; background: var(--accent-soft); direction: ltr; }
+  .range .dot { position: absolute; top: 50%; width: 16px; height: 16px; border-radius: 50%; background: var(--accent); border: 3px solid var(--panel); transform: translate(-50%, -50%); box-shadow: 0 0 0 1px var(--accent); }
+  .range .ends { display: flex; justify-content: space-between; font-size: .8rem; color: var(--muted); font-variant-numeric: tabular-nums; direction: ltr; }
+  .bars { display: flex; flex-direction: column; gap: 9px; }
+  .bar { display: grid; grid-template-columns: minmax(0, 11rem) minmax(0, 1fr) 3.2rem; gap: 10px; align-items: center; font-size: .88rem; }
+  .bar .t { height: 10px; border-radius: 999px; background: var(--soft); overflow: hidden; direction: ltr; }
+  .bar .t i { display: block; height: 100%; border-radius: 999px; }
+  .bar .up-bg { background: var(--ok); } .bar .down-bg { background: var(--bad); }
+  .bar .p { text-align: end; font-variant-numeric: tabular-nums; font-weight: 600; }
+  .trend { font-size: .8rem; font-weight: 600; }
+  .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr)); gap: 10px; }
+  .gallery figure { margin: 0; display: flex; flex-direction: column; gap: 3px; }
+  .gallery .ph { aspect-ratio: 4 / 3; border-radius: 8px; overflow: hidden; background: var(--soft); border: 1px solid var(--line); padding: 0; cursor: pointer; display: block; width: 100%; }
+  .gallery img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .blank { border: 1.5px dashed var(--line); border-radius: 16px; padding: 36px 20px; display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center; color: var(--muted); }
+  .blank svg { width: min(15rem, 60%); color: var(--accent); opacity: .45; }
+  .skel { border-radius: 12px; background: linear-gradient(100deg, var(--soft) 30%, var(--accent-soft) 50%, var(--soft) 70%); background-size: 300% 100%; animation: shimmer 1.3s linear infinite; min-height: 5rem; }
+  @keyframes shimmer { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+  @keyframes pagein { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  main > * { animation: pagein .2s ease both; }
+  @media (prefers-reduced-motion: reduce) { main > *, .skel { animation: none; } }
+  .hi { color: var(--hi); }
+
   #toast { position: fixed; inset-inline: 0; bottom: calc(96px + env(safe-area-inset-bottom, 0px)); display: grid; place-items: center; pointer-events: none; z-index: 30; }
-  #toast span { background: var(--ink); color: var(--bg); border-radius: 999px; padding: 8px 18px; font-weight: 600; font-size: .9rem; box-shadow: 0 6px 20px rgb(0 0 0 / .25); }
+  #toast span { background: var(--strong); color: var(--bg); border-radius: 999px; padding: 8px 18px; font-weight: 600; font-size: .9rem; box-shadow: 0 6px 20px rgb(0 0 0 / .25); }
   #print { display: none; }
   @media print {
     body > *:not(#print) { display: none !important; }
@@ -716,7 +771,30 @@ const AR = {
   '912 and 914': '912 و 914',
   '924, 944 and 968': '924 و 944 و 968',
   '928 and 959': '928 و 959',
-  'Boxster': 'بوكستر'
+  'Boxster': 'بوكستر',
+  // design refresh
+  'Prices over time': 'الأسعار عبر الزمن',
+  'Each dot is one sale. The line joins the typical price of each year with three or more sales.': 'كل نقطة عملية بيع واحدة. الخط يصل السعر المعتاد لكل سنة فيها ثلاث مبيعات أو أكثر.',
+  'Cars': 'السيارات',
+  'See the whole market': 'اعرض السوق كاملًا',
+  'Running hot': 'الصاعد',
+  'Running cold': 'الهابط',
+  'Typical price of every sale on file in each family. Families mix cheap and expensive variants, so compare like with like on a model’s own page.': 'السعر المعتاد لكل المبيعات المسجلة في كل فئة. الفئات تجمع نسخًا رخيصة وغالية، لذا قارن المتشابه في صفحة الطراز نفسه.',
+  '{p} against its long-run price': '{p} مقارنة بسعره على المدى الطويل',
+  'Open photo': 'افتح الصورة',
+  'Photos added': 'تمت إضافة الصور',
+  'Photo removed': 'تمت إزالة الصورة',
+  'Photos': 'الصور',
+  'Add photos of the car, its details and its paperwork.': 'أضف صورًا للسيارة وتفاصيلها وأوراقها.',
+  'Add photos': 'أضف صورًا',
+  'From {n} recent sales of cars with similar mileage.': 'من {n} عملية بيع حديثة لسيارات بعداد مشابه.',
+  'The typical price of {n} sales in the last 12 months.': 'السعر المعتاد لـ {n} عملية بيع خلال آخر 12 شهرًا.',
+  'Where the typical price sits in the range these cars sold for.': 'موقع السعر المعتاد ضمن نطاق أسعار بيع هذه السيارات.',
+  'Nothing is due. Reminders you add in the logbook show here.': 'لا شيء مستحق. التذكيرات التي تضيفها في السجل تظهر هنا.',
+  'Appearance': 'المظهر',
+  'Light': 'فاتح',
+  'Dark': 'داكن',
+  'Match my device': 'حسب جهازي'
 };
 /* ===== Screens. Every visible string goes through t() so it can be shown in Arabic (see i18n.js). ===== */
 const CLOUD = window.g197cloud;
@@ -734,7 +812,7 @@ const el = (tag, attrs, ...kids) => {
   return n;
 };
 const ls = { get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : v; } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} } };
-const S = { sales: null, salesError: false, counts: {}, cars: [], db: null, cur: ls.get('g197-cur', 'USD'), unit: ls.get('g197-unit', 'mi'), lang: ls.get('g197-lang', 'en'), mode: 'signin', loginMsg: '', filter: 'all', rec: null, remOpen: false };
+const S = { sales: null, salesError: false, counts: {}, cars: [], db: null, cur: ls.get('g197-cur', 'USD'), unit: ls.get('g197-unit', 'mi'), lang: ls.get('g197-lang', 'en'), theme: ls.get('g197-theme', 'light'), mode: 'signin', loginMsg: '', filter: 'all', rec: null, remOpen: false };
 if (!FX[S.cur]) S.cur = 'USD';
 
 function t(s, v) { let o = (S.lang === 'ar' && AR[s]) || s; if (v) for (const k in v) o = o.split('{' + k + '}').join(v[k]); return o; }
@@ -782,6 +860,24 @@ const stat = (label, value, note, cls) => el('div', { class: 'stat' }, el('span'
 const table = (heads, rows) => el('div', { class: 'tablebox' }, el('table', {}, el('thead', {}, el('tr', {}, heads.map((h) => el('th', { class: h[1] || '', text: h[0] })))), el('tbody', {}, rows)));
 const field = (label, input, hint) => { const id = input.id || (input.id = 'f' + Math.random().toString(36).slice(2, 8)); return el('div', { class: 'field' }, el('label', { for: id, text: label }), input, hint ? el('span', { class: 'hint', text: hint }) : null); };
 const select = (opts, value, attrs) => { const s = el('select', attrs || {}, opts.map((o) => el('option', { value: o[0], text: o[1] }))); s.value = value; return s; };
+const svgIcon = (d) => { const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); s.setAttribute('viewBox', '0 0 24 24'); s.setAttribute('fill', 'none'); s.setAttribute('stroke', 'currentColor'); s.setAttribute('stroke-width', '1.8'); s.setAttribute('stroke-linecap', 'round'); s.setAttribute('stroke-linejoin', 'round'); s.setAttribute('aria-hidden', 'true'); s.innerHTML = d; return s; };
+const ICONS = {
+  home: '<path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9.5h13V10"/><path d="M10 19.5v-5h4v5"/>',
+  garage: '<path d="M3 10.5 12 5l9 5.5V20H3z"/><path d="M7 20v-6h10v6"/><path d="M7 17h10"/>',
+  market: '<path d="M4 19.5h16"/><path d="M5 15.5l4.5-5 3.5 3 6-7.5"/><path d="M15.5 6H19v3.5"/>',
+  settings: '<circle cx="12" cy="12" r="3"/><path d="M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21M5.6 5.6l1.8 1.8M16.6 16.6l1.8 1.8M5.6 18.4l1.8-1.8M16.6 7.4l1.8-1.8"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>', pdf: '<path d="M7 3.5h7l4 4V20.5H7z"/><path d="M14 3.5v4h4"/><path d="M12 11v6m0 0-2.5-2.5M12 17l2.5-2.5"/>',
+  edit: '<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/>', camera: '<path d="M4 8h3l1.5-2h7L17 8h3v11H4z"/><circle cx="12" cy="13.5" r="3.2"/>'
+};
+const ico = (name, label) => [svgIcon(ICONS[name]), el('span', { text: label })];
+const LOGO = '<svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="21.5" fill="none" stroke="currentColor" stroke-width="3"/><circle cx="24" cy="24" r="16.5" fill="none" stroke="currentColor" stroke-width="1"/><text x="24" y="29.5" text-anchor="middle" font-family="Archivo, Arial, sans-serif" font-weight="700" font-size="15" letter-spacing="-.5" fill="currentColor">197</text></svg>';
+const brand = (href) => { const a = el(href ? 'a' : 'div', { class: 'brand', href }); a.innerHTML = LOGO; a.append(el('b', { text: 'Garage 197' })); return a; };
+const skel = (h) => el('div', { class: 'skel', style: 'min-height:' + h });
+function trendOf(model) {
+  const c = catOf(model); if (!c || !c.median2020 || !S.sales) return null;
+  const d = today(), y1 = (+d.slice(0, 4) - 1) + d.slice(4), v = S.sales.filter((r) => r.model === model && r.date >= y1).map((r) => r.gbp);
+  return v.length >= 5 ? (median(v) - c.median2020) / c.median2020 : null;
+}
 const CAR_SVG = '<svg viewBox="0 0 64 32" fill="currentColor" aria-hidden="true"><path d="M4 22c0-4 3-6 9-7l6-7c2-2 4-3 8-3h9c6 0 10 3 14 8l6 2c3 1 4 3 4 6v2h-5a6 6 0 0 0-12 0H23a6 6 0 0 0-12 0H4zm19-8h11V8h-6c-2 0-3 1-4 2zm14 0h9c-3-4-5-6-9-6z"/><circle cx="17" cy="24" r="4.5"/><circle cx="49" cy="24" r="4.5"/></svg>';
 function photoBox(car) {
   const box = el('div', { class: 'photo' }); box.innerHTML = CAR_SVG;
@@ -842,11 +938,11 @@ function viewLogin() {
       el('div', { class: 'row' }, el('button', { type: 'submit', class: 'btn primary', id: 'b-signin', text: t('Sign in') }), el('button', { type: 'button', class: 'btn', id: 'b-signup', text: t('Create account'), onclick: () => go(true) })),
       el('button', { type: 'button', class: 'linkbtn small', id: 'b-forgot', text: t('Forgot your password?'), onclick: () => { S.mode = 'forgot'; render(); } }));
   }
-  return el('div', { class: 'login' },
-    el('div', { class: 'row between' }, el('h1', { text: 'Garage 197' }), langToggle()),
-    el('p', { class: 'muted', text: t('Track what classic Porsches sell for, keep your cars and their history in one place, and see how your garage sits against the market.') }),
-    panel(t(S.mode === 'newpass' ? 'Choose a new password' : S.mode === 'forgot' ? 'Reset your password' : 'Sign in'), null, body, status),
-    S.mode === 'signin' ? el('p', { class: 'muted small', text: t('New here? Enter your email, choose a password of at least 8 characters and press Create account.') }) : null);
+  const art = el('div', { class: 'art' }, brand(), el('div', {}), el('p', { text: t('Track what classic Porsches sell for, keep your cars and their history in one place, and see how your garage sits against the market.') }));
+  art.children[1].innerHTML = CAR_SVG.replace('<svg ', '<svg class="car" ');
+  return el('div', { class: 'signin' }, art,
+    el('div', { class: 'form' }, el('div', { class: 'row between' }, el('h2', { text: t(S.mode === 'newpass' ? 'Choose a new password' : S.mode === 'forgot' ? 'Reset your password' : 'Sign in'), style: 'font-size:1.4rem' }), langToggle()), body, status,
+      S.mode === 'signin' ? el('p', { class: 'muted small', text: t('New here? Enter your email, choose a password of at least 8 characters and press Create account.') }) : null));
 }
 
 /* ----- market read-out ----- */
@@ -890,6 +986,24 @@ function drawChart(host, m, miles) {
   }
   host.append(svg, tip);
 }
+function drawTrend(host, rows) {
+  host.replaceChildren();
+  const W = Math.max(300, host.clientWidth || 600), H = 220, ml = 58, mr = 14, mt = 12, mb = 28;
+  const t0 = +new Date(rows[0].date), t1 = +new Date(rows[rows.length - 1].date), yVals = rows.map((r) => r.gbp / FX[S.cur]);
+  const step = (max, n) => { const raw = max / n, p = Math.pow(10, Math.floor(Math.log10(raw))); return [1, 2, 2.5, 5, 10].map((k) => k * p).find((x) => x >= raw); };
+  const ys = step(Math.max(...yVals) * 1.05, 4), yTop = Math.ceil(Math.max(...yVals) * 1.05 / ys) * ys;
+  const x = (d) => ml + ((+new Date(d) - t0) / (t1 - t0 || 1)) * (W - ml - mr), y = (v) => H - mb - (v / yTop) * (H - mt - mb);
+  const NS = 'http://www.w3.org/2000/svg', s = (tag, a, text) => { const n = document.createElementNS(NS, tag); for (const k in a) n.setAttribute(k, a[k]); if (text != null) n.textContent = text; return n; };
+  const svg = s('svg', { viewBox: '0 0 ' + W + ' ' + H, role: 'img', 'aria-label': t('Prices over time') }), kfmt = (v) => v >= 1e6 ? (v / 1e6).toFixed(1) + 'M' : Math.round(v / 1000) + 'k';
+  for (let v = 0; v <= yTop + 1; v += ys) { svg.append(s('line', { x1: ml, x2: W - mr, y1: y(v), y2: y(v), stroke: 'var(--line)', 'stroke-width': 1 })); svg.append(s('text', { x: ml - 8, y: y(v) + 4, 'text-anchor': 'end', fill: 'var(--muted)', 'font-size': 11 }, kfmt(v))); }
+  const years = {}; for (const r of rows) (years[r.date.slice(0, 4)] = years[r.date.slice(0, 4)] || []).push(r.gbp / FX[S.cur]);
+  for (const yr of Object.keys(years)) { const d = yr + '-01-01'; if (+new Date(d) >= t0) { svg.append(s('line', { x1: x(d), x2: x(d), y1: mt, y2: H - mb, stroke: 'var(--line)', 'stroke-width': 1, 'stroke-dasharray': '2 4' })); } svg.append(s('text', { x: Math.max(ml + 14, Math.min(W - mr - 14, x(yr + '-07-01'))), y: H - 8, 'text-anchor': 'middle', fill: 'var(--muted)', 'font-size': 11 }, yr)); }
+  for (const r of rows) svg.append(s('circle', { cx: x(r.date), cy: y(r.gbp / FX[S.cur]), r: 4, fill: 'var(--ink)', 'fill-opacity': .35 }));
+  const pts = Object.keys(years).filter((k) => years[k].length >= 3).map((k) => [Math.max(ml, Math.min(W - mr, x(k + '-07-01'))), y(median(years[k]))]);
+  if (pts.length >= 2) svg.append(s('polyline', { points: pts.map((q) => q.join(',')).join(' '), fill: 'none', stroke: 'var(--accent)', 'stroke-width': 2.5, 'stroke-linejoin': 'round' }));
+  for (const q of pts) svg.append(s('circle', { cx: q[0], cy: q[1], r: 5, fill: 'var(--accent)', stroke: 'var(--panel)', 'stroke-width': 2 }));
+  host.append(svg);
+}
 function marketView(model, car) {
   const out = el('div', { class: 'col' }), q = [car && car.year, (car && car.name) || model].filter(Boolean).join(' ') || 'classic car';
   if (S.salesError) return el('p', { class: 'empty', text: t('The sold results didn’t load. Reload the page to try again.') });
@@ -913,6 +1027,8 @@ function marketView(model, car) {
   if (cat && cat.median2020) { const d = m.median12 ? (m.median12 - cat.median2020) / cat.median2020 : null; stats.append(stat(t('Since 2020'), money(cat.median2020), d == null ? '' : t('The last 12 months are {p} against it', { p: pct(d) }))); }
   out.append(stats);
   if (m.points.length >= 2) { const ch = el('div', { class: 'chart' }); out.append(el('div', { class: 'col', style: 'gap:6px' }, el('span', { class: 'label', text: t('Price against distance driven, last two years') }), ch)); setTimeout(() => drawChart(ch, m, miles), 0); S.redraw = () => drawChart(ch, m, miles); } else S.redraw = null;
+  const all = S.sales.filter((r) => r.model === model).sort((a, b) => a.date.localeCompare(b.date));
+  if (all.length >= 8 && (new Date(all[all.length - 1].date) - new Date(all[0].date)) / 864e5 > 400) { const tr = el('div', { class: 'chart' }); out.append(el('div', { class: 'col', style: 'gap:6px' }, el('span', { class: 'label', text: t('Prices over time') }), tr, el('span', { class: 'muted small', text: t('Each dot is one sale. The line joins the typical price of each year with three or more sales.') }))); setTimeout(() => drawTrend(tr, all), 0); const prev = S.redraw; S.redraw = () => { if (prev) prev(); drawTrend(tr, all); }; }
   out.append(el('div', { class: 'col', style: 'gap:6px' }, el('span', { class: 'label', text: t(m.byMiles ? 'Closest sales by mileage' : 'Most recent sales') }),
     table([[t('Sold')], [t('Price'), 'num'], [unitName(), 'num'], [t('Car and venue')]], m.nearest.map((r) => el('tr', {}, el('td', { text: fmtDate(r.date) }), el('td', { class: 'num', text: money(r.gbp) }), el('td', { class: 'num', text: r.miles == null ? '' : num(dist(r.miles)) }), el('td', { text: [r.year, r.platform !== 'Unknown' ? r.platform : '', r.location].filter(Boolean).join(' · ') }))))));
   out.append(el('details', { class: 'more' }, el('summary', { text: t('How this is worked out') }), el('div', {}, el('p', { class: 'small muted', text: t('The typical price is the middle sale: half the cars sold for more and half for less, so one unusual car doesn’t distort it. “Cars like yours” uses sales with between half and one and a half times your car’s mileage and shows the middle half of them. Prices come from public auction results copied by hand, converted at fixed approximate exchange rates. This is market research, not a formal valuation.') }))));
@@ -936,26 +1052,35 @@ function valueHistory(total) {
 }
 function viewHome() {
   const out = el('div', { class: 'col' });
-  if (!CLOUD.loaded) { out.append(el('p', { class: 'empty', text: t('Loading your garage…') })); return out; }
+  if (!CLOUD.loaded) { out.append(skel('11rem'), skel('6rem')); return out; }
   if (CLOUD.setupError) out.append(panel(null, null, el('p', { style: 'color:var(--bad)', text: t('Your garage could not be loaded from the cloud. Check your connection and reload the page.') })));
-  if (!S.cars.length) out.append(panel(t('Welcome to Garage 197'), null, el('p', { text: t('Start by adding your first car. It takes a minute: give its name, year and mileage, and you will see what cars like it sell for and can start its logbook.') }), el('div', { class: 'row' }, el('a', { class: 'btn primary', href: '#/car/new', text: t('Add your first car') }))));
+  if (!S.cars.length) { const b = el('div', { class: 'blank' }); b.innerHTML = CAR_SVG; b.append(el('h2', { text: t('Welcome to Garage 197'), style: 'font-size:1.3rem' }), el('p', { style: 'max-width:46ch', text: t('Start by adding your first car. It takes a minute: give its name, year and mileage, and you will see what cars like it sell for and can start its logbook.') }), el('a', { class: 'btn primary', href: '#/car/new' }, ico('plus', t('Add your first car')))); out.append(b); }
   else {
-    const g = garageValue(), first = valueHistory(g.total);
-    const notes = [t('{a} of {b} cars valued from recent sales.', { a: g.valued, b: S.cars.length })];
-    const stats = [];
+    const g = garageValue(), first = valueHistory(g.total), stats = [];
     if (g.paidN) { const d = g.nowPaid - g.paid; stats.push(stat(t('Against what you paid'), (d >= 0 ? '+' : '−') + money(Math.abs(d)), t('Cars with a purchase price: {n}', { n: g.paidN }), d >= 0 ? 'up' : 'down')); }
     if (first && first.v) { const d = g.total - first.v; stats.push(stat(t('Since {d}', { d: fmtDate(first.d) }), (d >= 0 ? '+' : '−') + money(Math.abs(d)), t('Change in the estimate since you first opened the app'), d >= 0 ? 'up' : 'down')); }
-    out.append(panel(t('Your garage is worth about'), null, el('div', { class: 'big', text: g.valued ? money(g.total) : '—' }), el('p', { class: 'muted small', text: notes.join(' ') + ' ' + t('An estimate from public sales, not a formal valuation.') }), stats.length ? el('div', { class: 'stats' }, stats) : null, el('div', { class: 'row' }, el('a', { class: 'btn', href: '#/garage', text: t('Open my garage') }))));
+    stats.push(stat(t('Cars'), String(S.cars.length), t('{a} of {b} cars valued from recent sales.', { a: g.valued, b: S.cars.length })));
+    out.append(panel(null, null, el('span', { class: 'label', text: t('Your garage is worth about') }), el('div', { class: 'big', style: 'font-size:clamp(2.2rem,8vw,3.4rem)', text: g.valued ? money(g.total) : '—' }), el('div', { class: 'stats' }, stats), el('p', { class: 'muted small', text: t('An estimate from public sales, not a formal valuation.') }), el('div', { class: 'row' }, el('a', { class: 'btn primary', href: '#/garage' }, ico('garage', t('Open my garage'))))));
     const due = S.cars.flatMap(dueOf);
     if (due.length) out.append(panel(t('Coming up'), null, el('ul', { class: 'due-list' }, due.map((x) => el('li', {}, el('span', {}, el('a', { href: '#/car/' + x.car.id + '/logbook', text: x.r.title }), el('span', { class: 'muted', text: ' · ' + (x.car.name || '') })), el('span', { class: 'tag s-' + x.st, text: remText(x.car, x.r, x.st) }))))));
   }
-  // search
+  out.append(searchPanel());
+  if (S.sales) {
+    const latest = [...S.sales].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 4);
+    out.append(panel(t('Latest sales'), null, table([[t('Sold')], [t('Model')], [t('Price'), 'num']], latest.map((r) => el('tr', {}, el('td', { text: fmtDate(r.date) }), el('td', {}, mlink(r.model)), el('td', { class: 'num', text: money(r.gbp) })))), el('div', { class: 'row' }, el('a', { class: 'btn', href: '#/market' }, ico('market', t('See the whole market'))))));
+  }
+  return out;
+}
+function searchPanel() {
   const q = el('input', { type: 'search', list: 'dl-models', placeholder: t('e.g. 993 Turbo or 356 Speedster'), id: 'q-model', autocomplete: 'off' });
-  const find = () => { const v = q.value.trim().toLowerCase(); if (!v) return; const hit = CATALOG.find((m) => shortModel(m.name).toLowerCase() === v || m.name.toLowerCase() === v) || suggestHit(v) || CATALOG.find((m) => v.split(/\s+/).every((w) => m.name.toLowerCase().includes(w))); if (hit) nav('#/model/' + encodeURIComponent(hit.name || hit)); else toast(t('No model matches that. Try the list.')); };
+  const find = () => { const v = q.value.trim().toLowerCase(); if (!v) return; const hit = CATALOG.find((m) => shortModel(m.name).toLowerCase() === v || m.name.toLowerCase() === v) || suggestHit(v) || CATALOG.find((m) => v.split(/\s+/).every((w) => m.name.toLowerCase().includes(w))); if (hit) nav('#/model/' + encodeURIComponent(hit.name)); else toast(t('No model matches that. Try the list.')); };
   q.addEventListener('change', find);
-  out.append(panel(t('Look up any model'), null, el('form', { onsubmit: (ev) => { ev.preventDefault(); find(); } }, el('div', { class: 'row' }, el('div', { style: 'flex:1;min-width:12rem' }, q), el('button', { type: 'submit', class: 'btn primary', text: t('See its market') }))), el('datalist', { id: 'dl-models' }, CATALOG.map((m) => el('option', { value: shortModel(m.name) })))));
+  return panel(t('Look up any model'), null, el('form', { onsubmit: (ev) => { ev.preventDefault(); find(); } }, el('div', { class: 'row' }, el('div', { style: 'flex:1;min-width:12rem' }, q), el('button', { type: 'submit', class: 'btn primary', text: t('See its market') }))), el('datalist', { id: 'dl-models' }, CATALOG.map((m) => el('option', { value: shortModel(m.name) }))));
+}
+function viewMarket() {
+  const out = el('div', { class: 'col' }, el('h1', { text: t('Market') }));
   if (S.salesError) { out.append(el('p', { class: 'empty', text: t('The sold results didn’t load. Reload the page to try again.') })); return out; }
-  if (!S.sales) { out.append(el('p', { class: 'empty', text: t('Loading the market…') })); return out; }
+  if (!S.sales) { out.append(skel('8rem'), skel('16rem')); return out; }
   const d = today(), y1 = (+d.slice(0, 4) - 1) + d.slice(4), d90 = new Date(Date.now() - 90 * 864e5).toISOString().slice(0, 10);
   const last12 = S.sales.filter((r) => r.date >= y1), byModel = {};
   for (const r of last12) (byModel[r.model] = byModel[r.model] || []).push(r.gbp);
@@ -964,20 +1089,20 @@ function viewHome() {
     stat(t('Sold results on file'), num(S.sales.length), t('{n} models covered', { n: Object.keys(S.counts).length })),
     stat(t('Sold in the last 90 days'), num(S.sales.filter((r) => r.date >= d90).length), t('Latest on {d}', { d: fmtDate(latest[0].date) })),
     stat(t('Top sale, last 12 months'), top ? money(top.gbp) : '—', top ? shortModel(top.model) + ', ' + fmtDate(top.date) : ''))));
-  const latestPanel = panel(t('Latest sales'), t('The most recent sold results on file. Press a model to see its market. Live for-sale listings will appear here once a listings feed is licensed.'),
-    table([[t('Sold')], [t('Model')], [t('Price'), 'num'], [t('Car and venue')]], latest.slice(0, 12).map((r) => el('tr', {}, el('td', { text: fmtDate(r.date) }), el('td', {}, mlink(r.model)), el('td', { class: 'num', text: money(r.gbp) }), el('td', { class: 'muted', text: [r.year, r.platform !== 'Unknown' ? r.platform : ''].filter(Boolean).join(' · ') })))));
-  const movers = CATALOG.filter((m) => m.median2020 && (byModel[m.name] || []).length >= 5).map((m) => { const med = median(byModel[m.name]); return { m, med, d: (med - m.median2020) / m.median2020, n: byModel[m.name].length }; }).sort((a, b) => b.d - a.d);
-  const mrow = (x) => el('tr', {}, el('td', {}, mlink(x.m.name)), el('td', { class: 'num', text: money(x.med) }), el('td', { class: 'num ' + (x.d >= 0 ? 'up' : 'down'), text: pct(x.d) }), el('td', { class: 'num muted', text: String(x.n) }));
-  const heads = [[t('Model')], [t('Typical price, 12 months'), 'num'], [t('Against since 2020'), 'num'], [t('Sales'), 'num']];
-  const up = movers.filter((x) => x.d > 0).slice(0, 6), down = movers.filter((x) => x.d < 0).slice(-6).reverse();
-  const moverPanel = panel(t('Running hot and cold'), t('Each model’s typical price over the last 12 months against its typical price since 2020. Based on 5 to 20 sales per model, so read it as a pointer.'),
-    el('span', { class: 'label', text: t('Above their long-run level') }), up.length ? table(heads, up.map(mrow)) : el('p', { class: 'empty', text: t('None at the moment.') }),
-    el('span', { class: 'label', text: t('Below their long-run level') }), down.length ? table(heads, down.map(mrow)) : el('p', { class: 'empty', text: t('None at the moment.') }));
-  out.append(el('div', { class: 'grid2' }, latestPanel, moverPanel));
+  out.append(searchPanel());
+  const movers = CATALOG.filter((m) => m.median2020 && (byModel[m.name] || []).length >= 5).map((m) => { const med = median(byModel[m.name]); return { m, med, d: (med - m.median2020) / m.median2020 }; }).sort((a, b) => b.d - a.d);
+  const up = movers.filter((x) => x.d > 0).slice(0, 7), down = movers.filter((x) => x.d < 0).slice(-7).reverse(), max = Math.max(0.01, ...up.concat(down).map((x) => Math.abs(x.d)));
+  const bar = (x) => el('div', { class: 'bar' }, mlink(x.m.name), el('div', { class: 't' }, el('i', { class: x.d >= 0 ? 'up-bg' : 'down-bg', style: 'width:' + Math.max(3, Math.abs(x.d) / max * 100) + '%' })), el('span', { class: 'p ' + (x.d >= 0 ? 'up' : 'down'), text: pct(x.d) }));
+  const note = t('Each model’s typical price over the last 12 months against its typical price since 2020. Based on 5 to 20 sales per model, so read it as a pointer.');
+  out.append(el('div', { class: 'grid2' },
+    panel(t('Running hot'), note, up.length ? el('div', { class: 'bars' }, up.map(bar)) : el('p', { class: 'empty', text: t('None at the moment.') })),
+    panel(t('Running cold'), note, down.length ? el('div', { class: 'bars' }, down.map(bar)) : el('p', { class: 'empty', text: t('None at the moment.') }))));
+  out.append(panel(t('Latest sales'), t('The most recent sold results on file. Press a model to see its market. Live for-sale listings will appear here once a listings feed is licensed.'),
+    table([[t('Sold')], [t('Model')], [t('Price'), 'num'], [t('Car and venue')]], latest.slice(0, 15).map((r) => el('tr', {}, el('td', { text: fmtDate(r.date) }), el('td', {}, mlink(r.model)), el('td', { class: 'num', text: money(r.gbp) }), el('td', { class: 'muted', text: [r.year, r.platform !== 'Unknown' ? r.platform : ''].filter(Boolean).join(' · ') }))))));
   const fams = {}; for (const r of last12) { const c = catOf(r.model), f = c ? c.family : 'Other'; (fams[f] = fams[f] || []).push(r.gbp); }
-  const order = [...new Set(CATALOG.map((m) => m.family))].filter((f) => fams[f]);
-  out.append(panel(t('By model family, last 12 months'), t('Typical price and range of every sale on file in each family. Families mix cheap and expensive variants, so compare like with like on a model’s own page.'),
-    table([[t('Family')], [t('Sales'), 'num'], [t('Typical price'), 'num'], [t('Lowest'), 'num'], [t('Highest'), 'num']], order.map((f) => el('tr', {}, el('td', { text: t(f) }), el('td', { class: 'num', text: String(fams[f].length) }), el('td', { class: 'num', text: money(median(fams[f])) }), el('td', { class: 'num', text: money(Math.min(...fams[f])) }), el('td', { class: 'num', text: money(Math.max(...fams[f])) }))))));
+  const order = [...new Set(CATALOG.map((m) => m.family))].filter((f) => fams[f]), fmax = Math.max(...order.map((f) => median(fams[f])));
+  out.append(panel(t('By model family, last 12 months'), t('Typical price of every sale on file in each family. Families mix cheap and expensive variants, so compare like with like on a model’s own page.'),
+    el('div', { class: 'bars' }, order.map((f) => el('div', { class: 'bar', style: 'grid-template-columns:minmax(0,11rem) minmax(0,1fr) 6.5rem' }, el('span', { text: t(f) }), el('div', { class: 't' }, el('i', { style: 'background:var(--accent);width:' + Math.max(3, median(fams[f]) / fmax * 100) + '%' })), el('span', { class: 'p', text: money(median(fams[f])) }))))));
   out.append(el('p', { class: 'muted small', text: t('Sold prices are public auction results copied by hand from The Classic Valuer and Classic.com. This is market research, not a formal valuation.') }));
   return out;
 }
@@ -995,15 +1120,16 @@ function viewGarage() {
     const inp = el('input', { type: 'text', maxlength: 40, value: CLOUD.garageName || '', placeholder: t('My garage'), 'aria-label': t('Garage name'), style: 'flex:1;min-width:10rem' });
     head = el('form', { class: 'row', style: 'flex-direction:row', onsubmit: async (ev) => { ev.preventDefault(); const v = inp.value.trim().slice(0, 40); try { await CLOUD.saveGarageName(v); toast(t('Saved')); } catch (e) { toast(t('Couldn’t save. Try again.')); } S.renaming = false; render(); } }, inp, el('button', { type: 'submit', class: 'btn primary', text: t('Save name') }), el('button', { type: 'button', class: 'btn', text: t('Cancel'), onclick: () => { S.renaming = false; render(); } }));
     setTimeout(() => inp.focus(), 0);
-  } else head = el('div', { class: 'row between' }, el('div', { class: 'row' }, el('h1', { text: name, style: 'overflow-wrap:anywhere' }), el('button', { type: 'button', class: 'btn sm', id: 'b-rename', text: t('Rename'), onclick: () => { S.renaming = true; render(); } })), el('a', { class: 'btn primary', href: '#/car/new', text: t('Add a car') }));
+  } else head = el('div', { class: 'row between' }, el('div', { class: 'row' }, el('h1', { text: name, style: 'overflow-wrap:anywhere' }), el('button', { type: 'button', class: 'btn sm', id: 'b-rename', text: t('Rename'), onclick: () => { S.renaming = true; render(); } })), el('a', { class: 'btn primary', href: '#/car/new' }, ico('plus', t('Add a car'))));
   out.append(head);
-  if (!CLOUD.loaded) { out.append(el('p', { class: 'empty', text: t('Loading your garage…') })); return out; }
-  if (!S.cars.length) { out.append(panel(null, null, el('p', { class: 'empty', text: t('Your garage is empty. Add your first car to see what it is worth and start its logbook.') }))); return out; }
+  if (!CLOUD.loaded) { out.append(el('div', { class: 'cards' }, skel('17rem'), skel('17rem'))); return out; }
+  if (!S.cars.length) { const b = el('div', { class: 'blank' }); b.innerHTML = CAR_SVG; b.append(el('p', { style: 'max-width:44ch', text: t('Your garage is empty. Add your first car to see what it is worth and start its logbook.') }), el('a', { class: 'btn primary', href: '#/car/new' }, ico('plus', t('Add your first car')))); out.append(b); return out; }
   out.append(el('div', { class: 'cards' }, S.cars.map((c) => {
-    const e = estimate(c), due = dueOf(c).length;
+    const e = estimate(c), due = dueOf(c).length, tr = e ? trendOf(e.model) : null;
     return el('a', { class: 'card', href: '#/car/' + c.id + '/overview' }, photoBox(c), el('div', { class: 'body' },
       el('b', { text: c.name || t('Unnamed car') }), el('span', { class: 'muted small', text: [c.year, carOdo(c)].filter(Boolean).join(' · ') }),
       el('span', { class: 'small', text: e ? t('Worth about {p}', { p: money(e.gbp) }) : t('No market data yet') }),
+      tr == null ? null : el('span', { class: 'trend ' + (tr >= 0 ? 'up' : 'down'), text: (tr >= 0 ? '▲ ' : '▼ ') + t('{p} against its long-run price', { p: pct(tr) }) }),
       due ? el('span', {}, el('span', { class: 'badge due', text: t('{n} due', { n: due }) })) : null));
   })));
   return out;
@@ -1058,7 +1184,7 @@ function carForm(car) {
     let sure = false; const del = el('button', { type: 'button', class: 'btn danger', id: 'b-del', text: t('Remove this car') });
     del.addEventListener('click', async () => {
       if (!sure) { sure = true; del.textContent = t('Yes, remove it and its logbook'); return; }
-      const paths = (car.records || []).flatMap((r) => (r.files || []).map((x) => x.path)).concat(car.photo ? [car.photo.path] : []);
+      const paths = (car.records || []).flatMap((r) => (r.files || []).map((x) => x.path)).concat(car.photo ? [car.photo.path] : [], (car.gallery || []).map((x) => x.path));
       try { await S.db.collection('cars').doc(car.id).delete(); CLOUD.removeFiles(paths); toast(t('Car removed')); nav('#/garage'); } catch (e) { toast(t('Couldn’t remove it. Try again.')); }
     });
     out.append(el('div', { class: 'row' }, del));
@@ -1082,22 +1208,46 @@ function vinPlate(car) {
   wrap.append(el('div', { class: 'flags' }, d.flags.map((f) => el('span', { class: 'flag ' + f.kind, text: trFlag(f.text) }))));
   return wrap;
 }
+function banner(car, e) {
+  const b = el('div', { class: 'banner' }); b.innerHTML = CAR_SVG;
+  if (car.photo && car.photo.path) CLOUD.fileUrl(car.photo.path).then((url) => { const im = el('img', { src: url, alt: '' }); im.addEventListener('error', () => im.remove()); b.prepend(im); }).catch(() => {});
+  b.append(el('div', { class: 'over' }, el('h1', { text: car.name || t('Unnamed car') }), e ? el('div', { class: 'v' }, el('small', { text: t('Worth about') }), el('span', { text: money(e.gbp) })) : null));
+  return b;
+}
+function galleryPanel(car) {
+  const list = car.gallery || [], input = el('input', { type: 'file', accept: 'image/*', multiple: true, id: 'g-files', style: 'display:none' }), status = el('span', { class: 'status' });
+  input.addEventListener('change', async () => {
+    const files = [...input.files]; if (!files.length) return; const added = [];
+    try { let n = 0; for (const f of files) { status.textContent = t('Uploading file {a} of {b}…', { a: ++n, b: files.length }); added.push(await CLOUD.upload(car.id, await shrink(f))); } await saveCar(car, { gallery: list.concat(added) }); toast(t('Photos added')); render(); }
+    catch (e) { status.textContent = t('Couldn’t save: {m}', { m: (e && e.message) || '' }); }
+  });
+  const grid = el('div', { class: 'gallery' }, list.map((g) => {
+    const ph = el('button', { type: 'button', class: 'ph', 'aria-label': t('Open photo') });
+    CLOUD.fileUrl(g.path).then((url) => { ph.append(el('img', { src: url, alt: '', loading: 'lazy' })); ph.addEventListener('click', () => window.open(url, '_blank')); }).catch(() => {});
+    return el('figure', {}, ph, el('button', { type: 'button', class: 'linkbtn small', text: t('Remove'), onclick: async () => { try { await saveCar(car, { gallery: list.filter((x) => x !== g) }); CLOUD.removeFiles([g.path]); toast(t('Photo removed')); render(); } catch (e) { toast(t('Couldn’t save. Try again.')); } } }));
+  }));
+  return panel(t('Photos'), null, list.length ? grid : el('p', { class: 'empty', text: t('Add photos of the car, its details and its paperwork.') }), el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn', id: 'b-photos', onclick: () => input.click() }, ico('camera', t('Add photos'))), input, status));
+}
 function viewCar(car, sub) {
-  const base = '#/car/' + car.id + '/', tabs = [['overview', t('Overview')], ['market', t('Market')], ['logbook', t('Logbook')]];
+  const base = '#/car/' + car.id + '/', tabs = [['overview', t('Overview')], ['market', t('Market')], ['logbook', t('Logbook')]], e = estimate(car);
   const out = el('div', { class: 'col' },
-    el('div', { class: 'col', style: 'gap:6px' }, el('a', { class: 'small', href: '#/garage', text: '‹ ' + (CLOUD.garageName || t('My garage')) }), el('h1', { text: car.name || t('Unnamed car'), style: 'overflow-wrap:anywhere' })),
+    el('a', { class: 'small', href: '#/garage', text: '‹ ' + (CLOUD.garageName || t('My garage')) }), banner(car, e),
     el('nav', { class: 'subtabs', 'aria-label': t('Car sections') }, tabs.map((x) => el('a', { class: 'tab', href: base + x[0], 'aria-current': sub === x[0] ? 'page' : 'false', text: x[1] }))));
   if (sub === 'market') out.append(panel(null, null, marketView(modelOf(car), car)));
   else if (sub === 'logbook') out.append(logbookView(car));
   else {
-    const e = estimate(car), facts = [[t('Model year'), car.year], [t('Odometer'), carOdo(car)], [t('Colour'), car.colour], [t('Interior'), car.interior], [t('Registration'), car.reg], [t('Acquired'), car.acquired ? fmtDate(car.acquired) : ''], [t('Paid'), car.paid ? cash(+car.paid, car.paidCur) : ''], [t('Condition'), car.condition ? t({ 1: '1 Concours', 2: '2 Excellent', 3: '3 Good', 4: '4 Fair' }[car.condition]) : ''], [t('Compared against'), e ? shortModel(e.model) : '']].filter((x) => x[1]);
-    const basis = !e ? t('We couldn’t value this car yet. Open the Market tab to see why.') : e.basis === 'similar' ? t('From {n} recent sales of cars with similar mileage, which ranged from {a} to {b}.', { n: e.n, a: money(e.low), b: money(e.high) }) : e.basis === 'year' ? t('The typical price of {n} sales in the last 12 months, which ranged from {a} to {b}.', { n: e.n, a: money(e.low), b: money(e.high) }) : t('The typical price of the {n} sales on file. Few are recent, so treat it as a rough guide.', { n: e.n });
-    const value = el('div', { class: 'col', style: 'gap:6px' }, el('span', { class: 'label', text: t('Worth about') }), el('div', { class: 'big', text: e ? money(e.gbp) : '—' }), el('p', { class: 'muted small', text: basis }));
-    if (e && +car.paid && FX[car.paidCur || 'USD']) { const d = e.gbp - +car.paid * FX[car.paidCur || 'USD']; value.append(el('p', { class: 'small ' + (d >= 0 ? 'up' : 'down'), text: t('{d} against the {p} you paid', { d: (d >= 0 ? '+' : '−') + money(Math.abs(d)), p: cash(+car.paid, car.paidCur) }) })); }
+    const facts = [[t('Model year'), car.year], [t('Odometer'), carOdo(car)], [t('Colour'), car.colour], [t('Interior'), car.interior], [t('Registration'), car.reg], [t('Acquired'), car.acquired ? fmtDate(car.acquired) : ''], [t('Paid'), car.paid ? cash(+car.paid, car.paidCur) : ''], [t('Condition'), car.condition ? t({ 1: '1 Concours', 2: '2 Excellent', 3: '3 Good', 4: '4 Fair' }[car.condition]) : ''], [t('Compared against'), e ? shortModel(e.model) : '']].filter((x) => x[1]);
+    const basis = !e ? t('We couldn’t value this car yet. Open the Market tab to see why.') : e.basis === 'similar' ? t('From {n} recent sales of cars with similar mileage.', { n: e.n }) : e.basis === 'year' ? t('The typical price of {n} sales in the last 12 months.', { n: e.n }) : t('The typical price of the {n} sales on file. Few are recent, so treat it as a rough guide.', { n: e.n });
+    const value = el('div', { class: 'col', style: 'gap:8px' }, el('span', { class: 'label', text: t('Worth about') }), el('div', { class: 'big', text: e ? money(e.gbp) : '—' }));
+    if (e && e.low != null && e.high > e.low) value.append(el('div', { class: 'range' }, el('div', { class: 'track' }, el('span', { class: 'dot', style: 'left:' + Math.max(0, Math.min(100, (e.gbp - e.low) / (e.high - e.low) * 100)) + '%' })), el('div', { class: 'ends' }, el('span', { text: money(e.low) }), el('span', { text: money(e.high) })), el('span', { class: 'muted small', text: t('Where the typical price sits in the range these cars sold for.') })));
+    value.append(el('p', { class: 'muted small', text: basis }));
+    if (e && +car.paid && FX[car.paidCur || 'USD']) { const d = e.gbp - +car.paid * FX[car.paidCur || 'USD']; value.append(el('p', { class: 'small ' + (d >= 0 ? 'up' : 'down'), style: 'font-weight:600', text: t('{d} against the {p} you paid', { d: (d >= 0 ? '+' : '−') + money(Math.abs(d)), p: cash(+car.paid, car.paidCur) }) })); }
+    const tr = e ? trendOf(e.model) : null; if (tr != null) value.append(el('p', { class: 'trend ' + (tr >= 0 ? 'up' : 'down'), text: (tr >= 0 ? '▲ ' : '▼ ') + t('{p} against its long-run price', { p: pct(tr) }) }));
     const due = dueOf(car);
-    out.append(el('div', { class: 'hero' }, photoBox(car), el('div', { class: 'col' }, panel(null, null, value, el('div', { class: 'row' }, el('a', { class: 'btn', href: base + 'market', text: t('See the market') }), el('a', { class: 'btn', href: base + 'logbook', text: t('Open the logbook') }))),
-      due.length ? panel(t('Coming up'), null, el('ul', { class: 'due-list' }, due.map((x) => el('li', {}, el('span', { text: x.r.title }), el('span', { class: 'tag s-' + x.st, text: remText(car, x.r, x.st) }))))) : null)));
-    out.append(panel(t('Details'), null, facts.length ? el('dl', { class: 'facts' }, facts.map((x) => el('div', {}, el('dt', { text: x[0] }), el('dd', { text: x[1] })))) : el('p', { class: 'empty', text: t('No details yet.') }), vinPlate(car), el('div', { class: 'row' }, el('a', { class: 'btn', id: 'b-edit', href: base + 'edit', text: t('Edit details') }))));
+    out.append(el('div', { class: 'grid2' }, panel(null, null, value, el('div', { class: 'row' }, el('a', { class: 'btn', href: base + 'market' }, ico('market', t('See the market'))), el('a', { class: 'btn', href: base + 'logbook', text: t('Open the logbook') }))),
+      panel(t('Coming up'), null, due.length ? el('ul', { class: 'due-list' }, due.map((x) => el('li', {}, el('span', { text: x.r.title }), el('span', { class: 'tag s-' + x.st, text: remText(car, x.r, x.st) })))) : el('p', { class: 'empty', text: t('Nothing is due. Reminders you add in the logbook show here.') }))));
+    out.append(galleryPanel(car));
+    out.append(panel(t('Details'), null, facts.length ? el('dl', { class: 'facts' }, facts.map((x) => el('div', {}, el('dt', { text: x[0] }), el('dd', { text: x[1] })))) : el('p', { class: 'empty', text: t('No details yet.') }), vinPlate(car), el('div', { class: 'row' }, el('a', { class: 'btn', id: 'b-edit', href: base + 'edit' }, ico('edit', t('Edit details'))))));
   }
   return out;
 }
@@ -1120,7 +1270,7 @@ function logbookView(car) {
   } else remPanel.append(el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn', id: 'b-rem-new', text: t('Add a reminder'), onclick: () => { S.remOpen = true; render(); } })));
   out.append(remPanel);
   // records
-  const head = el('div', { class: 'row between' }, el('h2', { text: t('History') }), el('div', { class: 'row' }, recs.length ? el('button', { type: 'button', class: 'btn', id: 'b-pdf', text: t('Download as PDF'), onclick: () => printLogbook(car) }) : null, S.rec ? null : el('button', { type: 'button', class: 'btn primary', id: 'b-rec-new', text: t('Add a record'), onclick: () => { S.rec = { files: [], removed: [] }; render(); } })));
+  const head = el('div', { class: 'row between' }, el('h2', { text: t('History') }), el('div', { class: 'row' }, recs.length ? el('button', { type: 'button', class: 'btn', id: 'b-pdf', onclick: () => printLogbook(car) }, ico('pdf', t('Download as PDF'))) : null, S.rec ? null : el('button', { type: 'button', class: 'btn primary', id: 'b-rec-new', onclick: () => { S.rec = { files: [], removed: [] }; render(); } }, ico('plus', t('Add a record')))));
   const hist = el('section', { class: 'panel' }, head);
   if (S.rec) hist.append(recordForm(car));
   if (!recs.length) { if (!S.rec) hist.append(el('p', { class: 'empty', text: t('No records yet. Add the first service, condition check or document for this car.') })); out.append(hist); return out; }
@@ -1191,7 +1341,8 @@ function recordForm(car) {
 function printLogbook(car) {
   const recs = [...(car.records || [])].sort((a, b) => (a.date || '').localeCompare(b.date || '')), p = $('print');
   const facts = [[t('Model year'), car.year], [t('Chassis number (VIN)'), car.vin], [t('Odometer'), carOdo(car)], [t('Colour'), car.colour], [t('Interior'), car.interior], [t('Registration'), car.reg], [t('Acquired'), car.acquired ? fmtDate(car.acquired) : '']].filter((x) => x[1]);
-  p.replaceChildren(el('h1', { text: car.name || '' }), el('p', { text: t('Logbook from {g}, printed {d}', { g: CLOUD.garageName || 'Garage 197', d: fmtDate(today()) }) }),
+  const lg = el('div', { style: 'width:34pt;height:34pt;float:inline-end' }); lg.innerHTML = LOGO;
+  p.replaceChildren(lg, el('h1', { text: car.name || '' }), el('p', { text: t('Logbook from {g}, printed {d}', { g: CLOUD.garageName || 'Garage 197', d: fmtDate(today()) }) }),
     el('dl', { class: 'facts', style: 'margin-top:10pt' }, facts.map((x) => el('div', {}, el('dt', { text: x[0] }), el('dd', { text: x[1] })))),
     el('h2', { text: t('History') }),
     el('table', {}, el('thead', {}, el('tr', {}, [t('Date'), t('Type'), t('What happened'), t('Odometer'), t('Done by'), t('Cost')].map((h) => el('th', { text: h })))),
@@ -1206,7 +1357,8 @@ function viewSettings() {
     panel(t('Display'), null,
       field(t('Language'), pick('lang', 'g197-lang', [['en', 'English'], ['ar', 'العربية']])),
       field(t('Show prices in'), pick('cur', 'g197-cur', [['USD', t('US dollars')], ['GBP', t('Pounds')], ['EUR', t('Euros')], ['QAR', t('Qatari riyals')], ['AED', t('UAE dirhams')], ['SAR', t('Saudi riyals')]]), t('Conversions use fixed approximate exchange rates.')),
-      field(t('Show distances in'), pick('unit', 'g197-unit', [['mi', t('Miles')], ['km', t('Kilometres')]]))),
+      field(t('Show distances in'), pick('unit', 'g197-unit', [['mi', t('Miles')], ['km', t('Kilometres')]])),
+      field(t('Appearance'), pick('theme', 'g197-theme', [['light', t('Light')], ['dark', t('Dark')], ['auto', t('Match my device')]]))),
     panel(t('Account'), null, el('p', { class: 'small', text: t('Signed in as {email}. Your garage is saved to your account and follows you to any device.', { email: CLOUD.user.email || '' }) }),
       el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn', id: 'b-signout', text: t('Sign out'), onclick: async () => { await CLOUD.signOut(); location.hash = '#/home'; } }))));
   const n = CLOUD.localCount();
@@ -1216,15 +1368,17 @@ function viewSettings() {
 
 /* ----- frame ----- */
 function render() {
-  const app = $('app'); document.documentElement.lang = S.lang; document.documentElement.dir = S.lang === 'ar' ? 'rtl' : 'ltr'; S.redraw = null;
+  const app = $('app'); document.documentElement.lang = S.lang; document.documentElement.dir = S.lang === 'ar' ? 'rtl' : 'ltr'; document.documentElement.dataset.theme = S.theme; S.redraw = null;
+  const dark = S.theme === 'dark' || (S.theme === 'auto' && window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches), tc = document.querySelector('meta[name=theme-color]'); if (tc) tc.content = dark ? '#120d1c' : '#ffffff';
   if (!CLOUD.user || S.mode === 'newpass') { app.replaceChildren(viewLogin()); return; }
-  const r = route(), top = r.name === 'home' || r.name === 'model' ? 'home' : r.name === 'settings' ? 'settings' : 'garage';
-  const tab = (id, href, label) => el('a', { class: 'tab', id: 't-' + id, href, 'aria-current': top === id ? 'page' : 'false', text: label });
-  const head = el('header', { class: 'head' }, el('h1', { text: 'Garage 197', style: 'padding-block:8px' }), el('nav', { class: 'tabs', 'aria-label': t('Sections') }, tab('home', '#/home', t('Home')), tab('garage', '#/garage', CLOUD.garageName || t('My garage')), tab('settings', '#/settings', t('Settings'))));
+  const r = route(), top = r.name === 'home' ? 'home' : r.name === 'market' || r.name === 'model' ? 'market' : r.name === 'settings' ? 'settings' : 'garage';
+  const tab = (id, href, label) => el('a', { class: 'tab', id: 't-' + id, href, 'aria-current': top === id ? 'page' : 'false' }, ico(id, label));
+  const head = el('header', { class: 'head' }, brand('#/home'), el('nav', { class: 'tabs', 'aria-label': t('Sections') }, tab('home', '#/home', t('Home')), tab('garage', '#/garage', CLOUD.garageName || t('My garage')), tab('market', '#/market', t('Market')), tab('settings', '#/settings', t('Settings'))));
   let main;
   if (r.name === 'garage') main = viewGarage();
+  else if (r.name === 'market') main = viewMarket();
   else if (r.name === 'settings') main = viewSettings();
-  else if (r.name === 'model') { const m = catOf(r.a); main = el('div', { class: 'col' }, el('div', { class: 'col', style: 'gap:6px' }, el('a', { class: 'small', href: '#/home', text: '‹ ' + t('Home') }), el('h1', { text: m ? shortModel(m.name) : t('Model not found') }), m ? el('p', { class: 'muted', text: t('Built {a} to {b}', { a: m.from, b: m.to }) }) : null), m ? panel(null, null, marketView(m.name, null)) : null, m ? el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn primary', text: t('Add this car to my garage'), onclick: () => { S.prefill = m.name; nav('#/car/new'); } })) : null); }
+  else if (r.name === 'model') { const m = catOf(r.a); main = el('div', { class: 'col' }, el('div', { class: 'col', style: 'gap:6px' }, el('a', { class: 'small', href: '#/market', text: '‹ ' + t('Market') }), el('h1', { text: m ? shortModel(m.name) : t('Model not found') }), m ? el('p', { class: 'muted', text: t('Built {a} to {b}', { a: m.from, b: m.to }) }) : null), m ? panel(null, null, marketView(m.name, null)) : null, m ? el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn primary', text: t('Add this car to my garage'), onclick: () => { S.prefill = m.name; nav('#/car/new'); } })) : null); }
   else if (r.name === 'car' && r.a === 'new') main = carForm(null);
   else if (r.name === 'car') { const car = S.cars.find((c) => c.id === r.a); main = !car ? el('p', { class: 'empty', text: t(CLOUD.loaded ? 'That car is no longer in your garage.' : 'Loading your garage…') }) : r.b === 'edit' ? carForm(car) : viewCar(car, r.b || 'overview'); }
   else main = viewHome();
