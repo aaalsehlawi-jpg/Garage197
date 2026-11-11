@@ -179,6 +179,19 @@
   .bar .up-bg { background: var(--ok); } .bar .down-bg { background: var(--bad); }
   .bar .p { text-align: end; font-variant-numeric: tabular-nums; font-weight: 600; }
   .trend { font-size: .8rem; font-weight: 600; }
+  .feed { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr)); gap: 10px; }
+  .feeditem { display: flex; gap: 12px; align-items: center; text-decoration: none; color: inherit; border: 1px solid var(--line); border-radius: 12px; padding: 8px; min-width: 0; }
+  .feeditem:hover { border-color: var(--accent); }
+  .feeditem .photo { width: 5.5rem; flex: none; border-radius: 8px; }
+  .feeditem b { color: var(--strong); overflow-wrap: anywhere; }
+  a.chip { text-decoration: none; }
+  .posts { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+  .posts li { border-top: 1px solid var(--line); padding: 12px 0; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  .posts p { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .blank .btn, .btn { white-space: nowrap; }
+  .socials { display: flex; flex-wrap: wrap; gap: 6px; }
+  .check { display: flex; gap: 10px; align-items: center; font-weight: 600; cursor: pointer; }
+  .check input { width: 1.2rem; height: 1.2rem; accent-color: var(--accent); }
   .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr)); gap: 10px; }
   .gallery figure { margin: 0; display: flex; flex-direction: column; gap: 3px; }
   .gallery .ph { aspect-ratio: 4 / 3; border-radius: 8px; overflow: hidden; background: var(--soft); border: 1px solid var(--line); padding: 0; cursor: pointer; display: block; width: 100%; }

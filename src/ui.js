@@ -68,6 +68,7 @@ const ICONS = {
   garage: '<path d="M3 10.5 12 5l9 5.5V20H3z"/><path d="M7 20v-6h10v6"/><path d="M7 17h10"/>',
   market: '<path d="M4 19.5h16"/><path d="M5 15.5l4.5-5 3.5 3 6-7.5"/><path d="M15.5 6H19v3.5"/>',
   settings: '<circle cx="12" cy="12" r="3"/><path d="M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21M5.6 5.6l1.8 1.8M16.6 16.6l1.8 1.8M5.6 18.4l1.8-1.8M16.6 7.4l1.8-1.8"/>',
+  friends: '<circle cx="9" cy="8.5" r="3.2"/><path d="M3 19.5c.6-3.4 3-5 6-5s5.4 1.6 6 5"/><circle cx="17" cy="9.5" r="2.5"/><path d="M17 14.5c2.2.2 3.6 1.6 4 4"/>',
   plus: '<path d="M12 5v14M5 12h14"/>', pdf: '<path d="M7 3.5h7l4 4V20.5H7z"/><path d="M14 3.5v4h4"/><path d="M12 11v6m0 0-2.5-2.5M12 17l2.5-2.5"/>',
   edit: '<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/>', camera: '<path d="M4 8h3l1.5-2h7L17 8h3v11H4z"/><circle cx="12" cy="13.5" r="3.2"/>'
 };
@@ -266,6 +267,7 @@ function viewHome() {
     const due = S.cars.flatMap(dueOf);
     if (due.length) out.append(panel(t('Coming up'), null, el('ul', { class: 'due-list' }, due.map((x) => el('li', {}, el('span', {}, el('a', { href: '#/car/' + x.car.id + '/logbook', text: x.r.title }), el('span', { class: 'muted', text: ' · ' + (x.car.name || '') })), el('span', { class: 'tag s-' + x.st, text: remText(x.car, x.r, x.st) }))))));
   }
+  const fp = feedPanel(); if (fp) out.append(fp);
   out.append(searchPanel());
   if (S.sales) {
     const latest = [...S.sales].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 4);
@@ -561,10 +563,180 @@ function viewSettings() {
       field(t('Show prices in'), pick('cur', 'g197-cur', [['USD', t('US dollars')], ['GBP', t('Pounds')], ['EUR', t('Euros')], ['QAR', t('Qatari riyals')], ['AED', t('UAE dirhams')], ['SAR', t('Saudi riyals')]]), t('Conversions use fixed approximate exchange rates.')),
       field(t('Show distances in'), pick('unit', 'g197-unit', [['mi', t('Miles')], ['km', t('Kilometres')]])),
       field(t('Appearance'), pick('theme', 'g197-theme', [['light', t('Light')], ['dark', t('Dark')], ['auto', t('Match my device')]]))),
+    linksPanel(),
     panel(t('Account'), null, el('p', { class: 'small', text: t('Signed in as {email}. Your garage is saved to your account and follows you to any device.', { email: CLOUD.user.email || '' }) }),
       el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn', id: 'b-signout', text: t('Sign out'), onclick: async () => { await CLOUD.signOut(); location.hash = '#/home'; } }))));
   const n = CLOUD.localCount();
   if (n) out.append(panel(t('Cars saved on this device'), null, el('p', { class: 'small', text: t('Cars saved on this device before accounts existed: {n}.', { n }) }), el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn primary', id: 'b-import', text: t('Add them to my account'), onclick: async () => { try { await CLOUD.importLocal(); toast(t('Cars added to your account')); } catch (e) { toast(t('Couldn’t save. Try again.')); } render(); } }))));
+  return out;
+}
+
+/* ----- friends ----- */
+const incoming = () => CLOUD.friends.filter((f) => f.status === 'pending' && f.incoming);
+const friendName = (f) => f.garage || f.email || t('A friend');
+const SOCIALS = [['instagram', 'Instagram', 'https://www.instagram.com/'], ['youtube', 'YouTube', 'https://www.youtube.com/@'], ['tiktok', 'TikTok', 'https://www.tiktok.com/@'], ['x', 'X', 'https://x.com/'], ['facebook', 'Facebook', 'https://www.facebook.com/'], ['website', 'Website', '']];
+// Turns a handle or address into a safe https link, or null when it can't be one.
+function socialUrl(key, v) {
+  v = (v || '').trim(); if (!v) return '';
+  const base = SOCIALS.find((x) => x[0] === key)[2];
+  if (!/^https?:\/\//i.test(v)) { if (base && /^@?[\w.\-]{1,60}$/.test(v)) v = base + v.replace(/^@/, ''); else v = 'https://' + v; }
+  try { const u = new URL(v); if (!/^https?:$/.test(u.protocol) || !u.hostname.includes('.')) return null; u.protocol = 'https:'; return u.href.slice(0, 200); } catch (e) { return null; }
+}
+const socialLinks = (links) => { const l = SOCIALS.filter((x) => links && /^https:\/\//.test(links[x[0]] || '')); return l.length ? el('span', { class: 'socials' }, l.map((x) => el('a', { class: 'chip', href: links[x[0]], target: '_blank', rel: 'noopener noreferrer', text: x[0] === 'website' ? t('Website') : x[1] }))) : null; };
+const noSocial = () => panel(null, null, el('p', { class: 'muted', text: t('Friends are not switched on for this app yet. Check back soon.') }));
+function linksPanel() {
+  if (!CLOUD.social) return null;
+  const inputs = SOCIALS.map((x) => [x[0], el('input', { type: 'text', id: 'l-' + x[0], maxlength: 200, value: (CLOUD.links || {})[x[0]] || '', placeholder: x[2] ? t('Your username or the page address') : 'https://', autocapitalize: 'off', autocomplete: 'off', spellcheck: 'false', dir: 'ltr' })]);
+  const status = el('span', { class: 'status' });
+  return el('section', { class: 'panel' }, el('h2', { text: t('Social media') }), el('p', { class: 'muted small', text: t('Link your other pages. Only your friends see these, on the Friends page and on your garage.') }),
+    el('form', { class: 'col', style: 'gap:12px', onsubmit: async (ev) => {
+      ev.preventDefault(); const links = {};
+      for (const [k, inp] of inputs) { const u = socialUrl(k, inp.value); if (u === null) { status.textContent = t('That doesn’t look like a page address: {v}', { v: inp.value }); inp.focus(); return; } if (u) links[k] = u; }
+      try { await CLOUD.saveProfile({ links }); toast(t('Saved')); document.activeElement && document.activeElement.blur(); render(); } catch (e) { status.textContent = t('Couldn’t save. Try again.'); }
+    } }, inputs.map(([k, inp], i) => field(k === 'website' ? t('Website') : SOCIALS[i][1], inp)), el('div', { class: 'row' }, el('button', { type: 'submit', class: 'btn primary', id: 'b-links', text: t('Save links') }), status)));
+}
+function feedPanel() {
+  if (!CLOUD.social) return null;
+  const req = incoming(), feed = CLOUD.feed.slice(0, 6);
+  const evs = CLOUD.events.slice(0, 3);
+  if (!req.length && !feed.length && !evs.length) return null;
+  return panel(t('From your friends'), null,
+    req.length ? el('p', {}, el('a', { href: '#/friends', id: 'a-requests', text: req.length === 1 ? t('You have a friend request') : t('You have {n} friend requests', { n: req.length }) })) : null,
+    feed.length ? el('div', { class: 'feed' }, feed.map((x) => el('a', { class: 'feeditem', href: '#/friend/' + x.owner + '/' + encodeURIComponent(x.car_id) }, photoBox(x.car), el('span', { class: 'col', style: 'gap:2px' },
+      el('b', { text: x.car.name || t('Unnamed car') }), el('span', { class: 'small', text: t('Added to {g}', { g: x.garage || x.email || t('A friend') }) }), el('span', { class: 'muted small', text: fmtDate(String(x.added).slice(0, 10)) }))))) : null,
+    evs.length ? el('div', { class: 'col', style: 'gap:0' }, el('span', { class: 'label', text: t('Upcoming events') }), el('ul', { class: 'due-list' }, evs.map((e) => el('li', {}, el('span', {}, el('a', { href: '#/events', text: e.title }), el('span', { class: 'muted', text: ' · ' + (e.community || t('Friends')) })), el('span', { class: 'tag', text: fmtWhen(e.starts_at) }))))) : null,
+    el('div', { class: 'row' }, el('a', { class: 'btn', href: '#/friends' }, ico('friends', t('Open community')))));
+}
+function viewFriends() {
+  const out = el('div', { class: 'col', style: 'max-width:46rem' }, socialTabs('friends'));
+  if (!CLOUD.social) { out.append(noSocial()); return out; }
+  if (!CLOUD.socialLoaded) { out.append(skel('8rem'), skel('8rem')); return out; }
+  const act = (fn, done) => async () => { try { await fn(); if (done) toast(done); } catch (e) { toast(t('Couldn’t save. Try again.')); } render(); };
+  const email = el('input', { type: 'email', id: 'fr-email', required: true, placeholder: 'name@example.com', autocomplete: 'off', autocapitalize: 'off', dir: 'ltr', style: 'flex:1;min-width:12rem' }), status = el('span', { class: 'status', id: 'fr-status', role: 'status' });
+  out.append(panel(t('Add a friend'), t('Enter the email address your friend uses for Garage 197. They will see your request the next time they open the app.'),
+    el('form', { class: 'row', style: 'flex-direction:row', onsubmit: async (ev) => {
+      ev.preventDefault(); status.textContent = t('Sending…');
+      try {
+        const r = await CLOUD.requestFriend(email.value.trim());
+        S.frMsg = { sent: t('Request sent to {e}.', { e: email.value.trim() }), accepted: t('You are now friends.'), exists: t('You are already friends, or a request is waiting.'), self: t('That is your own email address.'), none: t('No Garage 197 account uses that email. Ask your friend to sign up first, then try again.') }[r] || '';
+        email.blur(); render();
+      } catch (e) { status.textContent = t('Couldn’t send the request. Try again.'); }
+    } }, email, el('button', { type: 'submit', class: 'btn primary', id: 'b-fr-add' }, ico('plus', t('Send request')))), status));
+  if (S.frMsg) { status.textContent = S.frMsg; S.frMsg = ''; }
+  const req = incoming(), friends = CLOUD.friends.filter((f) => f.status === 'accepted'), sent = CLOUD.friends.filter((f) => f.status === 'pending' && !f.incoming);
+  if (req.length) out.append(panel(t('Friend requests'), null, el('ul', { class: 'due-list' }, req.map((f) => el('li', {}, el('span', {}, el('b', { text: f.email }), f.garage ? el('span', { class: 'muted', text: ' · ' + f.garage }) : null),
+    el('span', { class: 'row' }, el('button', { type: 'button', class: 'btn sm primary', text: t('Accept'), onclick: act(() => CLOUD.acceptFriend(f.id), t('You are now friends.')) }), el('button', { type: 'button', class: 'btn sm', text: t('Decline'), onclick: act(() => CLOUD.removeFriend(f.id)) })))))));
+  out.append(panel(t('Your friends'), null, friends.length ? el('ul', { class: 'due-list' }, friends.map((f) => el('li', {},
+    el('span', { class: 'col', style: 'gap:4px;min-width:0' }, el('b', { text: friendName(f), style: 'overflow-wrap:anywhere' }), f.garage ? el('span', { class: 'muted small', text: f.email }) : null, socialLinks(f.links)),
+    el('span', { class: 'row' }, f.shared ? el('a', { class: 'btn sm primary', href: '#/friend/' + f.other, text: t('Open garage') }) : el('span', { class: 'muted small', text: t('Garage not shared') }),
+      el('button', { type: 'button', class: 'btn sm', text: t('Remove'), onclick: () => { if (confirm(t('Remove {n} from your friends?', { n: friendName(f) }))) act(() => CLOUD.removeFriend(f.id), t('Friend removed'))(); } })))))
+    : el('p', { class: 'empty', text: t('No friends yet. Send a request above to get started.') })));
+  if (sent.length) out.append(panel(t('Requests you sent'), null, el('ul', { class: 'due-list' }, sent.map((f) => el('li', {}, el('span', { text: f.email }), el('span', { class: 'row' }, el('span', { class: 'muted small', text: t('Waiting for a reply') }), el('button', { type: 'button', class: 'btn sm', text: t('Cancel'), onclick: act(() => CLOUD.removeFriend(f.id)) })))))));
+  const box = el('input', { type: 'checkbox', id: 'c-share' }); box.checked = !!CLOUD.shared;
+  box.addEventListener('change', async () => { try { await CLOUD.saveProfile({ shared: box.checked }); toast(box.checked ? t('Your friends can now see your garage') : t('Your garage is private again')); } catch (e) { box.checked = !box.checked; toast(t('Couldn’t save. Try again.')); } });
+  out.append(panel(t('Sharing'), null, el('label', { class: 'check', for: 'c-share' }, box, el('span', { text: t('Show my garage to my friends') })),
+    el('p', { class: 'muted small', text: t('Friends see each car’s name, year, model, colour, mileage and photos, and your newest cars appear on their Home page. They never see what you paid, values, chassis numbers, registration, logbooks or documents.') })));
+  return out;
+}
+function viewFriend(uid, carId) {
+  const out = el('div', { class: 'col' }), f = CLOUD.friends.find((x) => x.other === uid && x.status === 'accepted');
+  out.append(el('a', { class: 'small', href: carId ? '#/friend/' + uid : '#/friends', text: '‹ ' + (carId && f ? friendName(f) : t('Friends')) }));
+  if (!CLOUD.socialLoaded) { out.append(skel('12rem')); return out; }
+  if (!f || !f.shared) { out.append(el('p', { class: 'empty', text: t('This garage is not shared with you.') })); return out; }
+  S.fcars = S.fcars || {};
+  const got = S.fcars[uid];
+  if (!got) { S.fcars[uid] = { loading: true }; CLOUD.friendCars(uid).then((rows) => { S.fcars[uid] = { rows: rows || [] }; }).catch(() => { S.fcars[uid] = { rows: [], failed: true }; }).then(render); }
+  if (!got || got.loading) { out.append(el('h1', { text: friendName(f) }), el('div', { class: 'cards' }, skel('17rem'), skel('17rem'))); return out; }
+  const facts = (c) => [c.year, carOdo(c), c.colour].filter(Boolean).join(' · ');
+  if (carId) {
+    const x = got.rows.find((r) => r.car_id === carId);
+    if (!x) { out.append(el('p', { class: 'empty', text: t('That car is no longer in this garage.') })); return out; }
+    const c = x.car, mn = modelOf({ ...c, vin: '' }), m = mn && catOf(mn), list = c.gallery || [];
+    out.append(banner(c, null), panel(null, null, el('dl', { class: 'facts' }, [[t('Year'), c.year], [t('Model'), m ? shortModel(m.name) : ''], [t('Mileage'), carOdo(c)], [t('Colour'), c.colour], [t('Interior'), c.interior], [t('Added'), fmtDate(String(x.added).slice(0, 10))]].filter((r) => r[1]).map((r) => el('div', {}, el('dt', { text: r[0] }), el('dd', { text: String(r[1]) })))),
+      m ? el('div', { class: 'row' }, el('a', { class: 'btn', href: '#/model/' + encodeURIComponent(m.name) }, ico('market', t('See what this model sells for')))) : null));
+    if (list.length) out.append(panel(t('Photos'), null, el('div', { class: 'gallery' }, list.map((g) => { const ph = el('button', { type: 'button', class: 'ph', 'aria-label': t('Open photo') }); CLOUD.fileUrl(g.path).then((url) => { ph.append(el('img', { src: url, alt: '', loading: 'lazy' })); ph.addEventListener('click', () => window.open(url, '_blank')); }).catch(() => {}); return el('figure', {}, ph); }))));
+    return out;
+  }
+  out.append(el('div', { class: 'col', style: 'gap:6px' }, el('h1', { text: friendName(f), style: 'overflow-wrap:anywhere' }), socialLinks(f.links)));
+  if (!got.rows.length) { out.append(el('p', { class: 'empty', text: t(got.failed ? 'This garage could not be loaded. Try again later.' : 'This garage has no cars yet.') })); return out; }
+  out.append(el('div', { class: 'cards' }, got.rows.map((x) => el('a', { class: 'card', href: '#/friend/' + uid + '/' + encodeURIComponent(x.car_id) }, photoBox(x.car), el('div', { class: 'body' }, el('b', { text: x.car.name || t('Unnamed car') }), el('span', { class: 'muted small', text: facts(x.car) }))))));
+  return out;
+}
+
+/* ----- communities and events ----- */
+const fmtWhen = (iso) => { try { return new Date(iso).toLocaleString(S.lang === 'ar' ? 'ar-u-nu-latn' : 'en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }); } catch (e) { return iso; } };
+function socialTabs(cur) {
+  const tabs = [['friends', t('Friends')], ['communities', t('Communities')], ['events', t('Events')]];
+  return el('div', { class: 'col', style: 'gap:10px' }, el('h1', { text: t('Community') }), el('nav', { class: 'subtabs', 'aria-label': t('Community sections') }, tabs.map((x) => el('a', { class: 'tab', href: '#/' + x[0], 'aria-current': cur === x[0] ? 'page' : 'false', text: x[1] }))));
+}
+const noGroups = () => panel(null, null, el('p', { class: 'muted', text: t('Communities and events are not switched on for this app yet. Check back soon.') }));
+const doing = (fn, done) => async () => { try { await fn(); if (done) toast(done); } catch (e) { toast(t('Couldn’t save. Try again.')); } render(); };
+function viewCommunities() {
+  const out = el('div', { class: 'col', style: 'max-width:46rem' }, socialTabs('communities'));
+  if (!CLOUD.social || !CLOUD.groups) { out.append(noGroups()); return out; }
+  if (!CLOUD.socialLoaded) { out.append(skel('8rem'), skel('8rem')); return out; }
+  if (S.newCom) {
+    const name = el('input', { type: 'text', id: 'cm-name', required: true, minlength: 2, maxlength: 60, placeholder: t('e.g. Air-cooled Doha') }), about = el('textarea', { id: 'cm-about', rows: 3, maxlength: 500, placeholder: t('Who it is for and what you talk about') }), status = el('span', { class: 'status' });
+    out.append(el('section', { class: 'panel' }, el('h2', { text: t('Start a community') }), el('p', { class: 'muted small', text: t('Any Garage 197 user can find and join a community. Members see each other’s garage names, never email addresses.') }),
+      el('form', { class: 'col', style: 'gap:12px', onsubmit: async (ev) => { ev.preventDefault(); status.textContent = t('Saving…'); try { const id = await CLOUD.createCommunity(name.value.trim(), about.value.trim()); S.newCom = false; document.activeElement && document.activeElement.blur(); toast(t('Community created')); nav('#/community/' + id); } catch (e) { status.textContent = t('Couldn’t save. Try again.'); } } },
+        field(t('Name'), name), field(t('About'), about), el('div', { class: 'row' }, el('button', { type: 'submit', class: 'btn primary', id: 'b-cm-save', text: t('Create community') }), el('button', { type: 'button', class: 'btn', text: t('Cancel'), onclick: () => { S.newCom = false; render(); } }), status))));
+  } else out.append(el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn primary', id: 'b-cm-new', onclick: () => { S.newCom = true; render(); } }, ico('plus', t('Start a community')))));
+  const list = CLOUD.communities;
+  out.append(panel(t('All communities'), null, list.length ? el('ul', { class: 'due-list' }, list.map((c) => el('li', {},
+    el('span', { class: 'col', style: 'gap:2px;min-width:0;flex:1 1 14rem' }, el('a', { href: '#/community/' + c.id, style: 'font-weight:600;overflow-wrap:anywhere', text: c.name }), c.about ? el('span', { class: 'small', style: 'overflow-wrap:anywhere', text: c.about }) : null, el('span', { class: 'muted small', text: t('Members: {n}', { n: c.members }) + ' · ' + t('Started by {h}', { h: memberName(c.host) }) })),
+    c.joined ? el('a', { class: 'btn sm', href: '#/community/' + c.id, text: t('Open') }) : el('button', { type: 'button', class: 'btn sm primary', text: t('Join'), onclick: doing(() => CLOUD.joinCommunity(c.id), t('You joined {n}', { n: c.name })) }))))
+    : el('p', { class: 'empty', text: t('No communities yet. Start the first one.') })));
+  return out;
+}
+const memberName = (n) => n === 'A member' ? t('A member') : n;
+function loadPosts(id) { S.posts = S.posts || {}; S.posts[id] = S.posts[id] || { loading: true }; return CLOUD.posts(id).then((rows) => { S.posts[id] = { rows: rows || [] }; }).catch(() => { S.posts[id] = { rows: [], failed: true }; }).then(render); }
+function viewCommunity(id) {
+  const out = el('div', { class: 'col', style: 'max-width:46rem' }, el('a', { class: 'small', href: '#/communities', text: '‹ ' + t('Communities') }));
+  if (!CLOUD.socialLoaded) { out.append(skel('10rem')); return out; }
+  const c = CLOUD.communities.find((x) => x.id === id);
+  if (!c) { out.append(el('p', { class: 'empty', text: t('That community no longer exists.') })); return out; }
+  out.append(el('div', { class: 'col', style: 'gap:6px' }, el('h1', { text: c.name, style: 'overflow-wrap:anywhere' }), c.about ? el('p', { style: 'overflow-wrap:anywhere', text: c.about }) : null, el('p', { class: 'muted small', text: t('Members: {n}', { n: c.members }) + ' · ' + t('Started by {h}', { h: memberName(c.host) }) }),
+    el('div', { class: 'row' }, !c.joined ? el('button', { type: 'button', class: 'btn primary', id: 'b-join', text: t('Join'), onclick: doing(() => CLOUD.joinCommunity(c.id), t('You joined {n}', { n: c.name })) }) : null,
+      c.joined ? el('button', { type: 'button', class: 'btn', onclick: () => { S.evFor = c.id; S.newEv = true; nav('#/events'); } }, ico('plus', t('Create an event'))) : null,
+      c.joined && !c.mine ? el('button', { type: 'button', class: 'btn', text: t('Leave'), onclick: () => { if (confirm(t('Leave {n}?', { n: c.name }))) { S.posts = {}; doing(() => CLOUD.leaveCommunity(c.id))(); } } }) : null,
+      c.mine ? el('button', { type: 'button', class: 'btn', text: t('Delete community'), onclick: () => { if (confirm(t('Delete {n} with all its posts and events? This cannot be undone.', { n: c.name }))) CLOUD.deleteCommunity(c.id).then(() => { toast(t('Community deleted')); nav('#/communities'); }).catch(() => toast(t('Couldn’t save. Try again.'))); } }) : null)));
+  if (!c.joined) { out.append(el('p', { class: 'empty', text: t('Join to read and write posts and to see this community’s events.') })); return out; }
+  const evs = CLOUD.events.filter((e) => e.community_id === c.id);
+  if (evs.length) out.append(panel(t('Upcoming events'), null, eventList(evs)));
+  const body = el('textarea', { id: 'p-body', rows: 3, maxlength: 2000, required: true, placeholder: t('Share news, a question or a photo link with the community') }), status = el('span', { class: 'status' });
+  const got = (S.posts || {})[id]; if (!got) loadPosts(id);
+  out.append(panel(t('Posts'), null,
+    el('form', { class: 'col', style: 'gap:8px', onsubmit: async (ev) => { ev.preventDefault(); const v = body.value.trim(); if (!v) return; status.textContent = t('Sending…'); try { await CLOUD.post(id, v); body.value = ''; body.blur(); await loadPosts(id); } catch (e) { status.textContent = t('Couldn’t save. Try again.'); } } }, body, el('div', { class: 'row' }, el('button', { type: 'submit', class: 'btn primary', id: 'b-post', text: t('Post') }), status)),
+    !got || got.loading ? skel('5rem') : got.rows.length ? el('ul', { class: 'posts' }, got.rows.map((p) => el('li', {}, el('div', { class: 'row between' }, el('span', {}, el('b', { text: p.mine ? t('You') : memberName(p.author) }), el('span', { class: 'muted small', text: ' · ' + fmtWhen(p.created_at) })),
+      p.mine || c.mine ? el('button', { type: 'button', class: 'linkbtn small', text: t('Remove'), onclick: async () => { try { await CLOUD.deletePost(p.id); await loadPosts(id); } catch (e) { toast(t('Couldn’t save. Try again.')); } } }) : null), el('p', { text: p.body }))))
+      : el('p', { class: 'empty', text: t(got.failed ? 'Posts could not be loaded. Try again later.' : 'No posts yet. Say hello.') })));
+  return out;
+}
+function eventList(evs) {
+  return el('ul', { class: 'posts' }, evs.map((e) => el('li', {},
+    el('div', { class: 'row between' }, el('b', { text: e.title, style: 'overflow-wrap:anywhere' }), el('span', { class: 'tag', text: fmtWhen(e.starts_at) })),
+    el('span', { class: 'muted small', text: [e.place, e.community ? e.community : t('For friends of {h}', { h: e.mine ? t('You') : memberName(e.host) }), t('Hosted by {h}', { h: e.mine ? t('You') : memberName(e.host) })].filter(Boolean).join(' · ') }),
+    e.details ? el('p', { text: e.details }) : null,
+    el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn sm' + (e.me_going ? '' : ' primary'), 'aria-pressed': e.me_going ? 'true' : 'false', text: e.me_going ? t('You are going ✓') : t('I’m going'), onclick: doing(() => CLOUD.rsvp(e.id, !e.me_going)) }), el('span', { class: 'muted small', text: t('Going: {n}', { n: e.going }) }),
+      e.mine ? el('button', { type: 'button', class: 'linkbtn small', text: t('Cancel event'), onclick: () => { if (confirm(t('Cancel {n}?', { n: e.title }))) doing(() => CLOUD.deleteEvent(e.id), t('Event cancelled'))(); } }) : null))));
+}
+function viewEvents() {
+  const out = el('div', { class: 'col', style: 'max-width:46rem' }, socialTabs('events'));
+  if (!CLOUD.social || !CLOUD.groups) { out.append(noGroups()); return out; }
+  if (!CLOUD.socialLoaded) { out.append(skel('8rem'), skel('8rem')); return out; }
+  if (S.newEv) {
+    const mine = CLOUD.communities.filter((c) => c.joined);
+    const title = el('input', { type: 'text', id: 'e-title', required: true, minlength: 2, maxlength: 80, placeholder: t('e.g. Friday morning drive') }), when = el('input', { type: 'datetime-local', id: 'e-when', required: true }), place = el('input', { type: 'text', id: 'e-place', maxlength: 120 }), details = el('textarea', { id: 'e-details', rows: 3, maxlength: 1000 });
+    const who = select([['', t('My friends')]].concat(mine.map((c) => [c.id, c.name])), S.evFor && mine.some((c) => c.id === S.evFor) ? S.evFor : '', { id: 'e-for' }), status = el('span', { class: 'status' });
+    out.append(el('section', { class: 'panel' }, el('h2', { text: t('Create an event') }),
+      el('form', { class: 'col', style: 'gap:12px', onsubmit: async (ev) => {
+        ev.preventDefault(); const d = new Date(when.value); if (isNaN(d) || d < new Date()) { status.textContent = t('Choose a date and time in the future.'); return; }
+        status.textContent = t('Saving…');
+        try { await CLOUD.createEvent({ title: title.value.trim(), starts_at: d.toISOString(), place: place.value.trim() || null, details: details.value.trim() || null, community_id: who.value || null }); S.newEv = false; S.evFor = null; document.activeElement && document.activeElement.blur(); toast(t('Event created')); render(); } catch (e) { status.textContent = t('Couldn’t save. Try again.'); }
+      } }, field(t('What'), title), field(t('When'), when), field(t('Where'), place), field(t('Details'), details), field(t('Who can see it'), who, t('Choose your friends, or one of the communities you belong to.')),
+        el('div', { class: 'row' }, el('button', { type: 'submit', class: 'btn primary', id: 'b-ev-save', text: t('Create event') }), el('button', { type: 'button', class: 'btn', text: t('Cancel'), onclick: () => { S.newEv = false; S.evFor = null; render(); } }), status))));
+  } else out.append(el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn primary', id: 'b-ev-new', onclick: () => { S.newEv = true; render(); } }, ico('plus', t('Create an event')))));
+  out.append(panel(t('Upcoming events'), null, CLOUD.events.length ? eventList(CLOUD.events) : el('p', { class: 'empty', text: t('No events coming up. Create one for your friends or a community.') })));
   return out;
 }
 
@@ -573,13 +745,18 @@ function render() {
   const app = $('app'); document.documentElement.lang = S.lang; document.documentElement.dir = S.lang === 'ar' ? 'rtl' : 'ltr'; document.documentElement.dataset.theme = S.theme; S.redraw = null;
   const dark = S.theme === 'dark' || (S.theme === 'auto' && window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches), tc = document.querySelector('meta[name=theme-color]'); if (tc) tc.content = dark ? '#120d1c' : '#ffffff';
   if (!CLOUD.user || S.mode === 'newpass') { app.replaceChildren(viewLogin()); return; }
-  const r = route(), top = r.name === 'home' ? 'home' : r.name === 'market' || r.name === 'model' ? 'market' : r.name === 'settings' ? 'settings' : 'garage';
+  const r = route(), top = r.name === 'home' ? 'home' : ['friends', 'friend', 'communities', 'community', 'events'].includes(r.name) ? 'friends' : r.name === 'market' || r.name === 'model' ? 'market' : r.name === 'settings' ? 'settings' : 'garage';
   const tab = (id, href, label) => el('a', { class: 'tab', id: 't-' + id, href, 'aria-current': top === id ? 'page' : 'false' }, ico(id, label));
-  const head = el('header', { class: 'head' }, brand('#/home'), el('nav', { class: 'tabs', 'aria-label': t('Sections') }, tab('home', '#/home', t('Home')), tab('garage', '#/garage', CLOUD.garageName || t('My garage')), tab('market', '#/market', t('Market')), tab('settings', '#/settings', t('Settings'))));
+  const head = el('header', { class: 'head' }, brand('#/home'), el('nav', { class: 'tabs', 'aria-label': t('Sections') }, tab('home', '#/home', t('Home')), tab('garage', '#/garage', CLOUD.garageName || t('My garage')), tab('market', '#/market', t('Market')), tab('friends', '#/friends', t('Community') + (incoming().length ? ' (' + incoming().length + ')' : '')), tab('settings', '#/settings', t('Settings'))));
   let main;
   if (r.name === 'garage') main = viewGarage();
   else if (r.name === 'market') main = viewMarket();
   else if (r.name === 'settings') main = viewSettings();
+  else if (r.name === 'friends') main = viewFriends();
+  else if (r.name === 'communities') main = viewCommunities();
+  else if (r.name === 'community') main = viewCommunity(r.a);
+  else if (r.name === 'events') main = viewEvents();
+  else if (r.name === 'friend') main = viewFriend(r.a, r.b);
   else if (r.name === 'model') { const m = catOf(r.a); main = el('div', { class: 'col' }, el('div', { class: 'col', style: 'gap:6px' }, el('a', { class: 'small', href: '#/market', text: '‹ ' + t('Market') }), el('h1', { text: m ? shortModel(m.name) : t('Model not found') }), m ? el('p', { class: 'muted', text: t('Built {a} to {b}', { a: m.from, b: m.to }) }) : null), m ? panel(null, null, marketView(m.name, null)) : null, m ? el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn primary', text: t('Add this car to my garage'), onclick: () => { S.prefill = m.name; nav('#/car/new'); } })) : null); }
   else if (r.name === 'car' && r.a === 'new') main = carForm(null);
   else if (r.name === 'car') { const car = S.cars.find((c) => c.id === r.a); main = !car ? el('p', { class: 'empty', text: t(CLOUD.loaded ? 'That car is no longer in your garage.' : 'Loading your garage…') }) : r.b === 'edit' ? carForm(car) : viewCar(car, r.b || 'overview'); }
@@ -594,7 +771,8 @@ fetch('sales.csv').then((r) => { if (!r.ok) throw new Error('load'); return r.te
   S.db = await window.claude.use('db');
   let busy = () => { const a = document.activeElement; return !!(a && a.closest && a.closest('form') && /INPUT|TEXTAREA|SELECT/.test(a.tagName)); };
   S.db.collection('cars').onSnapshot((snap) => { S.cars = snap.docs.map((d) => ({ id: d.id, ...d.data() })).sort((a, b) => (a.name || '').localeCompare(b.name || '')); if (!busy()) render(); });
-  CLOUD.onAuth(() => { if (!busy() || !CLOUD.user) render(); });
+  CLOUD.onAuth(() => { if (!CLOUD.user) { S.fcars = {}; S.posts = {}; } if (!busy() || !CLOUD.user) render(); });
+  let lastSocial = 0; window.addEventListener('hashchange', () => { const n = route().name; if (['home', 'friends', 'communities', 'community', 'events'].includes(n) && CLOUD.user && CLOUD.social && Date.now() - lastSocial > 20000) { lastSocial = Date.now(); S.fcars = {}; S.posts = {}; CLOUD.loadSocial(); } });
   try { const k = await CLOUD.fromLink(); if (k === 'recovery') S.mode = 'newpass'; else if (k && k.error) S.loginMsg = t('That link didn’t work: {m}. Ask for a new one.', { m: k.error }); } catch (e) { S.loginMsg = t('That link has expired. Ask for a new one.'); }
   render();
 })();

@@ -47,12 +47,18 @@
       cloud = {};
       api.setupError = e.status === 404 || e.code === 'PGRST205' || e.code === '42P01' ? 'You are signed in, but the cloud tables are not set up yet, so nothing can be saved. The setup text still needs to be run in Supabase.' : 'You are signed in, but your garage could not be loaded (' + e.message + '). Check the connection and reload.';
     }
-    try { var g = await parse(await call('/rest/v1/garages?select=name')); api.garageName = g && g[0] && g[0].name ? g[0].name : ''; } catch (e) { api.garageName = ''; }
+    api.shared = false; api.links = {}; api.social = true;
+    try { var g = await parse(await call('/rest/v1/garages?select=name,shared,links')); api.garageName = g && g[0] && g[0].name ? g[0].name : ''; api.shared = !!(g && g[0] && g[0].shared); api.links = (g && g[0] && g[0].links) || {}; }
+    catch (e) { api.social = false; try { var g2 = await parse(await call('/rest/v1/garages?select=name')); api.garageName = g2 && g2[0] && g2[0].name ? g2[0].name : ''; } catch (e2) { api.garageName = ''; } }
     api.loaded = true; emit(); emitAuth();
+    if (api.social) api.loadSocial();
   }
   function upsertCar(id, d) {
     return call('/rest/v1/cars?on_conflict=user_id,id', { method: 'POST', headers: Object.assign({ Prefer: 'resolution=merge-duplicates,return=minimal' }, JSONH), body: JSON.stringify({ id: id, user_id: session.user.id, data: d, updated_at: new Date().toISOString() }) }).then(parse);
   }
+  function rpc(name, args) { return call('/rest/v1/rpc/' + name, { method: 'POST', headers: JSONH, body: JSON.stringify(args || {}) }).then(parse); }
+  function ins(table, row) { return call('/rest/v1/' + table, { method: 'POST', headers: Object.assign({ Prefer: 'return=minimal' }, JSONH), body: JSON.stringify(row) }).then(parse); }
+  function del(q) { return call('/rest/v1/' + q, { method: 'DELETE' }).then(parse); }
   function enc(p) { return p.split('/').map(encodeURIComponent).join('/'); }
   var col = {
     doc: function (id) { id = id || 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
@@ -70,8 +76,36 @@
       if (!j || !j.access_token) return { confirm: true };
       setSession(j); await loadCloud(); return { ok: true };
     },
-    signOut: async function () { try { await call('/auth/v1/logout', { method: 'POST' }); } catch (e) {} setSession(null); cloud = {}; api.garageName = ''; api.setupError = ''; emit(); emitAuth(); },
+    signOut: async function () { try { await call('/auth/v1/logout', { method: 'POST' }); } catch (e) {} setSession(null); cloud = {}; api.garageName = ''; api.setupError = ''; api.friends = []; api.feed = []; api.communities = []; api.events = []; api.shared = false; api.links = {}; api.socialLoaded = false; emit(); emitAuth(); },
     saveGarageName: function (name) { return call('/rest/v1/garages?on_conflict=user_id', { method: 'POST', headers: Object.assign({ Prefer: 'resolution=merge-duplicates,return=minimal' }, JSONH), body: JSON.stringify({ user_id: session.user.id, name: name, updated_at: new Date().toISOString() }) }).then(parse).then(function () { api.garageName = name; }); },
+    // Friends, shared garages and social links
+    shared: false, links: {}, social: true, friends: [], feed: [], socialLoaded: false,
+    loadSocial: async function () {
+      if (!session) return;
+      try {
+        var r = await Promise.all([rpc('my_friends', {}), rpc('friends_cars', {})]);
+        api.friends = r[0] || []; api.feed = r[1] || []; api.social = true;
+      } catch (e) { api.friends = []; api.feed = []; if (e.status === 404 || e.code === 'PGRST202') api.social = false; }
+      try { var c = await Promise.all([rpc('list_communities', {}), rpc('list_events', {})]); api.communities = c[0] || []; api.events = c[1] || []; api.groups = true; }
+      catch (e) { api.communities = []; api.events = []; if (e.status === 404 || e.code === 'PGRST202') api.groups = false; }
+      api.socialLoaded = true; emitAuth();
+    },
+    communities: [], events: [], groups: true,
+    createCommunity: async function (name, about) { var id = await rpc('create_community', { p_name: name, p_about: about || '' }); await api.loadSocial(); return id; },
+    joinCommunity: async function (id) { await ins('community_members', { community_id: id, user_id: session.user.id }); await api.loadSocial(); },
+    leaveCommunity: async function (id) { await del('community_members?community_id=eq.' + id + '&user_id=eq.' + session.user.id); await api.loadSocial(); },
+    deleteCommunity: async function (id) { await del('communities?id=eq.' + id); await api.loadSocial(); },
+    posts: function (id) { return rpc('list_posts', { p_community: id }); },
+    post: function (id, body) { return ins('community_posts', { community_id: id, user_id: session.user.id, body: body }); },
+    deletePost: function (id) { return del('community_posts?id=eq.' + id); },
+    createEvent: async function (ev) { await ins('events', Object.assign({ creator: session.user.id }, ev)); await api.loadSocial(); },
+    deleteEvent: async function (id) { await del('events?id=eq.' + id); await api.loadSocial(); },
+    rsvp: async function (id, on) { if (on) await ins('event_rsvps', { event_id: id, user_id: session.user.id }); else await del('event_rsvps?event_id=eq.' + id + '&user_id=eq.' + session.user.id); await api.loadSocial(); },
+    requestFriend: async function (email) { var r = await rpc('request_friend', { p_email: email }); await api.loadSocial(); return r; },
+    acceptFriend: async function (id) { await rpc('accept_friend', { p_id: id }); await api.loadSocial(); },
+    removeFriend: async function (id) { await parse(await call('/rest/v1/friendships?id=eq.' + encodeURIComponent(id), { method: 'DELETE' })); await api.loadSocial(); },
+    friendCars: function (owner) { return rpc('friends_cars', { p_owner: owner }); },
+    saveProfile: function (patch) { return call('/rest/v1/garages?on_conflict=user_id', { method: 'POST', headers: Object.assign({ Prefer: 'resolution=merge-duplicates,return=minimal' }, JSONH), body: JSON.stringify(Object.assign({ user_id: session.user.id, updated_at: new Date().toISOString() }, patch)) }).then(parse).then(function () { if ('shared' in patch) api.shared = patch.shared; if ('links' in patch) api.links = patch.links; }); },
     localCount: function () { return Object.keys(local()).length; },
     importLocal: async function () { var o = local(), ids = Object.keys(o); for (var i = 0; i < ids.length; i++) { var id = cloud[ids[i]] ? ids[i] + '-d' : ids[i]; await upsertCar(id, o[ids[i]]); cloud[id] = o[ids[i]]; } jset(LKEY, null); emit(); return ids.length; },
     upload: async function (carId, file) {
