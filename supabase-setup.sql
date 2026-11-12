@@ -854,3 +854,212 @@ revoke all on function public.shares_community(uuid), public.can_meet(uuid), pub
 grant execute on function public.shares_community(uuid), public.can_meet(uuid), public.list_going(uuid), public.list_members(uuid), public.member_profile(uuid), public.request_friend_member(uuid), public.my_friends() to authenticated;
 
 notify pgrst, 'reload schema';
+
+-- ---------------------------------------------------------------------------
+-- Usernames, finding people by name, and private messages between friends
+-- ---------------------------------------------------------------------------
+alter table public.garages add column if not exists username text;
+alter table public.garages drop constraint if exists garages_username_check;
+alter table public.garages add constraint garages_username_check check (username is null or username ~ '^[a-z0-9_]{3,20}$');
+create unique index if not exists garages_username_unique on public.garages (username) where username is not null;
+
+create or replace function public.username_of(p_user uuid) returns text
+language sql stable security definer set search_path = public as $$
+  select g.username from garages g where g.user_id = p_user;
+$$;
+
+-- Find people by username or name. Names, usernames and photos only, never emails.
+drop function if exists public.find_people(text);
+create function public.find_people(p_q text)
+returns table (user_id uuid, name text, username text, avatar text, relation text)
+language sql stable security definer set search_path = public as $$
+  with q as (select replace(replace(lower(trim(leading '@' from trim(coalesce(p_q, '')))), '\', ''), '%', '') as s)
+  select g.user_id, display_name(g.user_id), g.username, g.avatar,
+    case when f.id is null then 'none' when f.status = 'accepted' then 'friends' when f.addressee = auth.uid() then 'incoming' else 'sent' end
+  from q join garages g on char_length(q.s) >= 2 and (g.username like q.s || '%'
+      or lower(g.display_name) like '%' || replace(q.s, '_', '\_') || '%')
+  left join friendships f on (f.requester = auth.uid() and f.addressee = g.user_id) or (f.requester = g.user_id and f.addressee = auth.uid())
+  where auth.uid() is not null and g.user_id <> auth.uid() and not blocked_with(g.user_id)
+  order by (g.username = q.s) desc, (g.username like q.s || '%') desc, display_name(g.user_id) limit 20;
+$$;
+
+-- Anyone signed in can open a member page (name, username, photo, garage name). City, links and the garage stay for friends.
+drop function if exists public.member_profile(uuid);
+create function public.member_profile(p_user uuid)
+returns table (user_id uuid, name text, avatar text, garage text, city text, links jsonb, relation text, friendship uuid, shared boolean, communities jsonb, username text)
+language sql stable security definer set search_path = public as $$
+  select p_user, display_name(p_user), avatar_of(p_user), nullif(trim(g.name), ''),
+    case when f.status = 'accepted' then g.city end,
+    case when f.status = 'accepted' then coalesce(g.links, '{}'::jsonb) else '{}'::jsonb end,
+    case when p_user = auth.uid() then 'self' when f.id is null then 'none' when f.status = 'accepted' then 'friends'
+      when f.addressee = auth.uid() then 'incoming' else 'sent' end,
+    f.id, coalesce(g.shared, false) and f.status = 'accepted',
+    coalesce((select jsonb_agg(jsonb_build_object('id', c.id, 'name', c.name) order by c.name)
+      from communities c join community_members a on a.community_id = c.id and a.user_id = auth.uid()
+      join community_members b on b.community_id = c.id and b.user_id = p_user), '[]'::jsonb),
+    g.username
+  from auth.users u
+  left join garages g on g.user_id = u.id
+  left join friendships f on (f.requester = auth.uid() and f.addressee = p_user) or (f.requester = p_user and f.addressee = auth.uid())
+  where u.id = p_user and auth.uid() is not null and not blocked_with(p_user)
+  limit 1;
+$$;
+
+-- Friend request by member page or search result, without knowing the person's email.
+create or replace function public.request_friend_member(p_user uuid) returns text
+language plpgsql security definer set search_path = public as $$
+declare me uuid := auth.uid(); f friendships;
+begin
+  if me is null then raise exception 'Sign in first'; end if;
+  if p_user is null or p_user = me then return 'self'; end if;
+  if not exists (select 1 from auth.users where id = p_user) then return 'none'; end if;
+  if exists (select 1 from blocks where blocker = me and blocked = p_user) then return 'blocked'; end if;
+  if exists (select 1 from blocks where blocker = p_user and blocked = me) then return 'none'; end if;
+  select * into f from friendships where (requester = me and addressee = p_user) or (requester = p_user and addressee = me) limit 1;
+  if found then
+    if f.status = 'pending' and f.addressee = me then
+      update friendships set status = 'accepted', accepted_at = now() where id = f.id; return 'accepted';
+    end if;
+    return 'exists';
+  end if;
+  if (select count(*) from friendships where requester = me and status = 'pending' and created_at > now() - interval '1 day') >= 30 then return 'limit'; end if;
+  insert into friendships (requester, addressee, via) values (me, p_user, 'community');
+  return 'sent';
+end $$;
+
+-- Friends list now carries the username; emails are only returned for requests the sender typed by email.
+drop function if exists public.my_friends();
+create function public.my_friends()
+returns table (id uuid, other uuid, email text, garage text, shared boolean, status text, incoming boolean, links jsonb, name text, city text, avatar text, username text)
+language sql stable security definer set search_path = public as $$
+  select f.id, o.id, case when f.via = 'email' and f.status = 'pending' and f.requester = auth.uid() then o.email::text end,
+    g.name, coalesce(g.shared, false) and f.status = 'accepted', f.status, f.addressee = auth.uid(),
+    case when f.status = 'accepted' then coalesce(g.links, '{}'::jsonb) else '{}'::jsonb end,
+    nullif(display_name(o.id), 'A member'),
+    case when f.status = 'accepted' then g.city end, g.avatar, g.username
+  from friendships f
+  join auth.users o on o.id = case when f.requester = auth.uid() then f.addressee else f.requester end
+  left join garages g on g.user_id = o.id
+  where auth.uid() in (f.requester, f.addressee)
+  order by f.created_at desc;
+$$;
+
+-- Private messages. Only friends can write to each other; both sides can read their own conversation.
+create table if not exists public.messages (
+  id uuid primary key default gen_random_uuid(),
+  sender uuid not null references auth.users (id) on delete cascade,
+  recipient uuid not null references auth.users (id) on delete cascade,
+  body text not null check (char_length(body) between 1 and 2000),
+  created_at timestamptz not null default now(),
+  read_at timestamptz,
+  check (sender <> recipient)
+);
+create index if not exists messages_pair on public.messages (least(sender, recipient), greatest(sender, recipient), created_at desc);
+create index if not exists messages_unread on public.messages (recipient) where read_at is null;
+alter table public.messages enable row level security;
+drop policy if exists "read own messages" on public.messages;
+create policy "read own messages" on public.messages for select to authenticated using (auth.uid() in (sender, recipient));
+drop policy if exists "delete own sent messages" on public.messages;
+create policy "delete own sent messages" on public.messages for delete to authenticated using (sender = auth.uid());
+
+alter table public.reports drop constraint if exists reports_kind_check;
+alter table public.reports add constraint reports_kind_check check (kind in ('post', 'event', 'community', 'user', 'contact', 'message'));
+
+create or replace function public.send_message(p_to uuid, p_body text) returns text
+language plpgsql security definer set search_path = public as $$
+declare me uuid := auth.uid(); b text := trim(coalesce(p_body, ''));
+begin
+  if me is null then raise exception 'Sign in first'; end if;
+  if p_to is null or p_to = me or b = '' then return 'empty'; end if;
+  if blocked_with(p_to) or not are_friends(me, p_to) then return 'not_friends'; end if;
+  if (select count(*) from messages where sender = me and created_at > now() - interval '1 minute') >= 30 then return 'slow'; end if;
+  insert into messages (sender, recipient, body) values (me, p_to, left(b, 2000));
+  return 'sent';
+end $$;
+
+-- One row per conversation: the other person, the latest message and how many are unread.
+drop function if exists public.my_chats();
+create function public.my_chats()
+returns table (other uuid, name text, username text, avatar text, last_body text, last_at timestamptz, last_mine boolean, unread bigint, can_write boolean)
+language sql stable security definer set search_path = public as $$
+  select x.other, display_name(x.other), username_of(x.other), avatar_of(x.other), l.body, l.created_at, l.sender = auth.uid(),
+    (select count(*) from messages m where m.sender = x.other and m.recipient = auth.uid() and m.read_at is null),
+    are_friends(auth.uid(), x.other)
+  from (select distinct case when m.sender = auth.uid() then m.recipient else m.sender end as other
+        from messages m where auth.uid() in (m.sender, m.recipient)) x
+  join lateral (select m.body, m.created_at, m.sender from messages m
+        where (m.sender = auth.uid() and m.recipient = x.other) or (m.sender = x.other and m.recipient = auth.uid())
+        order by m.created_at desc limit 1) l on true
+  where not blocked_with(x.other)
+  order by l.created_at desc limit 200;
+$$;
+
+-- The conversation with one person, oldest first. Opening it marks their messages as read.
+create or replace function public.chat_with(p_user uuid)
+returns table (id uuid, mine boolean, body text, created_at timestamptz, read boolean)
+language plpgsql security definer set search_path = public as $$
+begin
+  if auth.uid() is null or blocked_with(p_user) then return; end if;
+  update messages m set read_at = now() where m.sender = p_user and m.recipient = auth.uid() and m.read_at is null;
+  return query select y.id, y.mine, y.body, y.created_at, y.read from (
+    select m.id, m.sender = auth.uid() as mine, m.body, m.created_at, m.read_at is not null as read from messages m
+    where (m.sender = auth.uid() and m.recipient = p_user) or (m.sender = p_user and m.recipient = auth.uid())
+    order by m.created_at desc limit 300) y order by y.created_at;
+end $$;
+
+create or replace function public.unread_messages() returns bigint
+language sql stable security definer set search_path = public as $$
+  select count(*) from messages m where m.recipient = auth.uid() and m.read_at is null and not blocked_with(m.sender);
+$$;
+
+-- Notifications no longer fall back to an email address when someone has not set a name.
+drop function if exists public.my_notifications();
+create function public.my_notifications()
+returns table (kind text, at timestamptz, who text, what text, ref text)
+language sql stable security definer set search_path = public as $$
+  select * from (
+    select 'request'::text, f.created_at, display_name(f.requester), null::text, f.id::text
+      from friendships f join auth.users u on u.id = f.requester where f.addressee = auth.uid() and f.status = 'pending'
+    union all
+    select 'accepted', f.accepted_at, display_name(f.addressee), null, f.addressee::text
+      from friendships f join auth.users u on u.id = f.addressee where f.requester = auth.uid() and f.status = 'accepted' and f.accepted_at is not null
+    union all
+    select 'car', c.created_at, display_name(c.user_id), c.data->>'name', c.user_id::text || '/' || c.id
+      from cars c join garages g on g.user_id = c.user_id and g.shared join auth.users u on u.id = c.user_id
+      where c.user_id <> auth.uid() and are_friends(auth.uid(), c.user_id)
+    union all
+    select 'post', p.created_at, display_name(p.user_id), m.name, m.id::text
+      from community_posts p join communities m on m.id = p.community_id
+      where p.user_id <> auth.uid() and is_member(p.community_id) and not blocked_with(p.user_id)
+    union all
+    select 'event', e.created_at, display_name(e.creator), e.title, e.id::text
+      from events e where e.creator <> auth.uid() and e.starts_at > now() and can_see_event(e.id) and not blocked_with(e.creator)
+    union all
+    select 'going', r.created_at, display_name(r.user_id), e.title, e.id::text
+      from event_rsvps r join events e on e.id = r.event_id where e.creator = auth.uid() and r.user_id <> auth.uid() and not blocked_with(r.user_id)
+    union all
+    select 'project', p.created_at, display_name(p.user_id), p.title, p.id::text
+      from projects p where p.user_id <> auth.uid() and can_see_project(p.id)
+    union all
+    select 'pupdate', u.created_at, display_name(p.user_id), p.title, p.id::text
+      from project_updates u join projects p on p.id = u.project_id where p.user_id <> auth.uid() and can_see_project(p.id)
+    union all
+    select 'suggest', s.created_at, display_name(s.user_id), p.title, p.id::text
+      from project_suggestions s join projects p on p.id = s.project_id where p.user_id = auth.uid() and s.user_id <> auth.uid() and not blocked_with(s.user_id)
+    union all
+    select 'helpful', s.created_at, display_name(p.user_id), p.title, p.id::text
+      from project_suggestions s join projects p on p.id = s.project_id where s.user_id = auth.uid() and p.user_id <> auth.uid() and (s.helpful or s.reply is not null) and can_see_project(p.id)
+    union all
+    select 'cheer', c.created_at, display_name(c.user_id), p.title, p.id::text
+      from project_cheers c join projects p on p.id = c.project_id where p.user_id = auth.uid() and c.user_id <> auth.uid() and not blocked_with(c.user_id)
+  ) n (kind, at, who, what, ref)
+  where n.at > now() - interval '30 days'
+  order by n.at desc limit 60;
+$$;
+revoke all on function public.my_notifications() from public, anon;
+grant execute on function public.my_notifications() to authenticated;
+
+revoke all on function public.username_of(uuid), public.find_people(text), public.member_profile(uuid), public.request_friend_member(uuid), public.my_friends(), public.send_message(uuid, text), public.my_chats(), public.chat_with(uuid), public.unread_messages() from public, anon;
+grant execute on function public.username_of(uuid), public.find_people(text), public.member_profile(uuid), public.request_friend_member(uuid), public.my_friends(), public.send_message(uuid, text), public.my_chats(), public.chat_with(uuid), public.unread_messages() to authenticated;
+
+notify pgrst, 'reload schema';

@@ -176,6 +176,14 @@
   .member:hover { background: var(--soft); }
   a.who { font-weight: 700; text-decoration: none; color: inherit; } a.who:hover { text-decoration: underline; }
   .avatar.lg { width: 72px; height: 72px; font-size: 1.6rem; flex: none; }
+  .chats { list-style: none; margin: 0; padding: 0; } .chats li + li { border-top: 1px solid var(--line); }
+  .chatrow { display: flex; align-items: center; gap: 12px; padding: 10px 0; min-height: 56px; text-decoration: none; color: inherit; }
+  .chatrow .count { background: var(--accent); color: #fff; border-radius: 999px; min-width: 1.5rem; height: 1.5rem; display: inline-grid; place-items: center; font-size: .75rem; font-weight: 700; padding: 0 6px; flex: none; }
+  .bubbles { display: flex; flex-direction: column; gap: 8px; max-height: 58vh; overflow-y: auto; padding: 12px; border: 1px solid var(--line); border-radius: 12px; }
+  .bubble { max-width: 82%; align-self: flex-start; background: var(--soft); border-radius: 14px; padding: 8px 12px; display: flex; flex-direction: column; gap: 2px; }
+  .bubble.mine { align-self: flex-end; background: var(--accent-soft); }
+  .bubble p { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; } .bubble .small { opacity: .7; font-size: .72rem; }
+  .chatform textarea { flex: 1; min-width: 0; }
   .attach { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; } .attach:empty { display: none; } .attach img { width: 72px; height: 72px; object-fit: cover; border-radius: 8px; border: 1px solid var(--line); }
   .banner .over { position: absolute; inset-inline: 0; bottom: 0; padding: 48px 20px 16px; background: linear-gradient(to top, rgb(20 8 40 / .82), rgb(20 8 40 / 0)); display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 6px 20px; }
   .banner .over h1 { color: #fff; overflow-wrap: anywhere; } .banner .over .v { color: #fff; font-family: var(--f-display); font-weight: 700; font-size: 1.5rem; font-variant-numeric: tabular-nums; }
@@ -327,7 +335,8 @@
     try { var g = await parse(await call('/rest/v1/garages?select=name,shared,links')); api.garageName = g && g[0] && g[0].name ? g[0].name : ''; api.shared = !!(g && g[0] && g[0].shared); api.links = (g && g[0] && g[0].links) || {}; }
     catch (e) { api.social = false; try { var g2 = await parse(await call('/rest/v1/garages?select=name')); api.garageName = g2 && g2[0] && g2[0].name ? g2[0].name : ''; } catch (e2) { api.garageName = ''; } }
     api.profile = { name: '', city: '', avatar: '' }; api.profiles = false;
-    try { var pr = await parse(await call('/rest/v1/garages?select=display_name,city,avatar')); api.profiles = true; if (pr && pr[0]) api.profile = { name: pr[0].display_name || '', city: pr[0].city || '', avatar: pr[0].avatar || '' }; } catch (e) {}
+    try { var pr = await parse(await call('/rest/v1/garages?select=display_name,city,avatar')); api.profiles = true; if (pr && pr[0]) api.profile = { name: pr[0].display_name || '', city: pr[0].city || '', avatar: pr[0].avatar || '', username: '' }; } catch (e) {}
+    try { var un = await parse(await call('/rest/v1/garages?select=username')); api.usernames = true; if (un && un[0]) api.profile.username = un[0].username || ''; } catch (e) { api.usernames = false; }
     api.prefsOn = false; api.prefs = {};
     try { var pf = await parse(await call('/rest/v1/garages?select=prefs')); api.prefsOn = true; api.prefs = (pf && pf[0] && pf[0].prefs) || {}; } catch (e) {}
     api.loaded = true; emit(); emitAuth();
@@ -356,7 +365,7 @@
       if (!j || !j.access_token) return { confirm: true };
       setSession(j); await loadCloud(); return { ok: true };
     },
-    signOut: async function () { try { await call('/auth/v1/logout', { method: 'POST' }); } catch (e) {} setSession(null); cloud = {}; api.garageName = ''; api.setupError = ''; api.friends = []; api.feed = []; api.communities = []; api.events = []; api.notes = []; api.blocks = []; api.projects = []; api.activity = []; api.seenAt = ''; api.shared = false; api.links = {}; api.socialLoaded = false; emit(); emitAuth(); },
+    signOut: async function () { try { await call('/auth/v1/logout', { method: 'POST' }); } catch (e) {} setSession(null); cloud = {}; api.garageName = ''; api.setupError = ''; api.friends = []; api.feed = []; api.communities = []; api.events = []; api.notes = []; api.blocks = []; api.projects = []; api.activity = []; api.chats = []; api.profile = { name: '', city: '', avatar: '', username: '' }; api.seenAt = ''; api.shared = false; api.links = {}; api.socialLoaded = false; emit(); emitAuth(); },
     saveGarageName: function (name) { return call('/rest/v1/garages?on_conflict=user_id', { method: 'POST', headers: Object.assign({ Prefer: 'resolution=merge-duplicates,return=minimal' }, JSONH), body: JSON.stringify({ user_id: session.user.id, name: name, updated_at: new Date().toISOString() }) }).then(parse).then(function () { api.garageName = name; }); },
     // Friends, shared garages and social links
     profile: { name: '', city: '', avatar: '' }, profiles: false,
@@ -373,6 +382,7 @@
       catch (e) { api.notes = []; api.blocks = []; api.extras = false; }
       try { api.projects = (await rpc('list_projects', {})) || []; api.projectsOn = true; } catch (e) { api.projects = []; api.projectsOn = false; }
       try { api.activity = (await rpc('friends_activity', {})) || []; api.activityOn = true; } catch (e) { api.activity = []; api.activityOn = false; }
+      try { api.chats = (await rpc('my_chats', {})) || []; api.chatsOn = true; } catch (e) { api.chats = []; api.chatsOn = false; }
       api.socialLoaded = true; emitAuth();
     },
     notes: [], blocks: [], seenAt: '', extras: false,
@@ -408,6 +418,11 @@
     deleteEvent: async function (id) { await del('events?id=eq.' + id); await api.loadSocial(); },
     rsvp: async function (id, on) { if (on) await ins('event_rsvps', { event_id: id, user_id: session.user.id }); else await del('event_rsvps?event_id=eq.' + id + '&user_id=eq.' + session.user.id); await api.loadSocial(); },
     requestFriend: async function (email) { var r = await rpc('request_friend', { p_email: email }); await api.loadSocial(); return r; },
+    chats: [], chatsOn: false, usernames: false,
+    findPeople: function (q) { return rpc('find_people', { p_q: q }); },
+    chatWith: function (uid) { return rpc('chat_with', { p_user: uid }); },
+    sendMessage: function (uid, body) { return rpc('send_message', { p_to: uid, p_body: body }); },
+    loadChats: async function () { if (!api.chatsOn) return; try { api.chats = (await rpc('my_chats', {})) || []; } catch (e) {} },
     listGoing: function (id) { return rpc('list_going', { p_event: id }); },
     listMembers: function (id) { return rpc('list_members', { p_community: id }); },
     memberProfile: async function (uid) { var r = await rpc('member_profile', { p_user: uid }); return (r && r[0]) || null; },
@@ -416,7 +431,7 @@
     removeFriend: async function (id) { await parse(await call('/rest/v1/friendships?id=eq.' + encodeURIComponent(id), { method: 'DELETE' })); await api.loadSocial(); },
     friendCars: function (owner) { return rpc('friends_cars', { p_owner: owner }); },
     savePrefs: function (prefs) { if (!api.prefsOn || !session) return Promise.resolve(); api.prefs = prefs; return call('/rest/v1/garages?on_conflict=user_id', { method: 'POST', headers: Object.assign({ Prefer: 'resolution=merge-duplicates,return=minimal' }, JSONH), body: JSON.stringify({ user_id: session.user.id, prefs: prefs }) }).then(parse).catch(function () {}); },
-    saveProfile: function (patch) { return call('/rest/v1/garages?on_conflict=user_id', { method: 'POST', headers: Object.assign({ Prefer: 'resolution=merge-duplicates,return=minimal' }, JSONH), body: JSON.stringify(Object.assign({ user_id: session.user.id, updated_at: new Date().toISOString() }, patch)) }).then(parse).then(function () { if ('shared' in patch) api.shared = patch.shared; if ('links' in patch) api.links = patch.links; if ('display_name' in patch) api.profile.name = patch.display_name || ''; if ('city' in patch) api.profile.city = patch.city || ''; if ('avatar' in patch) api.profile.avatar = patch.avatar || ''; }); },
+    saveProfile: function (patch) { return call('/rest/v1/garages?on_conflict=user_id', { method: 'POST', headers: Object.assign({ Prefer: 'resolution=merge-duplicates,return=minimal' }, JSONH), body: JSON.stringify(Object.assign({ user_id: session.user.id, updated_at: new Date().toISOString() }, patch)) }).then(parse).then(function () { if ('shared' in patch) api.shared = patch.shared; if ('links' in patch) api.links = patch.links; if ('display_name' in patch) api.profile.name = patch.display_name || ''; if ('city' in patch) api.profile.city = patch.city || ''; if ('username' in patch) api.profile.username = patch.username || ''; if ('avatar' in patch) api.profile.avatar = patch.avatar || ''; }); },
     localCount: function () { return Object.keys(local()).length; },
     importLocal: async function () { var o = local(), ids = Object.keys(o); for (var i = 0; i < ids.length; i++) { var id = cloud[ids[i]] ? ids[i] + '-d' : ids[i]; await upsertCar(id, o[ids[i]]); cloud[id] = o[ids[i]]; } jset(LKEY, null); emit(); return ids.length; },
     upload: async function (carId, file) {
@@ -1483,6 +1498,46 @@ const AR = {
   'Host': 'المنظّم',
   'See who': 'من سيحضر',
   'Hide': 'إخفاء',
+  'Name or @username': 'الاسم أو @اسم المستخدم',
+  'Search is not available just now. Try again.': 'البحث غير متاح الآن. حاول مرة أخرى.',
+  'Nobody found. Check the spelling, or ask your friend for their username.': 'لم يُعثر على أحد. تحقق من الكتابة أو اطلب من صديقك اسم المستخدم.',
+  'Add': 'إضافة',
+  'You have sent a lot of requests today. Try again tomorrow.': 'أرسلت طلبات كثيرة اليوم. حاول غدًا.',
+  'Find a friend': 'ابحث عن صديق',
+  'Search by name or username. They will see your request the next time they open the app.': 'ابحث بالاسم أو اسم المستخدم. سيرى طلبك عند فتح التطبيق في المرة القادمة.',
+  'Search': 'بحث',
+  'You have no username yet.': 'ليس لديك اسم مستخدم بعد.',
+  'Choose one so friends can find you': 'اختر واحدًا ليجدك أصدقاؤك',
+  'Your username is @{u}. Share it so friends can find you.': 'اسم المستخدم الخاص بك هو @{u}. شاركه ليجدك أصدقاؤك.',
+  'Add by email instead': 'أو أضف بالبريد الإلكتروني',
+  'Message': 'مراسلة',
+  'Messages are not switched on yet.': 'الرسائل غير مفعّلة بعد.',
+  'Conversations': 'المحادثات',
+  'Private messages between you and a friend. Nobody else can read them. Pick a friend to start.': 'رسائل خاصة بينك وبين صديق. لا يستطيع أحد غيركما قراءتها. اختر صديقًا للبدء.',
+  'Start a conversation': 'ابدأ محادثة',
+  'Messages': 'الرسائل',
+  'Seen': 'تمت القراءة',
+  'You can only message friends. Add this person as a friend to write to them.': 'يمكنك مراسلة الأصدقاء فقط. أضف هذا الشخص كصديق لتكتب له.',
+  'Write a message': 'اكتب رسالة',
+  'You are sending messages very quickly. Wait a moment.': 'أنت ترسل الرسائل بسرعة كبيرة. انتظر لحظة.',
+  'You can only message friends.': 'يمكنك مراسلة الأصدقاء فقط.',
+  'Couldn’t send. Try again.': 'تعذّر الإرسال. حاول مرة أخرى.',
+  'Send': 'إرسال',
+  'Only you and {n} can read this. Messages follow the': 'لا يقرأ هذه المحادثة إلا أنت و{n}. تخضع الرسائل لـ',
+  'e.g. amethyst964': 'مثال: amethyst964',
+  'Your name, username and photo are shown to other members. Your email is not shown to them.': 'يظهر اسمك واسم المستخدم وصورتك للأعضاء الآخرين. لا يظهر بريدك الإلكتروني أبدًا.',
+  'A username is 3 to 20 characters: English letters, numbers and underscores only.': 'اسم المستخدم من 3 إلى 20 حرفًا: حروف إنجليزية وأرقام وشرطة سفلية فقط.',
+  'That username is taken. Try another.': 'اسم المستخدم مستخدَم. جرّب غيره.',
+  'Username': 'اسم المستخدم',
+  'Friends can find you by this instead of your email.': 'يجدك الأصدقاء به بدلًا من بريدك الإلكتروني.',
+  'This member’s page is not available.': 'صفحة هذا العضو غير متاحة.',
+  'Messages could not be loaded. Try again later.': 'تعذّر تحميل الرسائل. حاول لاحقًا.',
+  'No messages yet. Say hello.': 'لا رسائل بعد. قل مرحبًا.',
+  'Your name, username and photo are shown to other members, for example beside your posts and in search. Your email is not shown to other members.': 'يظهر اسمك واسم المستخدم وصورتك للأعضاء الآخرين، مثلًا بجانب منشوراتك وفي البحث. لا يظهر بريدك الإلكتروني للأعضاء الآخرين.',
+  'Find friends by name or username. If you switch on sharing in your profile, friends see your cars’ names, years, colours, mileage and photos. They never see prices, values, chassis numbers or documents. Friends can also send each other private messages.': 'ابحث عن الأصدقاء بالاسم أو اسم المستخدم. إذا فعّلت المشاركة في ملفك الشخصي يرى الأصدقاء أسماء سياراتك وسنواتها وألوانها ومسافاتها وصورها. لا يرون الأسعار أو القيم أو أرقام الهيكل أو المستندات أبدًا. ويمكن للأصدقاء تبادل الرسائل الخاصة.',
+  'Find friends by name or username. Switch on sharing in your profile so they can see your cars. They never see prices or documents.': 'ابحث عن الأصدقاء بالاسم أو اسم المستخدم. فعّل المشاركة في ملفك الشخصي ليروا سياراتك. لا يرون الأسعار أو المستندات أبدًا.',
+  'Friends can see the garage you choose to share, follow your projects, join your events and message you. Find one by name or username.': 'يستطيع الأصدقاء رؤية الكراج الذي تختار مشاركته ومتابعة مشاريعك والانضمام إلى فعالياتك ومراسلتك. ابحث عن صديق بالاسم أو اسم المستخدم.',
+  'Private messages can be read by you and the friend you are writing to.': 'الرسائل الخاصة يقرؤها أنت والصديق الذي تراسله فقط.',
 };
 /* ===== Screens. Every visible string goes through t() so it can be shown in Arabic (see i18n.js). ===== */
 const CLOUD = window.g197cloud;
@@ -2262,7 +2317,19 @@ function viewFriends() {
   if (!CLOUD.socialLoaded) { out.append(skel('8rem'), skel('8rem')); return out; }
   const act = (fn, done) => async () => { try { await fn(); if (done) toast(done); } catch (e) { toast(t('Couldn’t save. Try again.')); } render(); };
   const email = el('input', { type: 'email', id: 'fr-email', required: true, placeholder: 'name@example.com', autocomplete: 'off', autocapitalize: 'off', dir: 'ltr', style: 'flex:1;min-width:12rem' }), status = el('span', { class: 'status', id: 'fr-status', role: 'status' });
-  out.append(panel(t('Add a friend'), t('Enter the email address your friend uses for Garage 197. They will see your request the next time they open the app.'),
+  if (CLOUD.usernames) {
+    const q = el('input', { type: 'search', id: 'fr-q', placeholder: t('Name or @username'), autocomplete: 'off', autocapitalize: 'off', value: S.frQ || '', style: 'flex:1;min-width:12rem' }), res = el('div', { id: 'fr-results', class: 'col', style: 'gap:8px' });
+    const show = () => { const r = S.frRes; res.replaceChildren(); if (!r) return; if (r.loading) { res.append(skel('3rem')); return; } if (r.failed) { res.append(el('p', { class: 'muted small', text: t('Search is not available just now. Try again.') })); return; }
+      if (!r.rows.length) { res.append(el('p', { class: 'muted small', text: t('Nobody found. Check the spelling, or ask your friend for their username.') })); return; }
+      res.append(el('ul', { class: 'due-list' }, r.rows.map((x) => el('li', {}, el('a', { class: 'row', style: 'gap:10px;flex-wrap:nowrap;min-width:0;text-decoration:none;color:inherit', href: '#/member/' + x.user_id }, avatarEl(x.avatar, memberName(x.name), 'sm'), el('span', { class: 'col', style: 'gap:2px;min-width:0' }, el('b', { text: memberName(x.name), style: 'overflow-wrap:anywhere' }), x.username ? el('span', { class: 'muted small', dir: 'ltr', text: '@' + x.username }) : null)),
+        x.relation === 'friends' ? el('span', { class: 'tag', text: t('Friends') }) : x.relation === 'sent' ? el('span', { class: 'muted small', text: t('Friend request sent') }) : el('button', { type: 'button', class: 'btn sm primary', text: x.relation === 'incoming' ? t('Accept') : t('Add'), onclick: async () => { try { const k = await CLOUD.requestFriendMember(x.user_id); toast(k === 'accepted' ? t('You are now friends.') : k === 'sent' || k === 'exists' ? t('Friend request sent') : k === 'limit' ? t('You have sent a lot of requests today. Try again tomorrow.') : t('The request could not be sent.')); x.relation = k === 'accepted' ? 'friends' : k === 'sent' || k === 'exists' ? 'sent' : x.relation; } catch (e) { toast(t('Couldn’t send the request. Try again.')); } render(); } }))))); };
+    const run = async () => { const v = q.value.trim(); S.frQ = v; if (v.replace(/^@/, '').length < 2) { S.frRes = null; show(); return; } S.frRes = { loading: true }; show(); try { const rows = await CLOUD.findPeople(v); if (S.frQ === v) S.frRes = { rows: rows || [] }; } catch (e) { S.frRes = { failed: true }; } show(); };
+    let h; q.addEventListener('input', () => { clearTimeout(h); h = setTimeout(run, 350); });
+    out.append(panel(t('Find a friend'), t('Search by name or username. They will see your request the next time they open the app.'), el('form', { class: 'row', style: 'flex-direction:row', onsubmit: (ev) => { ev.preventDefault(); clearTimeout(h); run(); } }, q, el('button', { type: 'submit', class: 'btn primary', id: 'b-fr-find', text: t('Search') })), res,
+      !CLOUD.profile.username ? el('p', { class: 'muted small' }, el('span', { text: t('You have no username yet.') + ' ' }), el('a', { href: '#/profile', text: t('Choose one so friends can find you') }), el('span', { text: '.' })) : el('p', { class: 'muted small', dir: 'auto', text: t('Your username is @{u}. Share it so friends can find you.', { u: CLOUD.profile.username }) })));
+    show();
+  }
+  out.append(panel(CLOUD.usernames ? t('Add by email instead') : t('Add a friend'), t('Enter the email address your friend uses for Garage 197. They will see your request the next time they open the app.'),
     el('form', { class: 'row', style: 'flex-direction:row', onsubmit: async (ev) => {
       ev.preventDefault(); status.textContent = t('Sending…');
       try {
@@ -2273,13 +2340,13 @@ function viewFriends() {
     } }, email, el('button', { type: 'submit', class: 'btn primary', id: 'b-fr-add' }, ico('plus', t('Send request')))), status));
   if (S.frMsg) { status.textContent = S.frMsg; S.frMsg = ''; }
   const req = incoming(), friends = CLOUD.friends.filter((f) => f.status === 'accepted'), sent = CLOUD.friends.filter((f) => f.status === 'pending' && !f.incoming);
-  if (req.length) out.append(panel(t('Friend requests'), null, el('ul', { class: 'due-list' }, req.map((f) => el('li', {}, el('span', { class: 'row', style: 'gap:10px;flex-wrap:nowrap;min-width:0' }, avatarEl(f.avatar, friendName(f), 'sm'), el('span', { style: 'overflow-wrap:anywhere;min-width:0' }, el('b', { text: friendName(f) }), f.email && f.name ? el('span', { class: 'muted', text: ' · ' + f.email }) : null, f.garage && f.garage !== friendName(f) ? el('span', { class: 'muted', text: ' · ' + f.garage }) : null)),
+  if (req.length) out.append(panel(t('Friend requests'), null, el('ul', { class: 'due-list' }, req.map((f) => el('li', {}, el('span', { class: 'row', style: 'gap:10px;flex-wrap:nowrap;min-width:0' }, avatarEl(f.avatar, friendName(f), 'sm'), el('span', { style: 'overflow-wrap:anywhere;min-width:0' }, el('b', { text: friendName(f) }), f.username ? el('span', { class: 'muted', dir: 'ltr', text: ' · @' + f.username }) : null, f.garage && f.garage !== friendName(f) ? el('span', { class: 'muted', text: ' · ' + f.garage }) : null)),
     el('span', { class: 'row' }, el('button', { type: 'button', class: 'btn sm primary', text: t('Accept'), onclick: act(() => CLOUD.acceptFriend(f.id), t('You are now friends.')) }), el('button', { type: 'button', class: 'btn sm', text: t('Decline'), onclick: act(() => CLOUD.removeFriend(f.id)) })))))));
   out.append(panel(t('Your friends'), null, friends.length ? el('ul', { class: 'due-list' }, friends.map((f) => el('li', {},
-    el('span', { class: 'row', style: 'gap:12px;min-width:0;flex-wrap:nowrap;align-items:flex-start' }, avatarEl(f.avatar, friendName(f)), el('span', { class: 'col', style: 'gap:4px;min-width:0' }, el('b', { text: friendName(f), style: 'overflow-wrap:anywhere' }), el('span', { class: 'muted small', style: 'overflow-wrap:anywhere', text: [f.garage && f.name ? f.garage : '', f.city, f.email].filter(Boolean).join(' · ') }), socialLinks(f.links))),
-    el('span', { class: 'row' }, f.shared ? el('a', { class: 'btn sm primary', href: '#/friend/' + f.other, text: t('Open garage') }) : el('span', { class: 'muted small', text: t('Garage not shared') }),
+    el('span', { class: 'row', style: 'gap:12px;min-width:0;flex-wrap:nowrap;align-items:flex-start' }, avatarEl(f.avatar, friendName(f)), el('span', { class: 'col', style: 'gap:4px;min-width:0' }, el('b', { text: friendName(f), style: 'overflow-wrap:anywhere' }), el('span', { class: 'muted small', style: 'overflow-wrap:anywhere', text: [f.username ? '@' + f.username : '', f.garage && f.name && f.garage !== f.name ? f.garage : '', f.city].filter(Boolean).join(' · ') }), socialLinks(f.links))),
+    el('span', { class: 'row' }, f.shared ? el('a', { class: 'btn sm primary', href: '#/friend/' + f.other, text: t('Open garage') }) : el('span', { class: 'muted small', text: t('Garage not shared') }), CLOUD.chatsOn ? el('a', { class: 'btn sm', href: '#/chat/' + f.other, text: t('Message') }) : null,
       el('button', { type: 'button', class: 'btn sm', text: t('Remove'), onclick: () => { if (confirm(t('Remove {n} from your friends?', { n: friendName(f) }))) act(() => CLOUD.removeFriend(f.id), t('Friend removed'))(); } }), CLOUD.extras ? el('button', { type: 'button', class: 'linkbtn small', text: t('Block'), onclick: () => blockAsk(f.other, friendName(f)) }) : null))))
-    : starter(t('Friends can see the garage you choose to share, follow your projects and join your events. Add one by the email they use for Garage 197.'), el('button', { type: 'button', class: 'btn primary', onclick: () => { email.focus(); email.scrollIntoView({ block: 'center' }); } }, ico('plus', t('Add a friend'))))));
+    : starter(t('Friends can see the garage you choose to share, follow your projects, join your events and message you. Find one by name or username.'), el('button', { type: 'button', class: 'btn primary', onclick: () => { const x = document.getElementById('fr-q') || email; x.focus(); x.scrollIntoView({ block: 'center' }); } }, ico('plus', t('Add a friend'))))));
   if (sent.length) out.append(panel(t('Requests you sent'), null, el('ul', { class: 'due-list' }, sent.map((f) => el('li', {}, el('span', { style: 'overflow-wrap:anywhere', text: f.email || friendName(f) }), el('span', { class: 'row' }, el('span', { class: 'muted small', text: t('Waiting for a reply') }), el('button', { type: 'button', class: 'btn sm', text: t('Cancel'), onclick: act(() => CLOUD.removeFriend(f.id)) })))))));
   out.append(el('p', { class: 'muted small' }, el('span', { text: t('Garage sharing and blocked people are on') + ' ' }), el('a', { href: '#/profile', text: t('your profile') }), el('span', { text: '.' })));
   return out;
@@ -2311,8 +2378,46 @@ function viewFriend(uid, carId) {
 
 /* ----- communities and events ----- */
 const fmtWhen = (iso) => { try { return new Date(iso).toLocaleString(S.lang === 'ar' ? 'ar-u-nu-latn' : 'en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }); } catch (e) { return iso; } };
+const unreadChats = () => (CLOUD.chats || []).reduce((n, c) => n + Number(c.unread || 0), 0);
+function viewMessages() {
+  const out = el('div', { class: 'col', style: 'max-width:46rem' }, socialTabs('messages'));
+  if (!CLOUD.socialLoaded) { out.append(skel('8rem')); return out; }
+  if (!CLOUD.chatsOn) { out.append(el('p', { class: 'empty', text: t('Messages are not switched on yet.') })); return out; }
+  if (S.chatsAt !== location.hash) { S.chatsAt = location.hash; CLOUD.loadChats().then(render); }
+  const cs = CLOUD.chats, friends = CLOUD.friends.filter((f) => f.status === 'accepted' && !cs.some((c) => c.other === f.other));
+  out.append(panel(t('Conversations'), null, cs.length ? el('ul', { class: 'chats', id: 'chats' }, cs.map((c) => el('li', {}, el('a', { class: 'chatrow', href: '#/chat/' + c.other }, avatarEl(c.avatar, memberName(c.name)), el('span', { class: 'col', style: 'gap:2px;min-width:0;flex:1' }, el('span', { class: 'row between', style: 'flex-wrap:nowrap' }, el('b', { text: memberName(c.name), style: 'overflow:hidden;text-overflow:ellipsis;white-space:nowrap' }), el('span', { class: 'muted small', style: 'flex:none', text: fmtWhen(c.last_at) })), el('span', { class: 'muted small', style: 'overflow:hidden;text-overflow:ellipsis;white-space:nowrap', text: (c.last_mine ? t('You') + ': ' : '') + c.last_body })), Number(c.unread) ? el('span', { class: 'count', text: String(c.unread) }) : null))))
+    : starter(t('Private messages between you and a friend. Nobody else can read them. Pick a friend to start.'), friends.length ? null : el('a', { class: 'btn primary', href: '#/friends' }, ico('plus', t('Add a friend'))))));
+  if (friends.length) out.append(panel(t('Start a conversation'), null, el('ul', { class: 'due-list' }, friends.map((f) => el('li', {}, el('span', { class: 'row', style: 'gap:10px;flex-wrap:nowrap;min-width:0' }, avatarEl(f.avatar, friendName(f), 'sm'), el('b', { text: friendName(f), style: 'overflow-wrap:anywhere' })), el('a', { class: 'btn sm', href: '#/chat/' + f.other, text: t('Message') }))))));
+  return out;
+}
+function loadChat(uid, quiet) { S.chat = S.chat || {}; if (!quiet) S.chat[uid] = S.chat[uid] || { loading: true }; return CLOUD.chatWith(uid).then((rows) => { const old = S.chat[uid] || {}; const same = old.rows && rows && old.rows.length === rows.length && (!rows.length || (old.rows[old.rows.length - 1].id === rows[rows.length - 1].id && old.rows[old.rows.length - 1].read === rows[rows.length - 1].read)); S.chat[uid] = { rows: rows || [] }; if (same && quiet) return false; return CLOUD.loadChats().then(() => true); }).catch(() => { if (!quiet) S.chat[uid] = { rows: [], failed: true }; return !quiet; }).then((ch) => { if (ch && route().name === 'chat' && route().a === uid) { if (quiet) { const ta = document.getElementById('c-body'); if (ta) S.chatDraft = ta.value; } S.chatDown = true; render(); } }); }
+function viewChat(uid) {
+  socialCache();
+  const f = CLOUD.friends.find((x) => x.other === uid && x.status === 'accepted'), c = (CLOUD.chats || []).find((x) => x.other === uid), name = f ? friendName(f) : c ? memberName(c.name) : t('A member');
+  const out = el('div', { class: 'col chat', style: 'max-width:40rem' }, el('a', { class: 'small', href: '#/messages', text: '‹ ' + t('Messages') }));
+  if (!CLOUD.socialLoaded) { out.append(skel('10rem')); return out; }
+  out.append(el('div', { class: 'row', style: 'gap:12px;flex-wrap:nowrap' }, avatarEl((f && f.avatar) || (c && c.avatar), name), el('a', { class: 'who', href: '#/member/' + uid }, el('h1', { text: name, style: 'overflow-wrap:anywhere;font-size:1.3rem' }))));
+  const got = (S.chat || {})[uid];
+  if (S.chatFor !== uid) { S.chatFor = uid; S.chatDraft = ''; loadChat(uid); }
+  clearInterval(viewChat.h); viewChat.h = setInterval(() => { if (route().name !== 'chat') { clearInterval(viewChat.h); S.chatFor = null; return; } if (!document.hidden) loadChat(route().a, true); }, 10000);
+  if (!got || got.loading) { out.append(skel('10rem')); return out; }
+  const list = el('div', { class: 'bubbles', id: 'bubbles' }, got.rows.length ? got.rows.map((m, i) => el('div', { class: 'bubble' + (m.mine ? ' mine' : '') }, el('p', { text: m.body }), el('span', { class: 'small', text: fmtWhen(m.created_at) + (m.mine && i === got.rows.length - 1 && m.read ? ' · ' + t('Seen') : '') }), !m.mine && CLOUD.extras ? el('button', { type: 'button', class: 'linkbtn small', text: t('Report'), onclick: () => reportAsk('message', m.id, name + ': ' + m.body) }) : null))
+    : el('p', { class: 'muted small', text: t(got.failed ? 'Messages could not be loaded. Try again later.' : 'No messages yet. Say hello.') }));
+  out.append(list);
+  if (!f) { out.append(el('p', { class: 'muted small', text: t('You can only message friends. Add this person as a friend to write to them.') })); }
+  else {
+    const body = el('textarea', { id: 'c-body', rows: 2, maxlength: 2000, placeholder: t('Write a message'), 'aria-label': t('Write a message') }), st = el('span', { class: 'status', role: 'status' }); body.value = S.chatDraft || '';
+    body.addEventListener('input', () => { S.chatDraft = body.value; });
+    const send = async () => { const v = body.value.trim(); if (!v) return; st.textContent = t('Sending…'); try { const r = await CLOUD.sendMessage(uid, v); if (r === 'sent') { S.chatDraft = ''; body.value = ''; st.textContent = ''; await loadChat(uid, true); } else st.textContent = r === 'slow' ? t('You are sending messages very quickly. Wait a moment.') : r === 'not_friends' ? t('You can only message friends.') : t('Couldn’t send. Try again.'); } catch (e) { st.textContent = t('Couldn’t send. Try again.'); } };
+    body.addEventListener('keydown', (ev) => { if (ev.key === 'Enter' && !ev.shiftKey && !matchMedia('(pointer: coarse)').matches) { ev.preventDefault(); send(); } });
+    out.append(el('form', { class: 'row chatform', style: 'flex-wrap:nowrap;align-items:flex-end', onsubmit: (ev) => { ev.preventDefault(); send(); } }, body, el('button', { type: 'submit', class: 'btn primary', id: 'b-send', text: t('Send') })), st,
+      el('p', { class: 'muted small' }, el('span', { text: t('Only you and {n} can read this. Messages follow the', { n: name }) + ' ' }), el('a', { href: '#/guidelines', text: t('community guidelines') }), el('span', { text: '.' })));
+  }
+  if (S.chatDown) { S.chatDown = false; setTimeout(() => { const b = document.getElementById('bubbles'); if (b) b.scrollTop = b.scrollHeight; }, 0); }
+  return out;
+}
 function socialTabs(cur) {
-  const tabs = [['friends', t('Friends')], ['communities', t('Communities')], ['events', t('Events')]].concat(CLOUD.projectsOn ? [['projects', t('Projects')]] : []);
+  const tabs = [['friends', t('Friends')]].concat(CLOUD.chatsOn ? [['messages', t('Messages') + (unreadChats() ? ' (' + unreadChats() + ')' : '')]] : [], [['communities', t('Communities')], ['events', t('Events')]], CLOUD.projectsOn ? [['projects', t('Projects')]] : []);
   return el('div', { class: 'col', style: 'gap:10px' }, el('h1', { text: t('Community') }), el('nav', { class: 'subtabs', 'aria-label': t('Community sections') }, tabs.map((x) => el('a', { class: 'tab', href: '#/' + x[0], 'aria-current': cur === x[0] ? 'page' : 'false', text: x[1] }))));
 }
 const noGroups = () => panel(null, null, el('p', { class: 'muted', text: t('Communities and events are not switched on for this app yet. Check back soon.') }));
@@ -2358,16 +2463,16 @@ function viewMember(uid) {
   if (!got) { S.member[uid] = { loading: true, key: fkey }; load(); out.append(skel('10rem')); return out; }
   if (got.loading) { out.append(skel('10rem')); return out; }
   const m = got.m;
-  if (!m) { out.append(el('p', { class: 'empty', text: t(got.failed ? 'This page could not be loaded. Try again later.' : 'You can see a member’s page once you are in a community together.') })); return out; }
+  if (!m) { out.append(el('p', { class: 'empty', text: t(got.failed ? 'This page could not be loaded. Try again later.' : 'This member’s page is not available.') })); return out; }
   const name = memberName(m.name), again = (fn, done) => async () => { try { await fn(); if (done) toast(done); } catch (e) { toast(t('Couldn’t save. Try again.')); } delete S.member[uid]; render(); };
-  out.append(el('div', { class: 'row', style: 'gap:16px;flex-wrap:nowrap;align-items:center' }, avatarEl(m.avatar, name, 'lg'), el('div', { class: 'col', style: 'gap:4px;min-width:0' }, el('h1', { text: name, style: 'overflow-wrap:anywhere' }), el('span', { class: 'muted small', style: 'overflow-wrap:anywhere', text: [m.garage && m.garage !== m.name ? m.garage : '', m.city].filter(Boolean).join(' · ') }), socialLinks(m.links))));
+  out.append(el('div', { class: 'row', style: 'gap:16px;flex-wrap:nowrap;align-items:center' }, avatarEl(m.avatar, name, 'lg'), el('div', { class: 'col', style: 'gap:4px;min-width:0' }, el('h1', { text: name, style: 'overflow-wrap:anywhere' }), el('span', { class: 'muted small', style: 'overflow-wrap:anywhere', text: [m.username ? '@' + m.username : '', m.garage && m.garage !== m.name ? m.garage : '', m.city].filter(Boolean).join(' · ') }), socialLinks(m.links))));
   const acts = el('div', { class: 'row' });
   if (m.relation === 'self') acts.append(el('a', { class: 'btn', href: '#/profile', text: t('Edit my profile') }));
   else if (m.relation === 'none') acts.append(el('button', { type: 'button', class: 'btn primary', id: 'b-add-member' }, ico('plus', t('Add as a friend'))));
   else if (m.relation === 'sent') acts.append(el('span', { class: 'tag', text: t('Friend request sent') }), el('button', { type: 'button', class: 'btn sm', text: t('Cancel'), onclick: again(() => CLOUD.removeFriend(m.friendship)) }));
   else if (m.relation === 'incoming') acts.append(el('button', { type: 'button', class: 'btn primary', id: 'b-accept-member', text: t('Accept friend request'), onclick: again(() => CLOUD.acceptFriend(m.friendship), t('You are now friends.')) }));
-  else if (m.relation === 'friends') acts.append(el('span', { class: 'tag', text: t('Friends') }), m.shared ? el('a', { class: 'btn primary', href: '#/friend/' + uid, id: 'b-member-garage', text: t('Open garage') }) : el('span', { class: 'muted small', text: t('Garage not shared') }));
-  const add = acts.querySelector('#b-add-member'); if (add) add.addEventListener('click', again(async () => { const r = await CLOUD.requestFriendMember(uid); toast(r === 'accepted' ? t('You are now friends.') : r === 'sent' || r === 'exists' ? t('Friend request sent') : t('The request could not be sent.')); }));
+  else if (m.relation === 'friends') acts.append(el('span', { class: 'tag', text: t('Friends') }), m.shared ? el('a', { class: 'btn primary', href: '#/friend/' + uid, id: 'b-member-garage', text: t('Open garage') }) : el('span', { class: 'muted small', text: t('Garage not shared') }), CLOUD.chatsOn ? el('a', { class: 'btn', id: 'b-member-msg', href: '#/chat/' + uid, text: t('Message') }) : null);
+  const add = acts.querySelector('#b-add-member'); if (add) add.addEventListener('click', again(async () => { const r = await CLOUD.requestFriendMember(uid); toast(r === 'accepted' ? t('You are now friends.') : r === 'sent' || r === 'exists' ? t('Friend request sent') : r === 'limit' ? t('You have sent a lot of requests today. Try again tomorrow.') : t('The request could not be sent.')); }));
   if (m.relation !== 'self' && CLOUD.extras) acts.append(el('button', { type: 'button', class: 'linkbtn small', text: t('Report'), onclick: () => reportAsk('user', uid, name) }), el('button', { type: 'button', class: 'linkbtn small', text: t('Block'), onclick: () => blockAsk(uid, name) }));
   out.append(acts);
   if (m.relation !== 'self' && m.relation !== 'friends') out.append(el('p', { class: 'muted small', text: t('Once you are friends, you can open {n}’s garage if they share it, follow their projects and join their events.', { n: name }) }));
@@ -2519,11 +2624,12 @@ function viewProfile() {
   if (!CLOUD.loaded) { out.append(skel('10rem')); return out; }
   if (CLOUD.profiles) {
     const name = el('input', { type: 'text', id: 'pr-name', maxlength: 40, autocomplete: 'name', value: CLOUD.profile.name }), city = el('input', { type: 'text', id: 'pr-city', maxlength: 60, value: CLOUD.profile.city, placeholder: t('e.g. Doha') }), status = el('span', { class: 'status' });
+    const uname = el('input', { type: 'text', id: 'pr-username', maxlength: 20, value: CLOUD.profile.username || '', placeholder: t('e.g. amethyst964'), autocapitalize: 'off', autocomplete: 'off', spellcheck: 'false', dir: 'ltr' });
     const file = el('input', { type: 'file', accept: 'image/*', id: 'pr-photo', style: 'display:none' });
     file.addEventListener('change', async () => { const f = file.files[0]; if (!f) return; status.textContent = t('Uploading…'); try { const old = CLOUD.profile.avatar, up = await CLOUD.upload('profile', await shrink(f)); await CLOUD.saveProfile({ avatar: up.path }); if (old) CLOUD.removeFiles([old]); toast(t('Photo updated')); render(); } catch (e) { status.textContent = t('Couldn’t save: {m}', { m: (e && e.message) || '' }); } });
-    out.append(el('section', { class: 'panel' }, el('div', { class: 'row', style: 'gap:16px' }, avatarEl(CLOUD.profile.avatar, CLOUD.profile.name || CLOUD.user.email || '', 'lg'), el('div', { class: 'col', style: 'gap:6px' }, el('button', { type: 'button', class: 'btn', id: 'b-pr-photo', onclick: () => file.click() }, ico('camera', t(CLOUD.profile.avatar ? 'Change photo' : 'Add a photo'))), file, el('span', { class: 'muted small', text: t('Your name and photo are shown to friends and in communities. Your email is only shown to friends.') }))),
-      el('form', { class: 'col', style: 'gap:12px', onsubmit: async (ev) => { ev.preventDefault(); try { await CLOUD.saveProfile({ display_name: name.value.trim().slice(0, 40) || null, city: city.value.trim().slice(0, 60) || null }); document.activeElement && document.activeElement.blur(); toast(t('Saved')); render(); } catch (e) { status.textContent = t('Couldn’t save. Try again.'); } } },
-        field(t('Your name'), name), field(t('City'), city, t('Shown to friends only.')), el('div', { class: 'row' }, el('button', { type: 'submit', class: 'btn primary', id: 'b-pr-save', text: t('Save profile') }), status))));
+    out.append(el('section', { class: 'panel' }, el('div', { class: 'row', style: 'gap:16px' }, avatarEl(CLOUD.profile.avatar, CLOUD.profile.name || CLOUD.user.email || '', 'lg'), el('div', { class: 'col', style: 'gap:6px' }, el('button', { type: 'button', class: 'btn', id: 'b-pr-photo', onclick: () => file.click() }, ico('camera', t(CLOUD.profile.avatar ? 'Change photo' : 'Add a photo'))), file, el('span', { class: 'muted small', text: t('Your name, username and photo are shown to other members. Your email is not shown to them.') }))),
+      el('form', { class: 'col', style: 'gap:12px', onsubmit: async (ev) => { ev.preventDefault(); const un = uname.value.trim().replace(/^@/, '').toLowerCase(); if (CLOUD.usernames && un && !/^[a-z0-9_]{3,20}$/.test(un)) { status.textContent = t('A username is 3 to 20 characters: English letters, numbers and underscores only.'); return; } const patch = { display_name: name.value.trim().slice(0, 40) || null, city: city.value.trim().slice(0, 60) || null }; if (CLOUD.usernames) patch.username = un || null; try { await CLOUD.saveProfile(patch); document.activeElement && document.activeElement.blur(); toast(t('Saved')); render(); } catch (e) { status.textContent = e && (e.status === 409 || e.code === '23505') ? t('That username is taken. Try another.') : t('Couldn’t save. Try again.'); } } },
+        field(t('Your name'), name), CLOUD.usernames ? field(t('Username'), uname, t('Friends can find you by this instead of your email.')) : null, field(t('City'), city, t('Shown to friends only.')), el('div', { class: 'row' }, el('button', { type: 'submit', class: 'btn primary', id: 'b-pr-save', text: t('Save profile') }), status))));
   }
   const lp = linksPanel(); if (lp) out.append(lp);
   if (CLOUD.social) {
@@ -2570,7 +2676,7 @@ function viewPage(name) {
     h('What we do'), p('We review reports and remove content that breaks these rules. Accounts that do it repeatedly or seriously are closed.'));
   else if (name === 'privacy') out.append(el('h1', { text: t('Privacy') }), draft(),
     h('What we keep'), ul('Your email address and a protected form of your password, to sign you in.', 'Your profile: name, city, photo and social links, if you add them.', 'Your garage: cars, photos, logbook records, documents and reminders.', 'What you do in the community: friends, communities, posts, events and reports.'),
-    h('Who can see it'), ul('Your cars, logbooks, documents, prices paid and chassis numbers are private to you.', 'If you switch on sharing, friends see each car’s name, year, model, colour, mileage and photos, and nothing else.', 'Your name and photo are shown to friends and beside your posts. Your email is shown only to friends.', 'The Garage 197 team can access stored data to run the service and to review reports.'),
+    h('Who can see it'), ul('Your cars, logbooks, documents, prices paid and chassis numbers are private to you.', 'If you switch on sharing, friends see each car’s name, year, model, colour, mileage and photos, and nothing else.', 'Your name, username and photo are shown to other members, for example beside your posts and in search. Your email is not shown to other members.', 'Private messages can be read by you and the friend you are writing to.', 'The Garage 197 team can access stored data to run the service and to review reports.'),
     h('Where it is stored'), p('Data is stored with our hosting provider, Supabase, on servers in Australia. We do not sell your data and we do not show adverts.'),
     h('AI reading of documents'), p('If you choose “Build from my documents”, the files you pick are sent to Anthropic, the maker of the Claude AI service, so they can be read and turned into draft logbook records. This happens only when you start it. Anthropic processes the files to provide that reading and does not use them to train its AI models.'),
     h('Your choices'), p('You can change or remove your cars, records, photos and profile at any time. To delete your account and everything in it, use Delete my account on your profile page.'),
@@ -2646,7 +2752,7 @@ const TIPS = {
   car: ['This car’s page', 'Overview shows value and details. Market shows what similar cars sold for. Logbook keeps the history and reminders. Projects tracks work in progress.'],
   logbook: ['The logbook', 'Keep every service, inspection and document here. The quickest way to fill it is “Build from my documents”: upload your paperwork and check the draft.'],
   market: ['The market', 'These are real sold prices. Press any model to see its sales, price range and trend, or search for a car you are thinking of buying.'],
-  friends: ['Friends', 'Add friends by the email they use for Garage 197. Switch on sharing in your profile so they can see your cars. They never see prices or documents.'],
+  friends: ['Friends', 'Find friends by name or username. Switch on sharing in your profile so they can see your cars. They never see prices or documents.'],
   communities: ['Communities', 'Groups for people who love the same cars. Join one to read and write posts and see its events, or start your own.'],
   events: ['Events', 'Plan a drive or a meet for your friends or a community. People can say whether they are coming.'],
   projects: ['Projects', 'Track a service, an upgrade or a restoration step by step. Share it and friends can cheer and suggest tools, equipment and know-how.']
@@ -2674,7 +2780,7 @@ function viewHelp() {
     sec('The logbook', 'The logbook is the car’s history: services, inspections, tyres, documents and what you paid. Choose “Build from my documents”, pick photos or PDFs of your paperwork, and the app drafts one record per document for you to check. You can also add records by hand, attach files, and download the whole logbook as a PDF to show a buyer or an insurer.', c ? base + 'logbook' : base, c ? 'Open the logbook' : 'Add your first car'),
     sec('Reminders', 'In the logbook, add a reminder by date, by mileage, or both. Anything due soon shows on Home and on the car’s page.', c ? base + 'logbook' : null, 'Set a reminder'),
     sec('Values and the market', 'Each car’s value comes from recent public sales of the same model, and the label beside it says how strong the evidence is. The Market tab shows the latest sales, which models are rising or falling, and lets you look up any model you are thinking of buying.', '#/market', 'Open the market'),
-    sec('Friends and sharing', 'Add friends by the email they use for Garage 197. If you switch on sharing in your profile, friends see your cars’ names, years, colours, mileage and photos. They never see prices, values, chassis numbers or documents.', '#/friends', 'Add a friend'),
+    sec('Friends and sharing', 'Find friends by name or username. If you switch on sharing in your profile, friends see your cars’ names, years, colours, mileage and photos. They never see prices, values, chassis numbers or documents. Friends can also send each other private messages.', '#/friends', 'Add a friend'),
     sec('Projects', 'Start a project for a service, an upgrade or a restoration. Post updates with photos as the work moves on. If you share it, friends can cheer and suggest equipment, tools and know-how.', '#/projects', 'Open projects'),
     sec('Communities and events', 'Join a community to talk with people who love the same cars, or start your own. Create events such as a morning drive for your friends or a community.', '#/communities', 'Open communities'),
     sec('Make it yours', 'In Settings, choose your language, currency, miles or kilometres, and light or dark mode. On your profile, add your name, photo and city.', '#/settings', 'Open settings'));
@@ -2795,11 +2901,11 @@ function render() {
   const r = route();
   if (!CLOUD.user && PAGES[r.name]) { app.replaceChildren(el('header', { class: 'head' }, brand('#/home'), el('a', { class: 'btn sm', href: '#/home', text: t('Sign in') })), el('main', {}, viewPage(r.name)), footer()); return; }
   if (!CLOUD.user || S.mode === 'newpass') { app.replaceChildren(viewLogin()); return; }
-  const top = r.name === 'home' ? 'home' : r.name === 'about' ? 'about' : ['friends', 'friend', 'member', 'communities', 'community', 'events', 'projects', 'project'].includes(r.name) ? 'friends' : r.name === 'market' || r.name === 'model' ? 'market' : r.name === 'settings' ? 'settings' : r.name === 'profile' || r.name === 'notifications' || PAGES[r.name] ? '' : 'garage';
+  const top = r.name === 'home' ? 'home' : r.name === 'about' ? 'about' : ['friends', 'friend', 'member', 'messages', 'chat', 'communities', 'community', 'events', 'projects', 'project'].includes(r.name) ? 'friends' : r.name === 'market' || r.name === 'model' ? 'market' : r.name === 'settings' ? 'settings' : r.name === 'profile' || r.name === 'notifications' || PAGES[r.name] ? '' : 'garage';
   const tab = (id, href, label) => el('a', { class: 'tab', id: 't-' + id, href, 'aria-current': top === id ? 'page' : 'false' }, ico(id, label));
   const nUnread = CLOUD.extras ? CLOUD.unread() : 0, bell = CLOUD.extras ? el('a', { class: 'bell', id: 'a-bell', href: '#/notifications', 'aria-label': nUnread ? t('Notifications, {n} new', { n: nUnread }) : t('Notifications'), 'aria-current': r.name === 'notifications' ? 'page' : 'false' }, svgIcon(ICONS.bell), nUnread ? el('span', { class: 'count', text: nUnread > 9 ? '9+' : String(nUnread) }) : null) : null;
   const me = CLOUD.profiles ? el('a', { class: 'mebtn', id: 'a-me', href: '#/profile', 'aria-label': t('Your profile') }, avatarEl(CLOUD.profile.avatar, CLOUD.profile.name || CLOUD.user.email || '', 'sm')) : null;
-  const head = el('header', { class: 'head' }, brand('#/home'), el('span', { class: 'headtools' }, bell, me), el('nav', { class: 'tabs', 'aria-label': t('Sections') }, tab('home', '#/home', t('Home')), tab('about', '#/about', t('About')), tab('garage', '#/garage', CLOUD.garageName || t('My garage')), tab('market', '#/market', t('Market')), tab('friends', '#/friends', t('Community') + (incoming().length ? ' (' + incoming().length + ')' : '')), tab('settings', '#/settings', t('Settings'))));
+  const head = el('header', { class: 'head' }, brand('#/home'), el('span', { class: 'headtools' }, bell, me), el('nav', { class: 'tabs', 'aria-label': t('Sections') }, tab('home', '#/home', t('Home')), tab('about', '#/about', t('About')), tab('garage', '#/garage', CLOUD.garageName || t('My garage')), tab('market', '#/market', t('Market')), tab('friends', '#/friends', t('Community') + (incoming().length + unreadChats() ? ' (' + (incoming().length + unreadChats()) + ')' : '')), tab('settings', '#/settings', t('Settings'))));
   let main;
   if (r.name !== 'notifications') S.noteSeen = null;
   if (r.name === 'garage') main = viewGarage();
@@ -2814,6 +2920,8 @@ function render() {
   else if (PAGES[r.name]) main = viewPage(r.name);
   else if (r.name === 'friend') main = viewFriend(r.a, r.b);
   else if (r.name === 'member') main = viewMember(r.a);
+  else if (r.name === 'messages') main = viewMessages();
+  else if (r.name === 'chat') main = viewChat(r.a);
   else if (r.name === 'model') { HELP.mark('market'); const m = catOf(r.a); main = el('div', { class: 'col' }, el('div', { class: 'col', style: 'gap:6px' }, el('a', { class: 'small', href: '#/market', text: '‹ ' + t('Market') }), m ? banner({ name: shortModel(m.name) }, null) : el('h1', { text: t('Model not found') }), m ? el('p', { class: 'muted', text: t('Built {a} to {b}', { a: m.from, b: m.to }) }) : null), m ? panel(null, null, marketView(m.name, null)) : null, m ? el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn primary', id: 'b-own-one', text: t('I own one: add it to my garage'), onclick: () => { S.prefill = m.name; nav('#/car/new'); } })) : null); }
   else if (r.name === 'projects') main = viewProjects();
   else if (r.name === 'project') main = r.a === 'new' ? projectForm() : viewProject(r.a);
