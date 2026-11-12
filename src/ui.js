@@ -267,6 +267,7 @@ function viewHome() {
   const out = el('div', { class: 'col' });
   if (!CLOUD.loaded) { out.append(skel('11rem'), skel('6rem')); return out; }
   if (CLOUD.setupError) out.append(panel(null, null, el('p', { style: 'color:var(--bad)', text: t('Your garage could not be loaded from the cloud. Check your connection and reload the page.') })));
+  const np = newsPanel(); if (np) out.append(np);
   if (!S.cars.length) out.append(welcome());
   else {
     const g = garageValue(), first = valueHistory(g.total), stats = [];
@@ -277,6 +278,7 @@ function viewHome() {
     const due = S.cars.flatMap(dueOf);
     if (due.length) out.append(panel(t('Coming up'), null, el('ul', { class: 'due-list' }, due.map((x) => el('li', {}, el('span', {}, el('a', { href: '#/car/' + x.car.id + '/logbook', text: x.r.title }), el('span', { class: 'muted', text: ' · ' + (x.car.name || '') })), el('span', { class: 'tag s-' + x.st, text: remText(x.car, x.r, x.st) }))))));
   }
+  const sp = startPanel(); if (sp) out.append(sp);
   const fp = feedPanel(); if (fp) out.append(fp);
   out.append(searchPanel());
   if (S.sales) {
@@ -292,7 +294,7 @@ function searchPanel() {
   return panel(t('Look up any model'), null, el('form', { onsubmit: (ev) => { ev.preventDefault(); find(); } }, el('div', { class: 'row' }, el('div', { style: 'flex:1;min-width:12rem' }, q), el('button', { type: 'submit', class: 'btn primary', text: t('See its market') }))), el('datalist', { id: 'dl-models' }, CATALOG.map((m) => el('option', { value: shortModel(m.name) }))));
 }
 function viewMarket() {
-  const out = el('div', { class: 'col' }, el('h1', { text: t('Market') }));
+  const out = el('div', { class: 'col' }, el('h1', { text: t('Market') }), tip('market'));
   if (S.salesError) { out.append(el('p', { class: 'empty', text: t('The sold results didn’t load. Reload the page to try again.') })); return out; }
   if (!S.sales) { out.append(skel('8rem'), skel('16rem')); return out; }
   const d = today(), y1 = (+d.slice(0, 4) - 1) + d.slice(4), d90 = new Date(Date.now() - 90 * 864e5).toISOString().slice(0, 10);
@@ -338,6 +340,7 @@ function viewGarage() {
   out.append(head);
   if (!CLOUD.loaded) { out.append(el('div', { class: 'cards' }, skel('17rem'), skel('17rem'))); return out; }
   if (!S.cars.length) { const b = el('div', { class: 'blank' }); b.innerHTML = CAR_SVG; b.append(el('p', { style: 'max-width:44ch', text: t('Your garage is empty. Add your first car to see what it is worth and start its logbook.') }), el('a', { class: 'btn primary', href: '#/car/new' }, ico('plus', t('Add your first car')))); out.append(b); return out; }
+  const gt = tip('garage'); if (gt) out.append(gt);
   out.append(el('div', { class: 'cards' }, S.cars.map((c) => {
     const e = estimate(c), due = dueOf(c).length, tr = e ? trendOf(e.model) : null;
     return el('a', { class: 'card', href: '#/car/' + c.id + '/overview' }, photoBox(c), el('div', { class: 'body' },
@@ -446,11 +449,12 @@ function viewCar(car, sub) {
   const base = '#/car/' + car.id + '/', tabs = [['overview', t('Overview')], ['market', t('Market')], ['logbook', t('Logbook')]].concat(CLOUD.projectsOn ? [['projects', t('Projects')]] : []), e = estimate(car);
   const out = el('div', { class: 'col' },
     el('a', { class: 'small', href: '#/garage', text: '‹ ' + (CLOUD.garageName || t('My garage')) }), banner(car, e),
-    el('nav', { class: 'subtabs', 'aria-label': t('Car sections') }, tabs.map((x) => el('a', { class: 'tab', href: base + x[0], 'aria-current': sub === x[0] ? 'page' : 'false', text: x[1] }))));
-  if (sub === 'market') out.append(panel(null, null, marketView(modelOf(car), car)));
-  else if (sub === 'projects') { const mine = CLOUD.projects.filter((x) => x.mine && x.car_id === car.id); out.append(el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn primary', id: 'b-proj-new', onclick: () => { S.projCar = car.id; nav('#/project/new'); } }, ico('plus', t('Start a project')))), mine.length ? projectCards(mine) : el('p', { class: 'empty', text: t('No projects for this car yet. Start one to track the work and get advice from friends.') })); }
-  else if (sub === 'logbook') out.append(logbookView(car));
+    el('nav', { class: 'subtabs', 'aria-label': t('Car sections') }, tabs.map((x) => el('a', { class: 'tab', href: base + x[0], 'aria-current': sub === x[0] ? 'page' : 'false', text: x[1] }))), sub === 'overview' ? tip('car') : null);
+  if (sub === 'market') { HELP.mark('market'); out.append(panel(null, null, marketView(modelOf(car), car))); }
+  else if (sub === 'projects') { const mine = CLOUD.projects.filter((x) => x.mine && x.car_id === car.id); out.append(el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn primary', id: 'b-proj-new', onclick: () => { S.projCar = car.id; nav('#/project/new'); } }, ico('plus', t('Start a project')))), mine.length ? projectCards(mine) : starter(t('A project tracks a service, an upgrade or a restoration from start to finish. Post updates with photos and let friends suggest tools and know-how.'), el('button', { type: 'button', class: 'btn primary', onclick: () => { S.projCar = car.id; nav('#/project/new'); } }, ico('plus', t('Start a project'))))); }
+  else if (sub === 'logbook') { const tp = tip('logbook'); if (tp) out.append(tp); out.append(logbookView(car)); }
   else {
+    if (CLOUD.user && !(car.records || []).length) out.append(el('section', { class: 'panel next', id: 'next-step' }, el('h2', { text: t('Next: build this car’s logbook') }), el('p', { text: t('Upload photos or PDFs of your invoices, inspection reports and papers. The app reads them and drafts the car’s history for you to check.') }), el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn primary', id: 'b-next-ai', onclick: () => { S.ai = { car: car.id, stage: 'pick' }; nav(base + 'logbook'); } }, ico('camera', t('Build from my documents'))))));
     const facts = [[t('Model year'), car.year], [t('Odometer'), carOdo(car)], [t('Colour'), car.colour], [t('Interior'), car.interior], [t('Registration'), car.reg], [t('Acquired'), car.acquired ? fmtDate(car.acquired) : ''], [t('Paid'), car.paid ? cash(+car.paid, car.paidCur) : ''], [t('Condition'), car.condition ? t({ 1: '1 Concours', 2: '2 Excellent', 3: '3 Good', 4: '4 Fair' }[car.condition]) : ''], [t('Compared against'), e ? shortModel(e.model) : '']].filter((x) => x[1]);
     const basis = !e ? t('We couldn’t value this car yet. Open the Market tab to see why.') : e.basis === 'similar' ? t('From {n} recent sales of cars with similar mileage.', { n: e.n }) : e.basis === 'year' ? t('The typical price of {n} sales in the last 12 months.', { n: e.n }) : t('The typical price of the {n} sales on file. Few are recent, so treat it as a rough guide.', { n: e.n });
     const value = el('div', { class: 'col', style: 'gap:8px' }, el('span', { class: 'label', text: t('Worth about') }), el('div', { class: 'big', text: e ? money(e.gbp) : '—' }));
@@ -461,7 +465,7 @@ function viewCar(car, sub) {
     const tr = e ? trendOf(e.model) : null; if (tr != null) value.append(el('p', { class: 'trend ' + (tr >= 0 ? 'up' : 'down'), text: (tr >= 0 ? '▲ ' : '▼ ') + t('{p} against its long-run price', { p: pct(tr) }) }));
     const due = dueOf(car);
     out.append(el('div', { class: 'grid2' }, panel(null, null, value, el('div', { class: 'row' }, el('a', { class: 'btn', href: base + 'market' }, ico('market', t('See the market'))), el('a', { class: 'btn', href: base + 'logbook', text: t('Open the logbook') }))),
-      panel(t('Coming up'), null, due.length ? el('ul', { class: 'due-list' }, due.map((x) => el('li', {}, el('span', { text: x.r.title }), el('span', { class: 'tag s-' + x.st, text: remText(car, x.r, x.st) })))) : el('p', { class: 'empty', text: t('Nothing is due. Reminders you add in the logbook show here.') }))));
+      panel(t('Coming up'), null, due.length ? el('ul', { class: 'due-list' }, due.map((x) => el('li', {}, el('span', { text: x.r.title }), el('span', { class: 'tag s-' + x.st, text: remText(car, x.r, x.st) })))) : el('p', { class: 'empty' }, el('span', { text: t('Nothing is due. Reminders you add in the logbook show here.') + ' ' }), el('a', { href: base + 'logbook', text: t('Set a reminder') })))));
     out.append(galleryPanel(car));
     out.append(panel(t('Details'), null, facts.length ? el('dl', { class: 'facts' }, facts.map((x) => el('div', {}, el('dt', { text: x[0] }), el('dd', { text: x[1] })))) : el('p', { class: 'empty', text: t('No details yet.') }), vinPlate(car), el('div', { class: 'row' }, el('a', { class: 'btn', id: 'b-edit', href: base + 'edit' }, ico('edit', t('Edit details'))))));
   }
@@ -490,7 +494,7 @@ function logbookView(car) {
   const hist = el('section', { class: 'panel' }, head);
   if (S.rec) hist.append(recordForm(car));
   if (S.ai && S.ai.car === car.id) hist.append(aiPanel(car)); else if (S.ai && S.ai.stage !== 'working') S.ai = null;
-  if (!recs.length) { if (!S.rec && !S.ai) hist.append(el('p', { class: 'empty', text: t(CLOUD.user ? 'No records yet. Add the first one yourself, or choose “Build from my documents” to upload your paperwork and have the logbook drafted for you.' : 'No records yet. Add the first service, condition check or document for this car.') })); out.append(hist); return out; }
+  if (!recs.length) { if (!S.rec && !S.ai) hist.append(starter(t('The logbook is this car’s history: services, inspections, documents and costs. The quickest start is to upload your paperwork and let the app draft the records.'), CLOUD.user ? el('button', { type: 'button', class: 'btn primary', id: 'b-ai-start', onclick: () => { S.ai = { car: car.id, stage: 'pick' }; render(); } }, ico('camera', t('Build from my documents'))) : null, el('button', { type: 'button', class: 'btn', onclick: () => { S.rec = { files: [], removed: [] }; render(); } }, ico('plus', t('Add a record'))))); out.append(hist); return out; }
   const spend = {}; for (const r of recs) if (+r.cost && r.type !== 'purchase') spend[r.cur || 'USD'] = (spend[r.cur || 'USD'] || 0) + +r.cost;
   const lastSvc = recs.find((r) => r.type === 'service'), odo = Math.max(0, ...recs.map((r) => +r.odometer || 0)), flagged = recs.filter((r) => r.status === 'attention').length;
   hist.append(el('div', { class: 'stats' },
@@ -733,7 +737,7 @@ function feedPanel() {
     el('div', { class: 'row' }, el('a', { class: 'btn', href: '#/friends' }, ico('friends', t('Open community'))), el('a', { class: 'btn', href: '#/events', text: t('Events') }), CLOUD.projectsOn ? el('a', { class: 'btn', href: '#/projects', text: t('Projects') }) : null));
 }
 function viewFriends() {
-  const out = el('div', { class: 'col', style: 'max-width:46rem' }, socialTabs('friends'));
+  const out = el('div', { class: 'col', style: 'max-width:46rem' }, socialTabs('friends'), tip('friends'));
   if (!CLOUD.social) { out.append(noSocial()); return out; }
   if (!CLOUD.socialLoaded) { out.append(skel('8rem'), skel('8rem')); return out; }
   const act = (fn, done) => async () => { try { await fn(); if (done) toast(done); } catch (e) { toast(t('Couldn’t save. Try again.')); } render(); };
@@ -755,7 +759,7 @@ function viewFriends() {
     el('span', { class: 'row', style: 'gap:12px;min-width:0;flex-wrap:nowrap;align-items:flex-start' }, avatarEl(f.avatar, friendName(f)), el('span', { class: 'col', style: 'gap:4px;min-width:0' }, el('b', { text: friendName(f), style: 'overflow-wrap:anywhere' }), el('span', { class: 'muted small', style: 'overflow-wrap:anywhere', text: [f.garage && f.name ? f.garage : '', f.city, f.email].filter(Boolean).join(' · ') }), socialLinks(f.links))),
     el('span', { class: 'row' }, f.shared ? el('a', { class: 'btn sm primary', href: '#/friend/' + f.other, text: t('Open garage') }) : el('span', { class: 'muted small', text: t('Garage not shared') }),
       el('button', { type: 'button', class: 'btn sm', text: t('Remove'), onclick: () => { if (confirm(t('Remove {n} from your friends?', { n: friendName(f) }))) act(() => CLOUD.removeFriend(f.id), t('Friend removed'))(); } }), CLOUD.extras ? el('button', { type: 'button', class: 'linkbtn small', text: t('Block'), onclick: () => blockAsk(f.other, friendName(f)) }) : null))))
-    : el('p', { class: 'empty', text: t('No friends yet. Send a request above to get started.') })));
+    : starter(t('Friends can see the garage you choose to share, follow your projects and join your events. Add one by the email they use for Garage 197.'), el('button', { type: 'button', class: 'btn primary', onclick: () => { email.focus(); email.scrollIntoView({ block: 'center' }); } }, ico('plus', t('Add a friend'))))));
   if (sent.length) out.append(panel(t('Requests you sent'), null, el('ul', { class: 'due-list' }, sent.map((f) => el('li', {}, el('span', { text: f.email }), el('span', { class: 'row' }, el('span', { class: 'muted small', text: t('Waiting for a reply') }), el('button', { type: 'button', class: 'btn sm', text: t('Cancel'), onclick: act(() => CLOUD.removeFriend(f.id)) })))))));
   out.append(el('p', { class: 'muted small' }, el('span', { text: t('Garage sharing and blocked people are on') + ' ' }), el('a', { href: '#/profile', text: t('your profile') }), el('span', { text: '.' })));
   return out;
@@ -794,7 +798,7 @@ function socialTabs(cur) {
 const noGroups = () => panel(null, null, el('p', { class: 'muted', text: t('Communities and events are not switched on for this app yet. Check back soon.') }));
 const doing = (fn, done) => async () => { try { await fn(); if (done) toast(done); } catch (e) { toast(t('Couldn’t save. Try again.')); } render(); };
 function viewCommunities() {
-  const out = el('div', { class: 'col', style: 'max-width:46rem' }, socialTabs('communities'));
+  const out = el('div', { class: 'col', style: 'max-width:46rem' }, socialTabs('communities'), tip('communities'));
   if (!CLOUD.social || !CLOUD.groups) { out.append(noGroups()); return out; }
   if (!CLOUD.socialLoaded) { out.append(skel('8rem'), skel('8rem')); return out; }
   if (S.newCom) {
@@ -807,7 +811,7 @@ function viewCommunities() {
   out.append(panel(t('All communities'), null, list.length ? el('ul', { class: 'due-list' }, list.map((c) => el('li', {},
     el('span', { class: 'col', style: 'gap:2px;min-width:0;flex:1 1 14rem' }, el('a', { href: '#/community/' + c.id, style: 'font-weight:600;overflow-wrap:anywhere', text: c.name }), c.about ? el('span', { class: 'small', style: 'overflow-wrap:anywhere', text: c.about }) : null, el('span', { class: 'muted small', text: t('Members: {n}', { n: c.members }) + ' · ' + t('Started by {h}', { h: memberName(c.host) }) })),
     c.joined ? el('a', { class: 'btn sm', href: '#/community/' + c.id, text: t('Open') }) : el('button', { type: 'button', class: 'btn sm primary', text: t('Join'), onclick: doing(() => CLOUD.joinCommunity(c.id), t('You joined {n}', { n: c.name })) }))))
-    : el('p', { class: 'empty', text: t('No communities yet. Start the first one.') })));
+    : starter(t('A community is a group for people who love the same cars, with its own posts and events. There are none yet, so yours would be the first.'), S.newCom ? null : el('button', { type: 'button', class: 'btn primary', onclick: () => { S.newCom = true; render(); } }, ico('plus', t('Start a community'))))));
   return out;
 }
 const memberName = (n) => n === 'A member' ? t('A member') : n;
@@ -849,7 +853,7 @@ function eventList(evs) {
       e.mine ? el('button', { type: 'button', class: 'linkbtn small', text: t('Cancel event'), onclick: () => { if (confirm(t('Cancel {n}?', { n: e.title }))) doing(() => CLOUD.deleteEvent(e.id), t('Event cancelled'))(); } }) : null))));
 }
 function viewEvents() {
-  const out = el('div', { class: 'col', style: 'max-width:46rem' }, socialTabs('events'));
+  const out = el('div', { class: 'col', style: 'max-width:46rem' }, socialTabs('events'), tip('events'));
   if (!CLOUD.social || !CLOUD.groups) { out.append(noGroups()); return out; }
   if (!CLOUD.socialLoaded) { out.append(skel('8rem'), skel('8rem')); return out; }
   if (S.newEv) {
@@ -864,7 +868,7 @@ function viewEvents() {
       } }, field(t('What'), title), field(t('When'), when), field(t('Where'), place), field(t('Details'), details), field(t('Who can see it'), who, t('Choose your friends, or one of the communities you belong to.')),
         el('div', { class: 'row' }, el('button', { type: 'submit', class: 'btn primary', id: 'b-ev-save', text: t('Create event') }), el('button', { type: 'button', class: 'btn', text: t('Cancel'), onclick: () => { S.newEv = false; S.evFor = null; render(); } }), status))));
   } else out.append(el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn primary', id: 'b-ev-new', onclick: () => { S.newEv = true; render(); } }, ico('plus', t('Create an event')))));
-  out.append(panel(t('Upcoming events'), null, CLOUD.events.length ? eventList(CLOUD.events) : el('p', { class: 'empty', text: t('No events coming up. Create one for your friends or a community.') })));
+  out.append(panel(t('Upcoming events'), null, CLOUD.events.length ? eventList(CLOUD.events) : starter(t('Events are drives, meets and shows shared with your friends or a community. Nothing is planned yet.'), S.newEv ? null : el('button', { type: 'button', class: 'btn primary', onclick: () => { S.newEv = true; render(); } }, ico('plus', t('Create an event'))))));
   return out;
 }
 
@@ -910,7 +914,7 @@ function avatarEl(path, name, size) {
   return a;
 }
 function footer() {
-  return el('footer', { class: 'foot' }, el('nav', { 'aria-label': t('About this app') }, [['about', t('About')], ['values', t('How we value cars')], ['guidelines', t('Community guidelines')], ['privacy', t('Privacy')], ['terms', t('Terms')], ['contact', t('Contact')]].map((x) => el('a', { href: '#/' + x[0], text: x[1] }))),
+  return el('footer', { class: 'foot' }, el('nav', { 'aria-label': t('About this app') }, [['about', t('About')], ['help', t('How it works')], ['values', t('How we value cars')], ['guidelines', t('Community guidelines')], ['privacy', t('Privacy')], ['terms', t('Terms')], ['contact', t('Contact')]].map((x) => el('a', { href: '#/' + x[0], text: x[1] }))),
     el('span', { class: 'muted small', text: '© 2026 Garage 197' }));
 }
 function welcome() {
@@ -931,7 +935,7 @@ function welcome() {
   return b;
 }
 function viewProfile() {
-  const out = el('div', { class: 'col', style: 'max-width:40rem' }, el('div', { class: 'row between' }, el('h1', { text: t('Your profile') }), el('a', { class: 'btn sm', id: 'a-settings', href: '#/settings' }, ico('settings', t('Settings')))));
+  const out = el('div', { class: 'col', style: 'max-width:40rem' }, el('div', { class: 'row between' }, el('h1', { text: t('Your profile') }), el('div', { class: 'row' }, el('a', { class: 'btn sm', id: 'a-help', href: '#/help' }, ico('about', t('How it works'))), el('a', { class: 'btn sm', id: 'a-settings', href: '#/settings' }, ico('settings', t('Settings'))))));
   if (!CLOUD.loaded) { out.append(skel('10rem')); return out; }
   if (CLOUD.profiles) {
     const name = el('input', { type: 'text', id: 'pr-name', maxlength: 40, autocomplete: 'name', value: CLOUD.profile.name }), city = el('input', { type: 'text', id: 'pr-city', maxlength: 60, value: CLOUD.profile.city, placeholder: t('e.g. Doha') }), status = el('span', { class: 'status' });
@@ -961,10 +965,11 @@ function viewProfile() {
     } }), dstatus)));
   return out;
 }
-const PAGES = { about: 1, values: 1, guidelines: 1, privacy: 1, terms: 1, contact: 1 };
+const PAGES = { about: 1, help: 1, values: 1, guidelines: 1, privacy: 1, terms: 1, contact: 1 };
 function viewPage(name) {
   const out = el('div', { class: 'col prose', style: 'max-width:44rem' }), h = (x) => el('h2', { text: t(x) }), p = (x, v) => el('p', { text: t(x, v) }), ul = (...xs) => el('ul', {}, xs.map((x) => el('li', { text: t(x) })));
   const draft = () => el('p', { class: 'muted small', text: t('Last updated 12 November 2026.') });
+  if (name === 'help') return viewHelp();
   if (name === 'about') out.append(el('h1', { text: t('About Garage 197') }),
     p('Garage 197 began with a collector and a simple frustration. The paperwork was in one folder, the service history in another, the market in a dozen browser tabs, and the people who love the same cars were scattered across group chats.'),
     p('So we set out to make the hobby easier for everyone who loves cars. One place to keep a car’s story. One place to see what the cars you love are really selling for. One place to find the people who love them too.'),
@@ -1008,6 +1013,90 @@ function viewPage(name) {
   return out;
 }
 
+/* ----- help: checklist, tips, what's new, how it works ----- */
+const HELP = {
+  key() { return 'g197-help-' + (CLOUD.user ? CLOUD.user.id : 'anon'); },
+  get() { try { return JSON.parse(ls.get(this.key(), '{}')) || {}; } catch (e) { return {}; } },
+  set(patch) { const h = { ...this.get(), ...patch }; ls.set(this.key(), JSON.stringify(h)); return h; },
+  mark(what) { const h = this.get(), did = h.did || {}; if (!did[what]) { did[what] = 1; this.set({ did }); } }
+};
+const NEWS_V = 1;
+const NEWS = ['Build a logbook from your documents: upload photos or PDFs of your paperwork and the app drafts the records for you.', 'Car projects: track a service, an upgrade or a restoration and get advice from friends.', 'Community on Home: see friends’ new cars, projects and upcoming events.', 'Mercedes-AMG models from 1995 to 2020 are now in the market data.'];
+function startSteps() {
+  const c = S.cars[0], did = HELP.get().did || {}, base = c ? '#/car/' + c.id + '/' : '#/car/new';
+  const steps = [
+    { id: 'car', done: !!c, label: 'Add your first car', why: 'See what it is worth and start its story.', href: '#/car/new' },
+    { id: 'photo', done: S.cars.some((x) => (x.photo && x.photo.path) || (x.gallery || []).length), label: 'Add a photo of your car', why: 'It becomes the picture on the car’s card and page.', href: c ? base + 'overview' : base },
+    { id: 'logbook', done: S.cars.some((x) => (x.records || []).length), label: 'Build its logbook from your documents', why: 'Upload invoices and papers and the records are drafted for you.', href: c ? base + 'logbook' : base },
+    { id: 'market', done: !!did.market, label: 'See what cars like yours sell for', why: 'Recent sales, the price range and where the market is heading.', href: c ? base + 'market' : '#/market' },
+    { id: 'reminder', done: S.cars.some((x) => (x.reminders || []).length) || !!did.reminder, label: 'Set a reminder', why: 'Never miss a service, inspection or insurance renewal.', href: c ? base + 'logbook' : base }
+  ];
+  if (CLOUD.social) steps.push({ id: 'friend', done: CLOUD.friends.length > 0, label: 'Add a friend', why: 'Share garages and see what your friends are working on.', href: '#/friends' });
+  if (CLOUD.projectsOn) steps.push({ id: 'project', done: CLOUD.projects.some((x) => x.mine), label: 'Start a project', why: 'Track the work on a car and get advice from friends.', href: '#/projects' });
+  return steps;
+}
+function startPanel() {
+  if (!CLOUD.user || !S.cars.length || HELP.get().hideList) return null;
+  if ((CLOUD.social && !CLOUD.socialLoaded)) return null;
+  const steps = startSteps(), n = steps.filter((s) => s.done).length, all = n === steps.length;
+  const hide = el('button', { type: 'button', class: 'linkbtn small', id: 'b-start-hide', text: t(all ? 'Close' : 'Hide this list'), onclick: () => { HELP.set({ hideList: 1 }); if (!all) toast(t('You can bring the list back from the How it works page.')); render(); } });
+  const sec = el('section', { class: 'panel', id: 'start-list' }, el('div', { class: 'row between' }, el('h2', { text: t('Get the most from your garage') }), hide),
+    el('div', { class: 'progress', role: 'progressbar', 'aria-valuemin': 0, 'aria-valuemax': steps.length, 'aria-valuenow': n, 'aria-label': t('{a} of {b} done', { a: n, b: steps.length }) }, el('i', { style: 'width:' + Math.round(n / steps.length * 100) + '%' })),
+    el('p', { class: 'muted small', text: all ? t('All done. You are using everything Garage 197 offers.') : t('{a} of {b} done', { a: n, b: steps.length }) }));
+  if (!all) sec.append(el('ol', { class: 'steps todo' }, steps.map((s, i) => el('li', { class: s.done ? 'done' : '' }, el('span', { class: 'n', text: s.done ? '✓' : String(i + 1) }),
+    s.done ? el('span', { text: t(s.label) }) : el('a', { class: 'col', style: 'gap:1px', href: s.href, id: 'st-' + s.id }, el('b', { text: t(s.label) }), el('span', { class: 'muted small', text: t(s.why) }))))),
+    el('p', { class: 'muted small' }, el('a', { href: '#/help', text: t('How it works') })));
+  return sec;
+}
+const TIPS = {
+  garage: ['Your garage', 'Each car has its own page with an overview, its market, a logbook and projects. Press a car to open it.'],
+  car: ['This car’s page', 'Overview shows value and details. Market shows what similar cars sold for. Logbook keeps the history and reminders. Projects tracks work in progress.'],
+  logbook: ['The logbook', 'Keep every service, inspection and document here. The quickest way to fill it is “Build from my documents”: upload your paperwork and check the draft.'],
+  market: ['The market', 'These are real sold prices. Press any model to see its sales, price range and trend, or search for a car you are thinking of buying.'],
+  friends: ['Friends', 'Add friends by the email they use for Garage 197. Switch on sharing in your profile so they can see your cars. They never see prices or documents.'],
+  communities: ['Communities', 'Groups for people who love the same cars. Join one to read and write posts and see its events, or start your own.'],
+  events: ['Events', 'Plan a drive or a meet for your friends or a community. People can say whether they are coming.'],
+  projects: ['Projects', 'Track a service, an upgrade or a restoration step by step. Share it and friends can cheer and suggest tools, equipment and know-how.']
+};
+function tip(key) {
+  if (!CLOUD.user || !TIPS[key]) return null; const h = HELP.get(), seen = h.tips || {}; if (seen[key]) return null;
+  const box = el('aside', { class: 'coach', id: 'tip-' + key }, el('div', { class: 'col', style: 'gap:2px;flex:1;min-width:0' }, el('b', { text: t(TIPS[key][0]) }), el('span', { class: 'small', text: t(TIPS[key][1]) })),
+    el('button', { type: 'button', class: 'btn sm', text: t('Got it'), onclick: () => { const s = HELP.get().tips || {}; s[key] = 1; HELP.set({ tips: s }); box.remove(); } }));
+  return box;
+}
+function newsPanel() {
+  if (!CLOUD.user || !CLOUD.loaded) return null; const h = HELP.get();
+  if (h.news == null && !S.cars.length) { HELP.set({ news: NEWS_V }); return null; }
+  if ((h.news || 0) >= NEWS_V) return null;
+  return el('section', { class: 'panel news', id: 'news' }, el('h2', { text: t('What’s new') }), el('ul', {}, NEWS.map((x) => el('li', { text: t(x) }))),
+    el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn primary', id: 'b-news-ok', text: t('Got it'), onclick: () => { HELP.set({ news: NEWS_V }); render(); } }), el('a', { class: 'btn', href: '#/help', text: t('How it works') })));
+}
+const starter = (text, ...btns) => el('div', { class: 'starter' }, el('p', { text }), btns.length ? el('div', { class: 'row', style: 'justify-content:center' }, ...btns) : null);
+function viewHelp() {
+  const out = el('div', { class: 'col prose', style: 'max-width:44rem' }), c = S.cars[0], base = c ? '#/car/' + c.id + '/' : '#/car/new';
+  const sec = (title, text, href, label) => el('section', { class: 'panel' }, el('h2', { text: t(title) }), el('p', { text: t(text) }), href ? el('div', { class: 'row' }, el('a', { class: 'btn', href, text: t(label) })) : null);
+  const qa = (q, a) => el('details', {}, el('summary', { text: t(q) }), el('p', { text: t(a) }));
+  out.append(el('h1', { text: t('How it works') }), el('p', { text: t('Garage 197 keeps each car’s story, shows what cars like yours sell for, and connects you with people who love the same cars. Here is what each part does.') }),
+    sec('Your garage', 'Add each car with its name, year and mileage. Every car gets its own page with a value, photos, a logbook and projects. Home adds them up to show what your garage is worth.', '#/garage', 'Open my garage'),
+    sec('The logbook', 'The logbook is the car’s history: services, inspections, tyres, documents and what you paid. Choose “Build from my documents”, pick photos or PDFs of your paperwork, and the app drafts one record per document for you to check. You can also add records by hand, attach files, and download the whole logbook as a PDF to show a buyer or an insurer.', c ? base + 'logbook' : base, c ? 'Open the logbook' : 'Add your first car'),
+    sec('Reminders', 'In the logbook, add a reminder by date, by mileage, or both. Anything due soon shows on Home and on the car’s page.', c ? base + 'logbook' : null, 'Set a reminder'),
+    sec('Values and the market', 'Each car’s value comes from recent public sales of the same model, and the label beside it says how strong the evidence is. The Market tab shows the latest sales, which models are rising or falling, and lets you look up any model you are thinking of buying.', '#/market', 'Open the market'),
+    sec('Friends and sharing', 'Add friends by the email they use for Garage 197. If you switch on sharing in your profile, friends see your cars’ names, years, colours, mileage and photos. They never see prices, values, chassis numbers or documents.', '#/friends', 'Add a friend'),
+    sec('Projects', 'Start a project for a service, an upgrade or a restoration. Post updates with photos as the work moves on. If you share it, friends can cheer and suggest equipment, tools and know-how.', '#/projects', 'Open projects'),
+    sec('Communities and events', 'Join a community to talk with people who love the same cars, or start your own. Create events such as a morning drive for your friends or a community.', '#/communities', 'Open communities'),
+    sec('Make it yours', 'In Settings, choose your language, currency, miles or kilometres, and light or dark mode. On your profile, add your name, photo and city.', '#/settings', 'Open settings'));
+  out.append(el('section', { class: 'panel faq' }, el('h2', { text: t('Common questions') }),
+    qa('Who can see my cars?', 'Only you, unless you switch on sharing in your profile. Then your friends see each car’s name, year, model, colour, mileage and photos, and nothing else.'),
+    qa('How accurate is the value?', 'It is a guide based on real sales of the same model, not a formal valuation. It does not know your car’s condition, history or specification. The evidence label tells you how many sales stand behind it.'),
+    qa('My car has no value. Why?', 'Either the model is not in the catalogue yet or there are no recent sales on file. Edit the car and pick the model under “More details”, or open its Market tab for links to public results.'),
+    qa('What happens to documents I upload for the AI logbook?', 'They are stored privately in your account and sent to the AI service only when you press “Build from my documents”. Nothing is saved to the logbook until you have checked the draft.'),
+    qa('Can I use it on my phone like an app?', 'Yes. Open the site in your phone’s browser and choose “Add to Home Screen” from the share or browser menu. It then opens like any other app.'),
+    qa('How do I delete my account?', 'Open your profile and choose Delete my account. This removes everything and cannot be undone.')));
+  out.append(el('section', { class: 'panel' }, el('h2', { text: t('What’s new') }), el('ul', {}, NEWS.map((x) => el('li', { text: t(x) })))));
+  if (CLOUD.user) out.append(el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn', id: 'b-help-list', text: t('Show the getting started list on Home'), onclick: () => { HELP.set({ hideList: 0 }); nav('#/home'); } }), el('button', { type: 'button', class: 'btn', id: 'b-help-tips', text: t('Show the tips again'), onclick: () => { HELP.set({ tips: {} }); toast(t('Tips will show again as you move around the app.')); } }), el('a', { class: 'btn', href: '#/contact', text: t('Ask us a question') })));
+  return out;
+}
+
 /* ----- car projects ----- */
 const PKIND = { maintenance: 'Maintenance', upgrade: 'Upgrade', restoration: 'Restoration' };
 const PSTATUS = { planned: 'Planned', active: 'In progress', done: 'Finished' };
@@ -1019,11 +1108,11 @@ function projectCards(list) {
     el('span', { class: 'muted small', text: t('{u} updates · {s} suggestions · {c} cheers', { u: x.updates, s: x.suggestions, c: x.cheers }) })))));
 }
 function viewProjects() {
-  const out = el('div', { class: 'col', style: 'max-width:56rem' }, socialTabs('projects'));
+  const out = el('div', { class: 'col', style: 'max-width:56rem' }, socialTabs('projects'), tip('projects'));
   if (!CLOUD.socialLoaded) { out.append(skel('8rem'), skel('8rem')); return out; }
   out.append(el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn primary', id: 'b-proj-start', onclick: () => { S.projCar = null; nav('#/project/new'); } }, ico('plus', t('Start a project')))));
   const mine = CLOUD.projects.filter((x) => x.mine), theirs = CLOUD.projects.filter((x) => !x.mine);
-  out.append(panel(t('Your projects'), null, mine.length ? projectCards(mine) : el('p', { class: 'empty', text: t('No projects yet. Start one for a service, an upgrade or a restoration, post your progress and let friends help.') })));
+  out.append(panel(t('Your projects'), null, mine.length ? projectCards(mine) : starter(t('No projects yet. Start one for a service, an upgrade or a restoration, post your progress and let friends help.'), el('button', { type: 'button', class: 'btn primary', onclick: () => { S.projCar = null; nav('#/project/new'); } }, ico('plus', t('Start a project'))))));
   out.append(panel(t('Friends’ projects'), null, theirs.length ? projectCards(theirs) : el('p', { class: 'empty', text: t('When a friend shares a project it shows here, and you can follow it and suggest tools, equipment and know-how.') })));
   return out;
 }
@@ -1131,7 +1220,7 @@ function render() {
   else if (r.name === 'profile') main = viewProfile();
   else if (PAGES[r.name]) main = viewPage(r.name);
   else if (r.name === 'friend') main = viewFriend(r.a, r.b);
-  else if (r.name === 'model') { const m = catOf(r.a); main = el('div', { class: 'col' }, el('div', { class: 'col', style: 'gap:6px' }, el('a', { class: 'small', href: '#/market', text: '‹ ' + t('Market') }), m ? banner({ name: shortModel(m.name) }, null) : el('h1', { text: t('Model not found') }), m ? el('p', { class: 'muted', text: t('Built {a} to {b}', { a: m.from, b: m.to }) }) : null), m ? panel(null, null, marketView(m.name, null)) : null, m ? el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn primary', text: t('Add this car to my garage'), onclick: () => { S.prefill = m.name; nav('#/car/new'); } })) : null); }
+  else if (r.name === 'model') { HELP.mark('market'); const m = catOf(r.a); main = el('div', { class: 'col' }, el('div', { class: 'col', style: 'gap:6px' }, el('a', { class: 'small', href: '#/market', text: '‹ ' + t('Market') }), m ? banner({ name: shortModel(m.name) }, null) : el('h1', { text: t('Model not found') }), m ? el('p', { class: 'muted', text: t('Built {a} to {b}', { a: m.from, b: m.to }) }) : null), m ? panel(null, null, marketView(m.name, null)) : null, m ? el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn primary', text: t('Add this car to my garage'), onclick: () => { S.prefill = m.name; nav('#/car/new'); } })) : null); }
   else if (r.name === 'projects') main = viewProjects();
   else if (r.name === 'project') main = r.a === 'new' ? projectForm() : viewProject(r.a);
   else if (r.name === 'car' && r.a === 'new') main = carForm(null);
