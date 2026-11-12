@@ -806,4 +806,8 @@ const AR = {
   'Four things are enough to start: the make, the model, the year and the mileage. Everything else can wait.': 'أربعة أشياء تكفي للبدء: الشركة المصنّعة والطراز والسنة والمسافة المقطوعة. كل ما عداها يمكن أن ينتظر.',
   'Work it out from the make and model': 'استنتجه من الشركة المصنّعة والطراز',
   'I own one: add it to my garage': 'أملك واحدة: أضفها إلى كراجي',
+  'Photo attached. Press Post to share it.': 'تم إرفاق الصورة. اضغط «نشر» لمشاركتها.',
+  'Uploading the photo…': 'جارٍ رفع الصورة…',
+  'The photo could not be uploaded. Try again.': 'تعذّر رفع الصورة. حاول مرة أخرى.',
+  'Share news, a question or a photo with the community': 'شارك خبرًا أو سؤالًا أو صورة مع المجتمع',
 };
