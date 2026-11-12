@@ -171,6 +171,11 @@
   .banner > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
   .banner > svg { width: 34%; opacity: .5; }
   .banner.has-photo > svg { display: none; }
+  .members { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; }
+  .member { display: flex; align-items: center; gap: 10px; padding: 8px 10px; min-height: 48px; border: 1px solid var(--line); border-radius: 10px; text-decoration: none; color: inherit; min-width: 0; }
+  .member:hover { background: var(--soft); }
+  a.who { font-weight: 700; text-decoration: none; color: inherit; } a.who:hover { text-decoration: underline; }
+  .avatar.lg { width: 72px; height: 72px; font-size: 1.6rem; flex: none; }
   .attach { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; } .attach:empty { display: none; } .attach img { width: 72px; height: 72px; object-fit: cover; border-radius: 8px; border: 1px solid var(--line); }
   .banner .over { position: absolute; inset-inline: 0; bottom: 0; padding: 48px 20px 16px; background: linear-gradient(to top, rgb(20 8 40 / .82), rgb(20 8 40 / 0)); display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 6px 20px; }
   .banner .over h1 { color: #fff; overflow-wrap: anywhere; } .banner .over .v { color: #fff; font-family: var(--f-display); font-weight: 700; font-size: 1.5rem; font-variant-numeric: tabular-nums; }
@@ -403,6 +408,10 @@
     deleteEvent: async function (id) { await del('events?id=eq.' + id); await api.loadSocial(); },
     rsvp: async function (id, on) { if (on) await ins('event_rsvps', { event_id: id, user_id: session.user.id }); else await del('event_rsvps?event_id=eq.' + id + '&user_id=eq.' + session.user.id); await api.loadSocial(); },
     requestFriend: async function (email) { var r = await rpc('request_friend', { p_email: email }); await api.loadSocial(); return r; },
+    listGoing: function (id) { return rpc('list_going', { p_event: id }); },
+    listMembers: function (id) { return rpc('list_members', { p_community: id }); },
+    memberProfile: async function (uid) { var r = await rpc('member_profile', { p_user: uid }); return (r && r[0]) || null; },
+    requestFriendMember: async function (uid) { var r = await rpc('request_friend_member', { p_user: uid }); await api.loadSocial(); return r; },
     acceptFriend: async function (id) { await rpc('accept_friend', { p_id: id }); await api.loadSocial(); },
     removeFriend: async function (id) { await parse(await call('/rest/v1/friendships?id=eq.' + encodeURIComponent(id), { method: 'DELETE' })); await api.loadSocial(); },
     friendCars: function (owner) { return rpc('friends_cars', { p_owner: owner }); },
@@ -1453,6 +1462,27 @@ const AR = {
   'Uploading the photo…': 'جارٍ رفع الصورة…',
   'The photo could not be uploaded. Try again.': 'تعذّر رفع الصورة. حاول مرة أخرى.',
   'Share news, a question or a photo with the community': 'شارك خبرًا أو سؤالًا أو صورة مع المجتمع',
+  'Members': 'الأعضاء',
+  'Founder': 'المؤسس',
+  'Show all {n} members': 'عرض كل الأعضاء ({n})',
+  'Tap a member to see their page and add them as a friend.': 'اضغط على عضو لفتح صفحته وإضافته كصديق.',
+  'You are the only member so far. Invite people to join.': 'أنت العضو الوحيد حتى الآن. ادعُ الآخرين للانضمام.',
+  'Back': 'رجوع',
+  'This page could not be loaded. Try again later.': 'تعذّر تحميل هذه الصفحة. حاول لاحقًا.',
+  'You can see a member’s page once you are in a community together.': 'يمكنك رؤية صفحة العضو عندما تكونان في مجتمع واحد.',
+  'Edit my profile': 'تعديل ملفي الشخصي',
+  'Add as a friend': 'إضافة كصديق',
+  'Friend request sent': 'تم إرسال طلب الصداقة',
+  'Accept friend request': 'قبول طلب الصداقة',
+  'The request could not be sent.': 'تعذّر إرسال الطلب.',
+  'Once you are friends, you can open {n}’s garage if they share it, follow their projects and join their events.': 'بعد أن تصبحا صديقين يمكنك فتح كراج {n} إذا شاركه، ومتابعة مشاريعه والانضمام إلى فعالياته.',
+  'Communities you share': 'المجتمعات المشتركة بينكما',
+  'Started by': 'أسّسه',
+  'The list of who is going is not switched on yet.': 'قائمة الحاضرين غير مفعّلة بعد.',
+  'Nobody has said they are going yet.': 'لم يؤكد أحد حضوره بعد.',
+  'Host': 'المنظّم',
+  'See who': 'من سيحضر',
+  'Hide': 'إخفاء',
 };
 /* ===== Screens. Every visible string goes through t() so it can be shown in Arabic (see i18n.js). ===== */
 const CLOUD = window.g197cloud;
@@ -2243,14 +2273,14 @@ function viewFriends() {
     } }, email, el('button', { type: 'submit', class: 'btn primary', id: 'b-fr-add' }, ico('plus', t('Send request')))), status));
   if (S.frMsg) { status.textContent = S.frMsg; S.frMsg = ''; }
   const req = incoming(), friends = CLOUD.friends.filter((f) => f.status === 'accepted'), sent = CLOUD.friends.filter((f) => f.status === 'pending' && !f.incoming);
-  if (req.length) out.append(panel(t('Friend requests'), null, el('ul', { class: 'due-list' }, req.map((f) => el('li', {}, el('span', {}, el('b', { text: f.email }), f.garage ? el('span', { class: 'muted', text: ' · ' + f.garage }) : null),
+  if (req.length) out.append(panel(t('Friend requests'), null, el('ul', { class: 'due-list' }, req.map((f) => el('li', {}, el('span', { class: 'row', style: 'gap:10px;flex-wrap:nowrap;min-width:0' }, avatarEl(f.avatar, friendName(f), 'sm'), el('span', { style: 'overflow-wrap:anywhere;min-width:0' }, el('b', { text: friendName(f) }), f.email && f.name ? el('span', { class: 'muted', text: ' · ' + f.email }) : null, f.garage && f.garage !== friendName(f) ? el('span', { class: 'muted', text: ' · ' + f.garage }) : null)),
     el('span', { class: 'row' }, el('button', { type: 'button', class: 'btn sm primary', text: t('Accept'), onclick: act(() => CLOUD.acceptFriend(f.id), t('You are now friends.')) }), el('button', { type: 'button', class: 'btn sm', text: t('Decline'), onclick: act(() => CLOUD.removeFriend(f.id)) })))))));
   out.append(panel(t('Your friends'), null, friends.length ? el('ul', { class: 'due-list' }, friends.map((f) => el('li', {},
     el('span', { class: 'row', style: 'gap:12px;min-width:0;flex-wrap:nowrap;align-items:flex-start' }, avatarEl(f.avatar, friendName(f)), el('span', { class: 'col', style: 'gap:4px;min-width:0' }, el('b', { text: friendName(f), style: 'overflow-wrap:anywhere' }), el('span', { class: 'muted small', style: 'overflow-wrap:anywhere', text: [f.garage && f.name ? f.garage : '', f.city, f.email].filter(Boolean).join(' · ') }), socialLinks(f.links))),
     el('span', { class: 'row' }, f.shared ? el('a', { class: 'btn sm primary', href: '#/friend/' + f.other, text: t('Open garage') }) : el('span', { class: 'muted small', text: t('Garage not shared') }),
       el('button', { type: 'button', class: 'btn sm', text: t('Remove'), onclick: () => { if (confirm(t('Remove {n} from your friends?', { n: friendName(f) }))) act(() => CLOUD.removeFriend(f.id), t('Friend removed'))(); } }), CLOUD.extras ? el('button', { type: 'button', class: 'linkbtn small', text: t('Block'), onclick: () => blockAsk(f.other, friendName(f)) }) : null))))
     : starter(t('Friends can see the garage you choose to share, follow your projects and join your events. Add one by the email they use for Garage 197.'), el('button', { type: 'button', class: 'btn primary', onclick: () => { email.focus(); email.scrollIntoView({ block: 'center' }); } }, ico('plus', t('Add a friend'))))));
-  if (sent.length) out.append(panel(t('Requests you sent'), null, el('ul', { class: 'due-list' }, sent.map((f) => el('li', {}, el('span', { text: f.email }), el('span', { class: 'row' }, el('span', { class: 'muted small', text: t('Waiting for a reply') }), el('button', { type: 'button', class: 'btn sm', text: t('Cancel'), onclick: act(() => CLOUD.removeFriend(f.id)) })))))));
+  if (sent.length) out.append(panel(t('Requests you sent'), null, el('ul', { class: 'due-list' }, sent.map((f) => el('li', {}, el('span', { style: 'overflow-wrap:anywhere', text: f.email || friendName(f) }), el('span', { class: 'row' }, el('span', { class: 'muted small', text: t('Waiting for a reply') }), el('button', { type: 'button', class: 'btn sm', text: t('Cancel'), onclick: act(() => CLOUD.removeFriend(f.id)) })))))));
   out.append(el('p', { class: 'muted small' }, el('span', { text: t('Garage sharing and blocked people are on') + ' ' }), el('a', { href: '#/profile', text: t('your profile') }), el('span', { text: '.' })));
   return out;
 }
@@ -2306,18 +2336,60 @@ function viewCommunities() {
 }
 const memberName = (n) => n === 'A member' ? t('A member') : n;
 function loadPosts(id) { S.posts = S.posts || {}; S.posts[id] = S.posts[id] || { loading: true }; return CLOUD.posts(id).then((rows) => { S.posts[id] = { rows: rows || [] }; }).catch(() => { S.posts[id] = { rows: [], failed: true }; }).then(render); }
+const socialCache = () => { const u = CLOUD.user && CLOUD.user.id; if (S.cacheUser !== u) { S.cacheUser = u; S.members = {}; S.member = {}; S.going = {}; S.allMembers = null; } };
+function loadMembers(id) { S.members = S.members || {}; S.members[id] = S.members[id] || { loading: true }; const key = S.members[id].key; return CLOUD.listMembers(id).then((rows) => { S.members[id] = { rows: rows || [], key }; }).catch((e) => { S.members[id] = { rows: [], off: true, key }; }).then(render); }
+const memberLink = (uid, name, mine) => uid && !(S.membersOff) ? el('a', { class: 'who', href: mine ? '#/profile' : '#/member/' + uid, text: name }) : el('b', { text: name });
+function membersPanel(id) {
+  socialCache(); const c0 = CLOUD.communities.find((x) => x.id === id), key = c0 ? String(c0.members) : '';
+  let got = (S.members || {})[id]; if (got && got.key !== key) got = null;
+  if (!got) { S.members[id] = { loading: true, key }; loadMembers(id); return skel('4rem'); }
+  if (got.loading) return skel('4rem'); if (got.off) { S.membersOff = true; return null; }
+  S.membersOff = false;
+  const all = got.rows, show = S.allMembers === id ? all : all.slice(0, 12);
+  return panel(t('Members'), null, el('ul', { class: 'members', id: 'members' }, show.map((m) => el('li', {}, el('a', { class: 'member', href: m.me ? '#/profile' : '#/member/' + m.user_id }, avatarEl(m.avatar, memberName(m.name)), el('span', { class: 'col', style: 'gap:2px;min-width:0' }, el('b', { text: m.me ? t('You') : memberName(m.name), style: 'overflow-wrap:anywhere' }), m.founder ? el('span', { class: 'muted small', text: t('Founder') }) : null))))),
+    all.length > show.length ? el('button', { type: 'button', class: 'linkbtn small', id: 'b-all-members', text: t('Show all {n} members', { n: all.length }), onclick: () => { S.allMembers = id; render(); } }) : null,
+    all.length > 1 ? el('p', { class: 'muted small', text: t('Tap a member to see their page and add them as a friend.') }) : el('p', { class: 'muted small', text: t('You are the only member so far. Invite people to join.') }));
+}
+function viewMember(uid) {
+  const out = el('div', { class: 'col', style: 'max-width:40rem' }, el('button', { type: 'button', class: 'linkbtn small', style: 'align-self:flex-start', text: '‹ ' + t('Back'), onclick: () => history.back() }));
+  socialCache(); const fkey = CLOUD.friends.map((f) => f.id + f.status).join();
+  let got = S.member[uid]; if (got && got.key !== fkey) got = null;
+  const load = () => CLOUD.memberProfile(uid).then((m) => { S.member[uid] = { m, key: fkey }; }).catch(() => { S.member[uid] = { m: null, failed: true, key: fkey }; }).then(render);
+  if (!got) { S.member[uid] = { loading: true, key: fkey }; load(); out.append(skel('10rem')); return out; }
+  if (got.loading) { out.append(skel('10rem')); return out; }
+  const m = got.m;
+  if (!m) { out.append(el('p', { class: 'empty', text: t(got.failed ? 'This page could not be loaded. Try again later.' : 'You can see a member’s page once you are in a community together.') })); return out; }
+  const name = memberName(m.name), again = (fn, done) => async () => { try { await fn(); if (done) toast(done); } catch (e) { toast(t('Couldn’t save. Try again.')); } delete S.member[uid]; render(); };
+  out.append(el('div', { class: 'row', style: 'gap:16px;flex-wrap:nowrap;align-items:center' }, avatarEl(m.avatar, name, 'lg'), el('div', { class: 'col', style: 'gap:4px;min-width:0' }, el('h1', { text: name, style: 'overflow-wrap:anywhere' }), el('span', { class: 'muted small', style: 'overflow-wrap:anywhere', text: [m.garage && m.garage !== m.name ? m.garage : '', m.city].filter(Boolean).join(' · ') }), socialLinks(m.links))));
+  const acts = el('div', { class: 'row' });
+  if (m.relation === 'self') acts.append(el('a', { class: 'btn', href: '#/profile', text: t('Edit my profile') }));
+  else if (m.relation === 'none') acts.append(el('button', { type: 'button', class: 'btn primary', id: 'b-add-member' }, ico('plus', t('Add as a friend'))));
+  else if (m.relation === 'sent') acts.append(el('span', { class: 'tag', text: t('Friend request sent') }), el('button', { type: 'button', class: 'btn sm', text: t('Cancel'), onclick: again(() => CLOUD.removeFriend(m.friendship)) }));
+  else if (m.relation === 'incoming') acts.append(el('button', { type: 'button', class: 'btn primary', id: 'b-accept-member', text: t('Accept friend request'), onclick: again(() => CLOUD.acceptFriend(m.friendship), t('You are now friends.')) }));
+  else if (m.relation === 'friends') acts.append(el('span', { class: 'tag', text: t('Friends') }), m.shared ? el('a', { class: 'btn primary', href: '#/friend/' + uid, id: 'b-member-garage', text: t('Open garage') }) : el('span', { class: 'muted small', text: t('Garage not shared') }));
+  const add = acts.querySelector('#b-add-member'); if (add) add.addEventListener('click', again(async () => { const r = await CLOUD.requestFriendMember(uid); toast(r === 'accepted' ? t('You are now friends.') : r === 'sent' || r === 'exists' ? t('Friend request sent') : t('The request could not be sent.')); }));
+  if (m.relation !== 'self' && CLOUD.extras) acts.append(el('button', { type: 'button', class: 'linkbtn small', text: t('Report'), onclick: () => reportAsk('user', uid, name) }), el('button', { type: 'button', class: 'linkbtn small', text: t('Block'), onclick: () => blockAsk(uid, name) }));
+  out.append(acts);
+  if (m.relation !== 'self' && m.relation !== 'friends') out.append(el('p', { class: 'muted small', text: t('Once you are friends, you can open {n}’s garage if they share it, follow their projects and join their events.', { n: name }) }));
+  const cs = m.communities || [];
+  if (cs.length && m.relation !== 'self') out.append(panel(t('Communities you share'), null, el('ul', { class: 'due-list' }, cs.map((c) => el('li', {}, el('a', { href: '#/community/' + c.id, text: c.name }))))));
+  const pj = (CLOUD.projects || []).filter((x) => !x.mine && x.owner === uid);
+  if (pj.length) out.append(panel(t('Projects'), null, el('ul', { class: 'due-list' }, pj.map((x) => el('li', {}, el('a', { href: '#/project/' + x.id, text: x.title }), el('span', { class: 'muted small', text: x.car_name || '' }))))));
+  return out;
+}
 function viewCommunity(id) {
   const out = el('div', { class: 'col', style: 'max-width:46rem' }, el('a', { class: 'small', href: '#/communities', text: '‹ ' + t('Communities') }));
   if (!CLOUD.socialLoaded) { out.append(skel('10rem')); return out; }
   const c = CLOUD.communities.find((x) => x.id === id);
   if (!c) { out.append(el('p', { class: 'empty', text: t('That community no longer exists.') })); return out; }
-  out.append(el('div', { class: 'col', style: 'gap:6px' }, el('h1', { text: c.name, style: 'overflow-wrap:anywhere' }), c.about ? el('p', { style: 'overflow-wrap:anywhere', text: c.about }) : null, el('p', { class: 'muted small', text: t('Members: {n}', { n: c.members }) + ' · ' + t('Started by {h}', { h: memberName(c.host) }) }),
+  out.append(el('div', { class: 'col', style: 'gap:6px' }, el('h1', { text: c.name, style: 'overflow-wrap:anywhere' }), c.about ? el('p', { style: 'overflow-wrap:anywhere', text: c.about }) : null, ((fo) => el('p', { class: 'muted small' }, el('span', { text: t('Members: {n}', { n: c.members }) + ' · ' + t('Started by') + ' ' }), fo ? el('a', { id: 'a-founder', href: fo.me ? '#/profile' : '#/member/' + fo.user_id, text: memberName(c.host) }) : el('span', { text: memberName(c.host) })))(c.joined ? (((S.members || {})[id] || {}).rows || []).find((m) => m.founder) : null),
     el('div', { class: 'row' }, !c.joined ? el('button', { type: 'button', class: 'btn primary', id: 'b-join', text: t('Join'), onclick: doing(() => CLOUD.joinCommunity(c.id), t('You joined {n}', { n: c.name })) }) : null,
       c.joined ? el('button', { type: 'button', class: 'btn', onclick: () => { S.evFor = c.id; S.newEv = true; nav('#/events'); } }, ico('plus', t('Create an event'))) : null,
       c.joined && !c.mine ? el('button', { type: 'button', class: 'btn', text: t('Leave'), onclick: () => { if (confirm(t('Leave {n}?', { n: c.name }))) { S.posts = {}; doing(() => CLOUD.leaveCommunity(c.id))(); } } }) : null,
       !c.mine && CLOUD.extras ? el('button', { type: 'button', class: 'linkbtn small', text: t('Report'), onclick: () => reportAsk('community', c.id, c.name + ' / ' + (c.about || '')) }) : null,
       c.mine ? el('button', { type: 'button', class: 'btn', text: t('Delete community'), onclick: () => { if (confirm(t('Delete {n} with all its posts and events? This cannot be undone.', { n: c.name }))) CLOUD.deleteCommunity(c.id).then(() => { toast(t('Community deleted')); nav('#/communities'); }).catch(() => toast(t('Couldn’t save. Try again.'))); } }) : null)));
   if (!c.joined) { out.append(el('p', { class: 'empty', text: t('Join to read and write posts and to see this community’s events.') })); return out; }
+  out.append(membersPanel(id));
   const evs = CLOUD.events.filter((e) => e.community_id === c.id);
   if (evs.length) out.append(panel(t('Upcoming events'), null, eventList(evs)));
   S.draft = S.draft || {}; const dr = S.draft[id] = S.draft[id] || { text: '', file: null };
@@ -2329,21 +2401,36 @@ function viewCommunity(id) {
   out.append(panel(t('Posts'), null,
     el('form', { class: 'col', style: 'gap:8px', onsubmit: async (ev) => { ev.preventDefault(); const v = body.value.trim(), f = CLOUD.extras && dr.file; if (!v && !f) { status.textContent = t('Write something or add a photo.'); return; } if (!ls.get('g197-rules-' + CLOUD.user.id, '')) { if (!confirm(t('Before your first post: be respectful, stay on cars, no abuse, spam or other people’s private details. Posts that break the community guidelines are removed and accounts can be closed. Do you agree?'))) return; ls.set('g197-rules-' + CLOUD.user.id, '1'); } const btn = document.getElementById('b-post'); if (btn) btn.disabled = true; status.textContent = f ? t('Uploading the photo…') : t('Sending…'); let step = 'photo'; try { let ph = null; if (f) ph = (await CLOUD.upload('community-' + id, await shrink(f))).path; step = 'post'; status.textContent = t('Sending…'); await CLOUD.post(id, v, ph); dr.text = ''; dr.file = null; body.value = ''; pfile.value = ''; showPick(); status.textContent = ''; body.blur(); await loadPosts(id); } catch (e) { const why = String((e && e.message) || '').slice(0, 140); status.textContent = (step === 'photo' ? t('The photo could not be uploaded. Try again.') : t('Couldn’t save. Try again.')) + (why ? ' (' + why + ')' : ''); } if (btn) btn.disabled = false; } }, body, pname, el('div', { class: 'row' }, el('button', { type: 'submit', class: 'btn primary', id: 'b-post', text: t('Post') }), CLOUD.extras ? el('button', { type: 'button', class: 'btn', onclick: () => pfile.click() }, ico('camera', t('Add a photo'))) : null, pfile), status),
     el('p', { class: 'muted small' }, el('span', { text: t('Posts follow the') + ' ' }), el('a', { href: '#/guidelines', text: t('community guidelines') }), el('span', { text: '.' })),
-    !got || got.loading ? skel('5rem') : got.rows.length ? el('ul', { class: 'posts' }, got.rows.map((p) => el('li', {}, el('div', { class: 'row between' }, el('span', { class: 'row', style: 'gap:8px' }, avatarEl(p.avatar, memberName(p.author), 'sm'), el('b', { text: p.mine ? t('You') : memberName(p.author) }), el('span', { class: 'muted small', text: fmtWhen(p.created_at) })),
+    !got || got.loading ? skel('5rem') : got.rows.length ? el('ul', { class: 'posts' }, got.rows.map((p) => el('li', {}, el('div', { class: 'row between' }, el('span', { class: 'row', style: 'gap:8px' }, avatarEl(p.avatar, memberName(p.author), 'sm'), memberLink(p.author_id, p.mine ? t('You') : memberName(p.author), p.mine), el('span', { class: 'muted small', text: fmtWhen(p.created_at) })),
       el('span', { class: 'row', style: 'gap:12px' }, p.mine || c.mine ? el('button', { type: 'button', class: 'linkbtn small', text: t('Remove'), onclick: async () => { try { await CLOUD.deletePost(p.id); if (p.mine && p.photo) CLOUD.removeFiles([p.photo]); await loadPosts(id); } catch (e) { toast(t('Couldn’t save. Try again.')); } } }) : null,
         !p.mine && CLOUD.extras ? el('button', { type: 'button', class: 'linkbtn small', text: t('Report'), onclick: () => reportAsk('post', p.id, p.author + ': ' + p.body + (p.photo ? ' [' + p.photo + ']' : '')) }) : null,
         !p.mine && CLOUD.extras && p.author_id ? el('button', { type: 'button', class: 'linkbtn small', text: t('Block'), onclick: () => blockAsk(p.author_id, memberName(p.author)) }) : null)), p.body ? el('p', { text: p.body }) : null, p.photo ? postPhoto(p.photo) : null)))
       : el('p', { class: 'empty', text: t(got.failed ? 'Posts could not be loaded. Try again later.' : 'No posts yet. Say hello.') })));
   return out;
 }
+function goingBox(e) {
+  socialCache(); const g = S.going[e.id];
+  if (!g || !g.open) return null;
+  if (g.loading) return skel('3rem');
+  if (g.off) return el('p', { class: 'muted small', text: t('The list of who is going is not switched on yet.') });
+  return g.rows.length ? el('ul', { class: 'members going' }, g.rows.map((m) => el('li', {}, el('a', { class: 'member', href: m.me ? '#/profile' : '#/member/' + m.user_id }, avatarEl(m.avatar, memberName(m.name), 'sm'), el('span', { class: 'col', style: 'gap:2px;min-width:0' }, el('b', { text: m.me ? t('You') : memberName(m.name), style: 'overflow-wrap:anywhere' }), m.host ? el('span', { class: 'muted small', text: t('Host') }) : null)))))
+    : el('p', { class: 'muted small', text: t('Nobody has said they are going yet.') });
+}
+function toggleGoing(e) {
+  socialCache(); const g = S.going[e.id];
+  if (g && g.open) { g.open = false; render(); return; }
+  S.going[e.id] = { open: true, loading: true }; render();
+  CLOUD.listGoing(e.id).then((rows) => { S.going[e.id] = { open: true, rows: rows || [] }; }).catch(() => { S.going[e.id] = { open: true, off: true, rows: [] }; }).then(render);
+}
+const reGoing = (e) => { const g = (S.going || {})[e.id]; if (g && g.open && !g.off) CLOUD.listGoing(e.id).then((rows) => { S.going[e.id] = { open: true, rows: rows || [] }; render(); }).catch(() => {}); };
 function eventList(evs) {
   return el('ul', { class: 'posts' }, evs.map((e) => el('li', {},
     el('div', { class: 'row between' }, el('b', { text: e.title, style: 'overflow-wrap:anywhere' }), el('span', { class: 'tag', text: fmtWhen(e.starts_at) })),
     el('span', { class: 'muted small', text: [e.place, e.community ? e.community : t('For friends of {h}', { h: e.mine ? t('You') : memberName(e.host) }), t('Hosted by {h}', { h: e.mine ? t('You') : memberName(e.host) })].filter(Boolean).join(' · ') }),
     e.details ? el('p', { text: e.details }) : null,
-    el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn sm' + (e.me_going ? '' : ' primary'), 'aria-pressed': e.me_going ? 'true' : 'false', text: e.me_going ? t('You are going ✓') : t('I’m going'), onclick: doing(() => CLOUD.rsvp(e.id, !e.me_going)) }), el('span', { class: 'muted small', text: t('Going: {n}', { n: e.going }) }),
+    el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn sm' + (e.me_going ? '' : ' primary'), 'aria-pressed': e.me_going ? 'true' : 'false', text: e.me_going ? t('You are going ✓') : t('I’m going'), onclick: doing(() => CLOUD.rsvp(e.id, !e.me_going).then(() => reGoing(e))) }), el('button', { type: 'button', class: 'linkbtn small going-btn', 'aria-expanded': ((S.going || {})[e.id] || {}).open ? 'true' : 'false', text: t('Going: {n}', { n: e.going }) + ' · ' + (((S.going || {})[e.id] || {}).open ? t('Hide') : t('See who')), onclick: () => toggleGoing(e) }),
       !e.mine && CLOUD.extras ? el('button', { type: 'button', class: 'linkbtn small', text: t('Report'), onclick: () => reportAsk('event', e.id, e.host + ': ' + e.title + ' / ' + (e.place || '') + ' / ' + (e.details || '')) }) : null,
-      e.mine ? el('button', { type: 'button', class: 'linkbtn small', text: t('Cancel event'), onclick: () => { if (confirm(t('Cancel {n}?', { n: e.title }))) doing(() => CLOUD.deleteEvent(e.id), t('Event cancelled'))(); } }) : null))));
+      e.mine ? el('button', { type: 'button', class: 'linkbtn small', text: t('Cancel event'), onclick: () => { if (confirm(t('Cancel {n}?', { n: e.title }))) doing(() => CLOUD.deleteEvent(e.id), t('Event cancelled'))(); } }) : null), goingBox(e))));
 }
 function viewEvents() {
   const out = el('div', { class: 'col', style: 'max-width:46rem' }, socialTabs('events'), tip('events'));
@@ -2708,7 +2795,7 @@ function render() {
   const r = route();
   if (!CLOUD.user && PAGES[r.name]) { app.replaceChildren(el('header', { class: 'head' }, brand('#/home'), el('a', { class: 'btn sm', href: '#/home', text: t('Sign in') })), el('main', {}, viewPage(r.name)), footer()); return; }
   if (!CLOUD.user || S.mode === 'newpass') { app.replaceChildren(viewLogin()); return; }
-  const top = r.name === 'home' ? 'home' : r.name === 'about' ? 'about' : ['friends', 'friend', 'communities', 'community', 'events', 'projects', 'project'].includes(r.name) ? 'friends' : r.name === 'market' || r.name === 'model' ? 'market' : r.name === 'settings' ? 'settings' : r.name === 'profile' || r.name === 'notifications' || PAGES[r.name] ? '' : 'garage';
+  const top = r.name === 'home' ? 'home' : r.name === 'about' ? 'about' : ['friends', 'friend', 'member', 'communities', 'community', 'events', 'projects', 'project'].includes(r.name) ? 'friends' : r.name === 'market' || r.name === 'model' ? 'market' : r.name === 'settings' ? 'settings' : r.name === 'profile' || r.name === 'notifications' || PAGES[r.name] ? '' : 'garage';
   const tab = (id, href, label) => el('a', { class: 'tab', id: 't-' + id, href, 'aria-current': top === id ? 'page' : 'false' }, ico(id, label));
   const nUnread = CLOUD.extras ? CLOUD.unread() : 0, bell = CLOUD.extras ? el('a', { class: 'bell', id: 'a-bell', href: '#/notifications', 'aria-label': nUnread ? t('Notifications, {n} new', { n: nUnread }) : t('Notifications'), 'aria-current': r.name === 'notifications' ? 'page' : 'false' }, svgIcon(ICONS.bell), nUnread ? el('span', { class: 'count', text: nUnread > 9 ? '9+' : String(nUnread) }) : null) : null;
   const me = CLOUD.profiles ? el('a', { class: 'mebtn', id: 'a-me', href: '#/profile', 'aria-label': t('Your profile') }, avatarEl(CLOUD.profile.avatar, CLOUD.profile.name || CLOUD.user.email || '', 'sm')) : null;
@@ -2726,6 +2813,7 @@ function render() {
   else if (r.name === 'profile') main = viewProfile();
   else if (PAGES[r.name]) main = viewPage(r.name);
   else if (r.name === 'friend') main = viewFriend(r.a, r.b);
+  else if (r.name === 'member') main = viewMember(r.a);
   else if (r.name === 'model') { HELP.mark('market'); const m = catOf(r.a); main = el('div', { class: 'col' }, el('div', { class: 'col', style: 'gap:6px' }, el('a', { class: 'small', href: '#/market', text: '‹ ' + t('Market') }), m ? banner({ name: shortModel(m.name) }, null) : el('h1', { text: t('Model not found') }), m ? el('p', { class: 'muted', text: t('Built {a} to {b}', { a: m.from, b: m.to }) }) : null), m ? panel(null, null, marketView(m.name, null)) : null, m ? el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn primary', id: 'b-own-one', text: t('I own one: add it to my garage'), onclick: () => { S.prefill = m.name; nav('#/car/new'); } })) : null); }
   else if (r.name === 'projects') main = viewProjects();
   else if (r.name === 'project') main = r.a === 'new' ? projectForm() : viewProject(r.a);

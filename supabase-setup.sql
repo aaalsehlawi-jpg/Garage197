@@ -744,3 +744,113 @@ alter table public.garages drop constraint if exists garages_prefs_small;
 alter table public.garages add constraint garages_prefs_small check (pg_column_size(prefs) < 4000);
 
 notify pgrst, 'reload schema';
+
+-- ---------------------------------------------------------------------------
+-- Community members: members list, member pages and friend requests from a community
+-- ---------------------------------------------------------------------------
+alter table public.friendships add column if not exists via text not null default 'email';
+alter table public.friendships drop constraint if exists friendships_via_check;
+alter table public.friendships add constraint friendships_via_check check (via in ('email', 'community'));
+
+-- True when the two people are in at least one community together.
+create or replace function public.shares_community(p_user uuid) returns boolean
+language sql stable security definer set search_path = public as $$
+  select exists (select 1 from community_members a join community_members b on b.community_id = a.community_id
+    where a.user_id = auth.uid() and b.user_id = p_user);
+$$;
+
+-- True when you can come across this person in the app: a shared community, or an event you can both see.
+create or replace function public.can_meet(p_user uuid) returns boolean
+language sql stable security definer set search_path = public as $$
+  select shares_community(p_user)
+    or exists (select 1 from event_rsvps r where r.user_id = p_user and can_see_event(r.event_id))
+    or exists (select 1 from events e where e.creator = p_user and can_see_event(e.id));
+$$;
+
+-- Who is going to an event, for anyone who can see the event. Names and photos only.
+drop function if exists public.list_going(uuid);
+create function public.list_going(p_event uuid)
+returns table (user_id uuid, name text, avatar text, me boolean, host boolean)
+language sql stable security definer set search_path = public as $$
+  select r.user_id, display_name(r.user_id), avatar_of(r.user_id), r.user_id = auth.uid(), r.user_id = e.creator
+  from event_rsvps r join events e on e.id = r.event_id
+  where r.event_id = p_event and can_see_event(p_event) and not blocked_with(r.user_id)
+  order by (r.user_id = e.creator) desc, r.created_at limit 300;
+$$;
+
+-- Members of a community, visible to its members only. Names and photos, never emails.
+drop function if exists public.list_members(uuid);
+create function public.list_members(p_community uuid)
+returns table (user_id uuid, name text, avatar text, founder boolean, me boolean, joined_at timestamptz)
+language sql stable security definer set search_path = public as $$
+  select m.user_id, display_name(m.user_id), avatar_of(m.user_id), c.owner = m.user_id, m.user_id = auth.uid(), m.joined_at
+  from community_members m join communities c on c.id = m.community_id
+  where m.community_id = p_community and is_member(p_community) and not blocked_with(m.user_id)
+  order by (c.owner = m.user_id) desc, m.joined_at limit 500;
+$$;
+
+-- What one member may see of another: name, photo, garage name and the communities they share.
+-- City and social links only once they are friends. The garage itself still needs friendship and sharing.
+drop function if exists public.member_profile(uuid);
+create function public.member_profile(p_user uuid)
+returns table (user_id uuid, name text, avatar text, garage text, city text, links jsonb, relation text, friendship uuid, shared boolean, communities jsonb)
+language sql stable security definer set search_path = public as $$
+  select p_user, display_name(p_user), avatar_of(p_user), nullif(trim(g.name), ''),
+    case when f.status = 'accepted' then g.city end,
+    case when f.status = 'accepted' then coalesce(g.links, '{}'::jsonb) else '{}'::jsonb end,
+    case when p_user = auth.uid() then 'self' when f.id is null then 'none' when f.status = 'accepted' then 'friends'
+      when f.addressee = auth.uid() then 'incoming' else 'sent' end,
+    f.id, coalesce(g.shared, false) and f.status = 'accepted',
+    coalesce((select jsonb_agg(jsonb_build_object('id', c.id, 'name', c.name) order by c.name)
+      from communities c join community_members a on a.community_id = c.id and a.user_id = auth.uid()
+      join community_members b on b.community_id = c.id and b.user_id = p_user), '[]'::jsonb)
+  from (select 1) one
+  left join garages g on g.user_id = p_user
+  left join friendships f on (f.requester = auth.uid() and f.addressee = p_user) or (f.requester = p_user and f.addressee = auth.uid())
+  where auth.uid() is not null and not blocked_with(p_user)
+    and (p_user = auth.uid() or can_meet(p_user) or f.id is not null)
+  limit 1;
+$$;
+
+-- Friend request to someone you share a community or an event with, without knowing their email.
+create or replace function public.request_friend_member(p_user uuid) returns text
+language plpgsql security definer set search_path = public as $$
+declare me uuid := auth.uid(); f friendships;
+begin
+  if me is null then raise exception 'Sign in first'; end if;
+  if p_user is null or p_user = me then return 'self'; end if;
+  if exists (select 1 from blocks where blocker = me and blocked = p_user) then return 'blocked'; end if;
+  if exists (select 1 from blocks where blocker = p_user and blocked = me) then return 'none'; end if;
+  select * into f from friendships where (requester = me and addressee = p_user) or (requester = p_user and addressee = me) limit 1;
+  if found then
+    if f.status = 'pending' and f.addressee = me then
+      update friendships set status = 'accepted', accepted_at = now() where id = f.id; return 'accepted';
+    end if;
+    return 'exists';
+  end if;
+  if not can_meet(p_user) then return 'none'; end if;
+  insert into friendships (requester, addressee, via) values (me, p_user, 'community');
+  return 'sent';
+end $$;
+
+-- Emails stay hidden for requests made from a community until the request is accepted.
+drop function if exists public.my_friends();
+create function public.my_friends()
+returns table (id uuid, other uuid, email text, garage text, shared boolean, status text, incoming boolean, links jsonb, name text, city text, avatar text)
+language sql stable security definer set search_path = public as $$
+  select f.id, o.id, case when f.status = 'accepted' or f.via = 'email' then o.email::text end,
+    g.name, coalesce(g.shared, false) and f.status = 'accepted', f.status, f.addressee = auth.uid(),
+    case when f.status = 'accepted' then coalesce(g.links, '{}'::jsonb) else '{}'::jsonb end,
+    case when f.status = 'accepted' or f.via = 'email' then nullif(trim(g.display_name), '') else display_name(o.id) end,
+    case when f.status = 'accepted' then g.city end, g.avatar
+  from friendships f
+  join auth.users o on o.id = case when f.requester = auth.uid() then f.addressee else f.requester end
+  left join garages g on g.user_id = o.id
+  where auth.uid() in (f.requester, f.addressee)
+  order by f.created_at desc;
+$$;
+
+revoke all on function public.shares_community(uuid), public.can_meet(uuid), public.list_going(uuid), public.list_members(uuid), public.member_profile(uuid), public.request_friend_member(uuid), public.my_friends() from public, anon;
+grant execute on function public.shares_community(uuid), public.can_meet(uuid), public.list_going(uuid), public.list_members(uuid), public.member_profile(uuid), public.request_friend_member(uuid), public.my_friends() to authenticated;
+
+notify pgrst, 'reload schema';
