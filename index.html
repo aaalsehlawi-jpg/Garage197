@@ -60,8 +60,9 @@
   .subtabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); }
   @media (max-width: 640px) {
     .head .tabs { position: fixed; inset-inline: 0; bottom: 0; z-index: 20; background: var(--panel); border-top: 1px solid var(--line); justify-content: space-around; padding-bottom: env(safe-area-inset-bottom, 0px); }
-    .head .tab { flex: 1; flex-direction: column; gap: 2px; justify-content: center; font-size: .72rem; border-bottom: 0; border-top: 3px solid transparent; padding: 8px 4px 9px; max-width: none; min-width: 0; }
+    .head .tab { flex: 1; flex-direction: column; gap: 2px; justify-content: center; font-size: .7rem; border-bottom: 0; border-top: 3px solid transparent; padding: 8px 1px 9px; max-width: none; min-width: 0; }
     .head .tab svg { width: 1.5rem; height: 1.5rem; }
+    .head #t-settings { display: none; }
     .head .tab span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
     .head .tab[aria-current="page"] { border-top-color: var(--accent); }
     .head { border-bottom: 0; }
@@ -1213,6 +1214,7 @@ const ICONS = {
   market: '<path d="M4 19.5h16"/><path d="M5 15.5l4.5-5 3.5 3 6-7.5"/><path d="M15.5 6H19v3.5"/>',
   settings: '<circle cx="12" cy="12" r="3"/><path d="M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21M5.6 5.6l1.8 1.8M16.6 16.6l1.8 1.8M5.6 18.4l1.8-1.8M16.6 7.4l1.8-1.8"/>',
   friends: '<circle cx="9" cy="8.5" r="3.2"/><path d="M3 19.5c.6-3.4 3-5 6-5s5.4 1.6 6 5"/><circle cx="17" cy="9.5" r="2.5"/><path d="M17 14.5c2.2.2 3.6 1.6 4 4"/>',
+  about: '<circle cx="12" cy="12" r="8.5"/><path d="M12 11v5.5"/><path d="M12 7.6v.1"/>',
   bell: '<path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/>',
   plus: '<path d="M12 5v14M5 12h14"/>', pdf: '<path d="M7 3.5h7l4 4V20.5H7z"/><path d="M14 3.5v4h4"/><path d="M12 11v6m0 0-2.5-2.5M12 17l2.5-2.5"/>',
   edit: '<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/>', camera: '<path d="M4 8h3l1.5-2h7L17 8h3v11H4z"/><circle cx="12" cy="13.5" r="3.2"/>'
@@ -1950,7 +1952,7 @@ function welcome() {
   return b;
 }
 function viewProfile() {
-  const out = el('div', { class: 'col', style: 'max-width:40rem' }, el('h1', { text: t('Your profile') }));
+  const out = el('div', { class: 'col', style: 'max-width:40rem' }, el('div', { class: 'row between' }, el('h1', { text: t('Your profile') }), el('a', { class: 'btn sm', id: 'a-settings', href: '#/settings' }, ico('settings', t('Settings')))));
   if (!CLOUD.loaded) { out.append(skel('10rem')); return out; }
   if (CLOUD.profiles) {
     const name = el('input', { type: 'text', id: 'pr-name', maxlength: 40, autocomplete: 'name', value: CLOUD.profile.name }), city = el('input', { type: 'text', id: 'pr-city', maxlength: 60, value: CLOUD.profile.city, placeholder: t('e.g. Doha') }), status = el('span', { class: 'status' });
@@ -2033,11 +2035,11 @@ function render() {
   const r = route();
   if (!CLOUD.user && PAGES[r.name]) { app.replaceChildren(el('header', { class: 'head' }, brand('#/home'), el('a', { class: 'btn sm', href: '#/home', text: t('Sign in') })), el('main', {}, viewPage(r.name)), footer()); return; }
   if (!CLOUD.user || S.mode === 'newpass') { app.replaceChildren(viewLogin()); return; }
-  const top = r.name === 'home' ? 'home' : ['friends', 'friend', 'communities', 'community', 'events'].includes(r.name) ? 'friends' : r.name === 'market' || r.name === 'model' ? 'market' : r.name === 'settings' ? 'settings' : r.name === 'profile' || r.name === 'notifications' || PAGES[r.name] ? '' : 'garage';
+  const top = r.name === 'home' ? 'home' : r.name === 'about' ? 'about' : ['friends', 'friend', 'communities', 'community', 'events'].includes(r.name) ? 'friends' : r.name === 'market' || r.name === 'model' ? 'market' : r.name === 'settings' ? 'settings' : r.name === 'profile' || r.name === 'notifications' || PAGES[r.name] ? '' : 'garage';
   const tab = (id, href, label) => el('a', { class: 'tab', id: 't-' + id, href, 'aria-current': top === id ? 'page' : 'false' }, ico(id, label));
   const nUnread = CLOUD.extras ? CLOUD.unread() : 0, bell = CLOUD.extras ? el('a', { class: 'bell', id: 'a-bell', href: '#/notifications', 'aria-label': nUnread ? t('Notifications, {n} new', { n: nUnread }) : t('Notifications'), 'aria-current': r.name === 'notifications' ? 'page' : 'false' }, svgIcon(ICONS.bell), nUnread ? el('span', { class: 'count', text: nUnread > 9 ? '9+' : String(nUnread) }) : null) : null;
   const me = CLOUD.profiles ? el('a', { class: 'mebtn', id: 'a-me', href: '#/profile', 'aria-label': t('Your profile') }, avatarEl(CLOUD.profile.avatar, CLOUD.profile.name || CLOUD.user.email || '', 'sm')) : null;
-  const head = el('header', { class: 'head' }, brand('#/home'), el('span', { class: 'headtools' }, bell, me), el('nav', { class: 'tabs', 'aria-label': t('Sections') }, tab('home', '#/home', t('Home')), tab('garage', '#/garage', CLOUD.garageName || t('My garage')), tab('market', '#/market', t('Market')), tab('friends', '#/friends', t('Community') + (incoming().length ? ' (' + incoming().length + ')' : '')), tab('settings', '#/settings', t('Settings'))));
+  const head = el('header', { class: 'head' }, brand('#/home'), el('span', { class: 'headtools' }, bell, me), el('nav', { class: 'tabs', 'aria-label': t('Sections') }, tab('home', '#/home', t('Home')), tab('about', '#/about', t('About')), tab('garage', '#/garage', CLOUD.garageName || t('My garage')), tab('market', '#/market', t('Market')), tab('friends', '#/friends', t('Community') + (incoming().length ? ' (' + incoming().length + ')' : '')), tab('settings', '#/settings', t('Settings'))));
   let main;
   if (r.name !== 'notifications') S.noteSeen = null;
   if (r.name === 'garage') main = viewGarage();
