@@ -212,6 +212,7 @@
   .steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; text-align: start; color: var(--ink); }
   .steps li { display: flex; gap: 10px; align-items: center; } .steps .n { width: 1.7rem; height: 1.7rem; flex: none; border-radius: 999px; border: 1.5px solid var(--accent); color: var(--accent); display: grid; place-items: center; font-weight: 700; font-size: .85rem; }
   .steps li.done { color: var(--muted); } .steps li.done .n { background: var(--accent); color: #fff; }
+  .clamp { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
   .pcard { align-items: flex-start; padding: 12px; }
   .badge.k-maintenance { background: #e7f1fb; color: #1d5a96; } .badge.k-upgrade { background: #f9eeda; color: #8a5a08; } .badge.k-restoration { background: #e5f4e4; color: #2a6b2a; }
   .posts li.helpful { border-inline-start: 3px solid var(--ok); padding-inline-start: 10px; }
@@ -332,7 +333,7 @@
       if (!j || !j.access_token) return { confirm: true };
       setSession(j); await loadCloud(); return { ok: true };
     },
-    signOut: async function () { try { await call('/auth/v1/logout', { method: 'POST' }); } catch (e) {} setSession(null); cloud = {}; api.garageName = ''; api.setupError = ''; api.friends = []; api.feed = []; api.communities = []; api.events = []; api.notes = []; api.blocks = []; api.projects = []; api.seenAt = ''; api.shared = false; api.links = {}; api.socialLoaded = false; emit(); emitAuth(); },
+    signOut: async function () { try { await call('/auth/v1/logout', { method: 'POST' }); } catch (e) {} setSession(null); cloud = {}; api.garageName = ''; api.setupError = ''; api.friends = []; api.feed = []; api.communities = []; api.events = []; api.notes = []; api.blocks = []; api.projects = []; api.activity = []; api.seenAt = ''; api.shared = false; api.links = {}; api.socialLoaded = false; emit(); emitAuth(); },
     saveGarageName: function (name) { return call('/rest/v1/garages?on_conflict=user_id', { method: 'POST', headers: Object.assign({ Prefer: 'resolution=merge-duplicates,return=minimal' }, JSONH), body: JSON.stringify({ user_id: session.user.id, name: name, updated_at: new Date().toISOString() }) }).then(parse).then(function () { api.garageName = name; }); },
     // Friends, shared garages and social links
     profile: { name: '', city: '', avatar: '' }, profiles: false,
@@ -348,11 +349,12 @@
       try { var n = await Promise.all([rpc('my_notifications', {}), rpc('my_blocks', {}), call('/rest/v1/garages?select=seen_at').then(parse)]); api.notes = n[0] || []; api.blocks = n[1] || []; api.seenAt = (n[2] && n[2][0] && n[2][0].seen_at) || ''; api.extras = true; }
       catch (e) { api.notes = []; api.blocks = []; api.extras = false; }
       try { api.projects = (await rpc('list_projects', {})) || []; api.projectsOn = true; } catch (e) { api.projects = []; api.projectsOn = false; }
+      try { api.activity = (await rpc('friends_activity', {})) || []; api.activityOn = true; } catch (e) { api.activity = []; api.activityOn = false; }
       api.socialLoaded = true; emitAuth();
     },
     notes: [], blocks: [], seenAt: '', extras: false,
     // Car projects
-    projects: [], projectsOn: false,
+    projects: [], projectsOn: false, activity: [], activityOn: false,
     createProject: async function (row) { var id = (crypto.randomUUID ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xxx-8xxx-xxxxxxxxxxxx'.replace(/x/g, function () { return (Math.random() * 16 | 0).toString(16); })); await ins('projects', Object.assign({ id: id, user_id: session.user.id }, row)); await api.loadSocial(); return id; },
     updateProject: async function (id, patch) { await parse(await call('/rest/v1/projects?id=eq.' + id, { method: 'PATCH', headers: Object.assign({ Prefer: 'return=minimal' }, JSONH), body: JSON.stringify(Object.assign({ updated_at: new Date().toISOString() }, patch)) })); await api.loadSocial(); },
     deleteProject: async function (id) { await del('projects?id=eq.' + id); await api.loadSocial(); },
@@ -1226,6 +1228,16 @@ const AR = {
   '{who} posted an update on {what}': '{who} نشر تحديثاً على {what}',
   '{who} responded to your suggestion on {what}': '{who} ردّ على اقتراحك في {what}',
   '{who} started the project {what}': '{who} بدأ المشروع {what}',
+  'with a photo': 'مع صورة',
+  'Latest from your friends': 'آخر أخبار أصدقائك',
+  'joined a community': 'انضم إلى مجتمع',
+  'posted a project update': 'نشر تحديثاً للمشروع',
+  'Show all {n}': 'عرض الكل ({n})',
+  'No upcoming events. Create one for your friends or a community.': 'لا توجد فعاليات قادمة. أنشئ فعالية لأصدقائك أو لمجتمع.',
+  'added a car to their garage': 'أضاف سيارة إلى كراجه',
+  'started a {k} project': 'بدأ مشروع {k}',
+  'Nothing new yet. New cars, projects, project updates and communities your friends join will show here.': 'لا جديد بعد. ستظهر هنا السيارات الجديدة والمشاريع وتحديثاتها والمجتمعات التي ينضم إليها أصدقاؤك.',
+  'Add friends to see their new cars, projects and the communities they join.': 'أضف أصدقاء لترى سياراتهم الجديدة ومشاريعهم والمجتمعات التي ينضمون إليها.',
 };
 /* ===== Screens. Every visible string goes through t() so it can be shown in Arabic (see i18n.js). ===== */
 const CLOUD = window.g197cloud;
@@ -1839,16 +1851,30 @@ function linksPanel() {
 }
 function feedPanel() {
   if (!CLOUD.social) return null;
-  const req = incoming(), feed = CLOUD.feed.slice(0, 6);
-  const evs = CLOUD.events.slice(0, 3), fproj = CLOUD.projects.filter((x) => !x.mine && x.status !== 'done').slice(0, 3);
-  if (!req.length && !feed.length && !evs.length && !fproj.length) return null;
-  return panel(t('From your friends'), null,
+  const req = incoming(), evs = CLOUD.events.slice(0, 4), items = [];
+  CLOUD.feed.forEach((x) => items.push({ at: x.added, href: '#/friend/' + x.owner + '/' + encodeURIComponent(x.car_id), lead: photoBox(x.car), who: ((f) => f ? friendName(f) : (x.garage || x.email || t('A friend')))(CLOUD.friends.find((f) => f.other === x.owner)), line: t('added a car to their garage'), title: x.car.name || t('Unnamed car') }));
+  if (CLOUD.activityOn) CLOUD.activity.forEach((n) => {
+    const who = memberName(n.who_name), lead = avatarEl(n.avatar, who, '');
+    if (n.kind === 'project') items.push({ at: n.at, href: '#/project/' + n.ref, lead, who, line: t('started a {k} project', { k: t(PKIND[n.body] || 'Maintenance').toLowerCase() }), title: n.title });
+    else if (n.kind === 'pupdate') items.push({ at: n.at, href: '#/project/' + n.ref, lead, who, line: t('posted a project update'), title: n.title, body: n.body, hasPhoto: !!n.photo });
+    else if (n.kind === 'joined') items.push({ at: n.at, href: '#/community/' + n.ref, lead, who, line: t('joined a community'), title: n.title });
+  });
+  else CLOUD.projects.filter((x) => !x.mine).forEach((x) => items.push({ at: x.created_at, href: '#/project/' + x.id, lead: avatarEl(x.owner_avatar, memberName(x.owner_name), ''), who: memberName(x.owner_name), line: t('started a {k} project', { k: t(PKIND[x.kind]).toLowerCase() }), title: x.title }));
+  items.sort((p, q) => String(q.at).localeCompare(String(p.at)));
+  const more = items.length > 8 && !S.feedAll, shown = S.feedAll ? items : items.slice(0, 8);
+  return el('section', { class: 'panel', id: 'home-community' }, el('h2', { text: t('Community') }),
     req.length ? el('p', {}, el('a', { href: '#/friends', id: 'a-requests', text: req.length === 1 ? t('You have a friend request') : t('You have {n} friend requests', { n: req.length }) })) : null,
-    feed.length ? el('div', { class: 'feed' }, feed.map((x) => el('a', { class: 'feeditem', href: '#/friend/' + x.owner + '/' + encodeURIComponent(x.car_id) }, photoBox(x.car), el('span', { class: 'col', style: 'gap:2px' },
-      el('b', { text: x.car.name || t('Unnamed car') }), el('span', { class: 'small', text: t('Added to {g}', { g: x.garage || x.email || t('A friend') }) }), el('span', { class: 'muted small', text: fmtDate(String(x.added).slice(0, 10)) }))))) : null,
-    evs.length ? el('div', { class: 'col', style: 'gap:0' }, el('span', { class: 'label', text: t('Upcoming events') }), el('ul', { class: 'due-list' }, evs.map((e) => el('li', {}, el('span', {}, el('a', { href: '#/events', text: e.title }), el('span', { class: 'muted', text: ' · ' + (e.community || t('Friends')) })), el('span', { class: 'tag', text: fmtWhen(e.starts_at) }))))) : null,
-    fproj.length ? el('div', { class: 'col', style: 'gap:8px' }, el('span', { class: 'label', text: t('Friends’ projects') }), projectCards(fproj)) : null,
-    el('div', { class: 'row' }, el('a', { class: 'btn', href: '#/friends' }, ico('friends', t('Open community')))));
+    el('span', { class: 'label', text: t('Latest from your friends') }),
+    shown.length ? el('div', { class: 'feed' }, shown.map((x) => el('a', { class: 'feeditem', href: x.href }, x.lead, el('span', { class: 'col', style: 'gap:2px;min-width:0;flex:1' },
+      el('span', { class: 'small' }, el('b', { text: x.who }), el('span', { text: ' ' + x.line })), el('b', { style: 'overflow-wrap:anywhere', text: x.title }),
+      x.body ? el('span', { class: 'small clamp', text: x.body }) : null,
+      el('span', { class: 'muted small', text: fmtWhen(x.at) + (x.hasPhoto ? ' · ' + t('with a photo') : '') })))))
+      : el('p', { class: 'empty', text: t(CLOUD.friends.some((f) => f.status === 'accepted') ? 'Nothing new yet. New cars, projects, project updates and communities your friends join will show here.' : 'Add friends to see their new cars, projects and the communities they join.') }),
+    more ? el('button', { type: 'button', class: 'linkbtn small', id: 'b-feed-more', text: t('Show all {n}', { n: items.length }), onclick: () => { S.feedAll = true; render(); } }) : null,
+    el('span', { class: 'label', text: t('Upcoming events') }),
+    evs.length ? el('ul', { class: 'due-list' }, evs.map((e) => el('li', {}, el('span', {}, el('a', { href: '#/events', text: e.title }), el('span', { class: 'muted', text: ' · ' + (e.community || t('Friends')) + (e.place ? ' · ' + e.place : '') })), el('span', { class: 'tag', text: fmtWhen(e.starts_at) }))))
+      : el('p', { class: 'muted small', text: t('No upcoming events. Create one for your friends or a community.') }),
+    el('div', { class: 'row' }, el('a', { class: 'btn', href: '#/friends' }, ico('friends', t('Open community'))), el('a', { class: 'btn', href: '#/events', text: t('Events') }), CLOUD.projectsOn ? el('a', { class: 'btn', href: '#/projects', text: t('Projects') }) : null));
 }
 function viewFriends() {
   const out = el('div', { class: 'col', style: 'max-width:46rem' }, socialTabs('friends'));

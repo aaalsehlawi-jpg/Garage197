@@ -610,16 +610,30 @@ function linksPanel() {
 }
 function feedPanel() {
   if (!CLOUD.social) return null;
-  const req = incoming(), feed = CLOUD.feed.slice(0, 6);
-  const evs = CLOUD.events.slice(0, 3), fproj = CLOUD.projects.filter((x) => !x.mine && x.status !== 'done').slice(0, 3);
-  if (!req.length && !feed.length && !evs.length && !fproj.length) return null;
-  return panel(t('From your friends'), null,
+  const req = incoming(), evs = CLOUD.events.slice(0, 4), items = [];
+  CLOUD.feed.forEach((x) => items.push({ at: x.added, href: '#/friend/' + x.owner + '/' + encodeURIComponent(x.car_id), lead: photoBox(x.car), who: ((f) => f ? friendName(f) : (x.garage || x.email || t('A friend')))(CLOUD.friends.find((f) => f.other === x.owner)), line: t('added a car to their garage'), title: x.car.name || t('Unnamed car') }));
+  if (CLOUD.activityOn) CLOUD.activity.forEach((n) => {
+    const who = memberName(n.who_name), lead = avatarEl(n.avatar, who, '');
+    if (n.kind === 'project') items.push({ at: n.at, href: '#/project/' + n.ref, lead, who, line: t('started a {k} project', { k: t(PKIND[n.body] || 'Maintenance').toLowerCase() }), title: n.title });
+    else if (n.kind === 'pupdate') items.push({ at: n.at, href: '#/project/' + n.ref, lead, who, line: t('posted a project update'), title: n.title, body: n.body, hasPhoto: !!n.photo });
+    else if (n.kind === 'joined') items.push({ at: n.at, href: '#/community/' + n.ref, lead, who, line: t('joined a community'), title: n.title });
+  });
+  else CLOUD.projects.filter((x) => !x.mine).forEach((x) => items.push({ at: x.created_at, href: '#/project/' + x.id, lead: avatarEl(x.owner_avatar, memberName(x.owner_name), ''), who: memberName(x.owner_name), line: t('started a {k} project', { k: t(PKIND[x.kind]).toLowerCase() }), title: x.title }));
+  items.sort((p, q) => String(q.at).localeCompare(String(p.at)));
+  const more = items.length > 8 && !S.feedAll, shown = S.feedAll ? items : items.slice(0, 8);
+  return el('section', { class: 'panel', id: 'home-community' }, el('h2', { text: t('Community') }),
     req.length ? el('p', {}, el('a', { href: '#/friends', id: 'a-requests', text: req.length === 1 ? t('You have a friend request') : t('You have {n} friend requests', { n: req.length }) })) : null,
-    feed.length ? el('div', { class: 'feed' }, feed.map((x) => el('a', { class: 'feeditem', href: '#/friend/' + x.owner + '/' + encodeURIComponent(x.car_id) }, photoBox(x.car), el('span', { class: 'col', style: 'gap:2px' },
-      el('b', { text: x.car.name || t('Unnamed car') }), el('span', { class: 'small', text: t('Added to {g}', { g: x.garage || x.email || t('A friend') }) }), el('span', { class: 'muted small', text: fmtDate(String(x.added).slice(0, 10)) }))))) : null,
-    evs.length ? el('div', { class: 'col', style: 'gap:0' }, el('span', { class: 'label', text: t('Upcoming events') }), el('ul', { class: 'due-list' }, evs.map((e) => el('li', {}, el('span', {}, el('a', { href: '#/events', text: e.title }), el('span', { class: 'muted', text: ' · ' + (e.community || t('Friends')) })), el('span', { class: 'tag', text: fmtWhen(e.starts_at) }))))) : null,
-    fproj.length ? el('div', { class: 'col', style: 'gap:8px' }, el('span', { class: 'label', text: t('Friends’ projects') }), projectCards(fproj)) : null,
-    el('div', { class: 'row' }, el('a', { class: 'btn', href: '#/friends' }, ico('friends', t('Open community')))));
+    el('span', { class: 'label', text: t('Latest from your friends') }),
+    shown.length ? el('div', { class: 'feed' }, shown.map((x) => el('a', { class: 'feeditem', href: x.href }, x.lead, el('span', { class: 'col', style: 'gap:2px;min-width:0;flex:1' },
+      el('span', { class: 'small' }, el('b', { text: x.who }), el('span', { text: ' ' + x.line })), el('b', { style: 'overflow-wrap:anywhere', text: x.title }),
+      x.body ? el('span', { class: 'small clamp', text: x.body }) : null,
+      el('span', { class: 'muted small', text: fmtWhen(x.at) + (x.hasPhoto ? ' · ' + t('with a photo') : '') })))))
+      : el('p', { class: 'empty', text: t(CLOUD.friends.some((f) => f.status === 'accepted') ? 'Nothing new yet. New cars, projects, project updates and communities your friends join will show here.' : 'Add friends to see their new cars, projects and the communities they join.') }),
+    more ? el('button', { type: 'button', class: 'linkbtn small', id: 'b-feed-more', text: t('Show all {n}', { n: items.length }), onclick: () => { S.feedAll = true; render(); } }) : null,
+    el('span', { class: 'label', text: t('Upcoming events') }),
+    evs.length ? el('ul', { class: 'due-list' }, evs.map((e) => el('li', {}, el('span', {}, el('a', { href: '#/events', text: e.title }), el('span', { class: 'muted', text: ' · ' + (e.community || t('Friends')) + (e.place ? ' · ' + e.place : '') })), el('span', { class: 'tag', text: fmtWhen(e.starts_at) }))))
+      : el('p', { class: 'muted small', text: t('No upcoming events. Create one for your friends or a community.') }),
+    el('div', { class: 'row' }, el('a', { class: 'btn', href: '#/friends' }, ico('friends', t('Open community'))), el('a', { class: 'btn', href: '#/events', text: t('Events') }), CLOUD.projectsOn ? el('a', { class: 'btn', href: '#/projects', text: t('Projects') }) : null));
 }
 function viewFriends() {
   const out = el('div', { class: 'col', style: 'max-width:46rem' }, socialTabs('friends'));

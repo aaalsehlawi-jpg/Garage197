@@ -78,7 +78,7 @@
       if (!j || !j.access_token) return { confirm: true };
       setSession(j); await loadCloud(); return { ok: true };
     },
-    signOut: async function () { try { await call('/auth/v1/logout', { method: 'POST' }); } catch (e) {} setSession(null); cloud = {}; api.garageName = ''; api.setupError = ''; api.friends = []; api.feed = []; api.communities = []; api.events = []; api.notes = []; api.blocks = []; api.projects = []; api.seenAt = ''; api.shared = false; api.links = {}; api.socialLoaded = false; emit(); emitAuth(); },
+    signOut: async function () { try { await call('/auth/v1/logout', { method: 'POST' }); } catch (e) {} setSession(null); cloud = {}; api.garageName = ''; api.setupError = ''; api.friends = []; api.feed = []; api.communities = []; api.events = []; api.notes = []; api.blocks = []; api.projects = []; api.activity = []; api.seenAt = ''; api.shared = false; api.links = {}; api.socialLoaded = false; emit(); emitAuth(); },
     saveGarageName: function (name) { return call('/rest/v1/garages?on_conflict=user_id', { method: 'POST', headers: Object.assign({ Prefer: 'resolution=merge-duplicates,return=minimal' }, JSONH), body: JSON.stringify({ user_id: session.user.id, name: name, updated_at: new Date().toISOString() }) }).then(parse).then(function () { api.garageName = name; }); },
     // Friends, shared garages and social links
     profile: { name: '', city: '', avatar: '' }, profiles: false,
@@ -94,11 +94,12 @@
       try { var n = await Promise.all([rpc('my_notifications', {}), rpc('my_blocks', {}), call('/rest/v1/garages?select=seen_at').then(parse)]); api.notes = n[0] || []; api.blocks = n[1] || []; api.seenAt = (n[2] && n[2][0] && n[2][0].seen_at) || ''; api.extras = true; }
       catch (e) { api.notes = []; api.blocks = []; api.extras = false; }
       try { api.projects = (await rpc('list_projects', {})) || []; api.projectsOn = true; } catch (e) { api.projects = []; api.projectsOn = false; }
+      try { api.activity = (await rpc('friends_activity', {})) || []; api.activityOn = true; } catch (e) { api.activity = []; api.activityOn = false; }
       api.socialLoaded = true; emitAuth();
     },
     notes: [], blocks: [], seenAt: '', extras: false,
     // Car projects
-    projects: [], projectsOn: false,
+    projects: [], projectsOn: false, activity: [], activityOn: false,
     createProject: async function (row) { var id = (crypto.randomUUID ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xxx-8xxx-xxxxxxxxxxxx'.replace(/x/g, function () { return (Math.random() * 16 | 0).toString(16); })); await ins('projects', Object.assign({ id: id, user_id: session.user.id }, row)); await api.loadSocial(); return id; },
     updateProject: async function (id, patch) { await parse(await call('/rest/v1/projects?id=eq.' + id, { method: 'PATCH', headers: Object.assign({ Prefer: 'return=minimal' }, JSONH), body: JSON.stringify(Object.assign({ updated_at: new Date().toISOString() }, patch)) })); await api.loadSocial(); },
     deleteProject: async function (id) { await del('projects?id=eq.' + id); await api.loadSocial(); },

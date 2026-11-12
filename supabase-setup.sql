@@ -688,3 +688,30 @@ revoke all on function public.owns_project(uuid), public.can_see_project(uuid), 
 grant execute on function public.owns_project(uuid), public.can_see_project(uuid), public.answer_suggestion(uuid, boolean, text), public.list_projects(), public.list_project_updates(uuid), public.list_project_suggestions(uuid), public.project_photo_visible(text), public.my_notifications() to authenticated;
 
 notify pgrst, 'reload schema';
+
+-- ---------------------------------------------------------------------------
+-- Friends' activity for the Home page
+-- ---------------------------------------------------------------------------
+create or replace function public.friends_activity()
+returns table (kind text, at timestamptz, who uuid, who_name text, avatar text, title text, ref text, body text, photo text)
+language sql stable security definer set search_path = public as $$
+  select * from (
+    select 'project'::text, p.created_at, p.user_id, display_name(p.user_id), avatar_of(p.user_id), p.title, p.id::text, p.kind, null::text
+      from projects p
+      where p.user_id <> auth.uid() and p.shared and are_friends(auth.uid(), p.user_id) and not blocked_with(p.user_id)
+    union all
+    select 'pupdate', u.created_at, p.user_id, display_name(p.user_id), avatar_of(p.user_id), p.title, p.id::text, left(u.body, 240), u.photo
+      from project_updates u join projects p on p.id = u.project_id
+      where p.user_id <> auth.uid() and p.shared and are_friends(auth.uid(), p.user_id) and not blocked_with(p.user_id)
+    union all
+    select 'joined', m.joined_at, m.user_id, display_name(m.user_id), avatar_of(m.user_id), c.name, c.id::text, null, null
+      from community_members m join communities c on c.id = m.community_id
+      where m.user_id <> auth.uid() and are_friends(auth.uid(), m.user_id) and not blocked_with(m.user_id)
+  ) x (kind, at, who, who_name, avatar, title, ref, body, photo)
+  where x.at > now() - interval '60 days'
+  order by x.at desc limit 30;
+$$;
+revoke all on function public.friends_activity() from public, anon;
+grant execute on function public.friends_activity() to authenticated;
+
+notify pgrst, 'reload schema';
