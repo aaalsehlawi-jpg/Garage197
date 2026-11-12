@@ -78,7 +78,7 @@
       if (!j || !j.access_token) return { confirm: true };
       setSession(j); await loadCloud(); return { ok: true };
     },
-    signOut: async function () { try { await call('/auth/v1/logout', { method: 'POST' }); } catch (e) {} setSession(null); cloud = {}; api.garageName = ''; api.setupError = ''; api.friends = []; api.feed = []; api.communities = []; api.events = []; api.notes = []; api.blocks = []; api.seenAt = ''; api.shared = false; api.links = {}; api.socialLoaded = false; emit(); emitAuth(); },
+    signOut: async function () { try { await call('/auth/v1/logout', { method: 'POST' }); } catch (e) {} setSession(null); cloud = {}; api.garageName = ''; api.setupError = ''; api.friends = []; api.feed = []; api.communities = []; api.events = []; api.notes = []; api.blocks = []; api.projects = []; api.seenAt = ''; api.shared = false; api.links = {}; api.socialLoaded = false; emit(); emitAuth(); },
     saveGarageName: function (name) { return call('/rest/v1/garages?on_conflict=user_id', { method: 'POST', headers: Object.assign({ Prefer: 'resolution=merge-duplicates,return=minimal' }, JSONH), body: JSON.stringify({ user_id: session.user.id, name: name, updated_at: new Date().toISOString() }) }).then(parse).then(function () { api.garageName = name; }); },
     // Friends, shared garages and social links
     profile: { name: '', city: '', avatar: '' }, profiles: false,
@@ -93,9 +93,22 @@
       catch (e) { api.communities = []; api.events = []; if (e.status === 404 || e.code === 'PGRST202') api.groups = false; }
       try { var n = await Promise.all([rpc('my_notifications', {}), rpc('my_blocks', {}), call('/rest/v1/garages?select=seen_at').then(parse)]); api.notes = n[0] || []; api.blocks = n[1] || []; api.seenAt = (n[2] && n[2][0] && n[2][0].seen_at) || ''; api.extras = true; }
       catch (e) { api.notes = []; api.blocks = []; api.extras = false; }
+      try { api.projects = (await rpc('list_projects', {})) || []; api.projectsOn = true; } catch (e) { api.projects = []; api.projectsOn = false; }
       api.socialLoaded = true; emitAuth();
     },
     notes: [], blocks: [], seenAt: '', extras: false,
+    // Car projects
+    projects: [], projectsOn: false,
+    createProject: async function (row) { var id = (crypto.randomUUID ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xxx-8xxx-xxxxxxxxxxxx'.replace(/x/g, function () { return (Math.random() * 16 | 0).toString(16); })); await ins('projects', Object.assign({ id: id, user_id: session.user.id }, row)); await api.loadSocial(); return id; },
+    updateProject: async function (id, patch) { await parse(await call('/rest/v1/projects?id=eq.' + id, { method: 'PATCH', headers: Object.assign({ Prefer: 'return=minimal' }, JSONH), body: JSON.stringify(Object.assign({ updated_at: new Date().toISOString() }, patch)) })); await api.loadSocial(); },
+    deleteProject: async function (id) { await del('projects?id=eq.' + id); await api.loadSocial(); },
+    projectDetail: async function (id) { var r = await Promise.all([rpc('list_project_updates', { p_project: id }), rpc('list_project_suggestions', { p_project: id })]); return { updates: r[0] || [], suggestions: r[1] || [] }; },
+    addUpdate: function (pid, body, photo) { var row = { project_id: pid, user_id: session.user.id, body: body || '' }; if (photo) row.photo = photo; return ins('project_updates', row); },
+    deleteUpdate: function (id) { return del('project_updates?id=eq.' + id); },
+    suggest: function (pid, kind, body, link) { var row = { project_id: pid, user_id: session.user.id, kind: kind, body: body }; if (link) row.link = link; return ins('project_suggestions', row); },
+    deleteSuggestion: function (id) { return del('project_suggestions?id=eq.' + id); },
+    answerSuggestion: function (id, helpful, reply) { return rpc('answer_suggestion', { p_id: id, p_helpful: helpful, p_reply: reply }); },
+    cheer: async function (pid, on) { if (on) await ins('project_cheers', { project_id: pid, user_id: session.user.id }); else await del('project_cheers?project_id=eq.' + pid + '&user_id=eq.' + session.user.id); await api.loadSocial(); },
     unread: function () { var s = api.seenAt ? Date.parse(api.seenAt) : 0; return api.notes.filter(function (n) { return Date.parse(n.at) > s; }).length; },
     markSeen: async function () { var now = new Date().toISOString(); try { await api.saveProfile({ seen_at: now }); api.seenAt = now; emitAuth(); } catch (e) {} },
     blockUser: async function (id) { await rpc('block_user', { p_user: id }); await api.loadSocial(); },

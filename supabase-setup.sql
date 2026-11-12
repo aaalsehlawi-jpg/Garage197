@@ -511,3 +511,180 @@ revoke all on function public.delete_my_account(boolean) from public, anon;
 grant execute on function public.delete_my_account(boolean) to authenticated;
 
 notify pgrst, 'reload schema';
+
+-- ===== Car projects. Safe to run more than once. =====
+
+create table if not exists public.projects (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null default auth.uid() references auth.users (id) on delete cascade,
+  car_id text,
+  car_name text check (char_length(car_name) <= 120),
+  title text not null check (char_length(title) between 2 and 80),
+  kind text not null check (kind in ('maintenance', 'upgrade', 'restoration')),
+  status text not null default 'active' check (status in ('planned', 'active', 'done')),
+  about text check (char_length(about) <= 1000),
+  shared boolean not null default false,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+create table if not exists public.project_updates (
+  id uuid primary key default gen_random_uuid(),
+  project_id uuid not null references public.projects (id) on delete cascade,
+  user_id uuid not null default auth.uid() references auth.users (id) on delete cascade,
+  body text not null default '' check (char_length(body) <= 2000),
+  photo text check (char_length(photo) <= 300),
+  created_at timestamptz not null default now(),
+  check (char_length(body) >= 1 or photo is not null)
+);
+create table if not exists public.project_suggestions (
+  id uuid primary key default gen_random_uuid(),
+  project_id uuid not null references public.projects (id) on delete cascade,
+  user_id uuid not null default auth.uid() references auth.users (id) on delete cascade,
+  kind text not null check (kind in ('equipment', 'tool', 'info')),
+  body text not null check (char_length(body) between 1 and 1000),
+  link text check (char_length(link) <= 300 and (link is null or link ~ '^https://')),
+  helpful boolean not null default false,
+  reply text check (char_length(reply) <= 1000),
+  created_at timestamptz not null default now()
+);
+create table if not exists public.project_cheers (
+  project_id uuid not null references public.projects (id) on delete cascade,
+  user_id uuid not null default auth.uid() references auth.users (id) on delete cascade,
+  created_at timestamptz not null default now(),
+  primary key (project_id, user_id)
+);
+alter table public.projects enable row level security;
+alter table public.project_updates enable row level security;
+alter table public.project_suggestions enable row level security;
+alter table public.project_cheers enable row level security;
+
+create or replace function public.owns_project(p_project uuid) returns boolean
+language sql stable security definer set search_path = public as $$
+  select exists (select 1 from projects p where p.id = p_project and p.user_id = auth.uid());
+$$;
+-- The owner always sees a project. Friends see it only while it is shared.
+create or replace function public.can_see_project(p_project uuid) returns boolean
+language sql stable security definer set search_path = public as $$
+  select exists (select 1 from projects p where p.id = p_project
+    and (p.user_id = auth.uid() or (p.shared and are_friends(auth.uid(), p.user_id) and not blocked_with(p.user_id))));
+$$;
+
+drop policy if exists "own projects" on public.projects;
+create policy "own projects" on public.projects for all to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
+
+drop policy if exists "post updates" on public.project_updates;
+create policy "post updates" on public.project_updates for insert to authenticated with check (user_id = auth.uid() and public.owns_project(project_id));
+drop policy if exists "remove updates" on public.project_updates;
+create policy "remove updates" on public.project_updates for delete to authenticated using (user_id = auth.uid());
+
+drop policy if exists "suggest" on public.project_suggestions;
+create policy "suggest" on public.project_suggestions for insert to authenticated
+  with check (user_id = auth.uid() and public.can_see_project(project_id) and not helpful and reply is null);
+drop policy if exists "remove suggestions" on public.project_suggestions;
+create policy "remove suggestions" on public.project_suggestions for delete to authenticated using (user_id = auth.uid() or public.owns_project(project_id));
+
+drop policy if exists "see own cheers" on public.project_cheers;
+create policy "see own cheers" on public.project_cheers for select to authenticated using (user_id = auth.uid());
+drop policy if exists "cheer" on public.project_cheers;
+create policy "cheer" on public.project_cheers for insert to authenticated with check (user_id = auth.uid() and public.can_see_project(project_id));
+drop policy if exists "uncheer" on public.project_cheers;
+create policy "uncheer" on public.project_cheers for delete to authenticated using (user_id = auth.uid());
+
+-- The project owner marks a suggestion helpful and can answer it.
+create or replace function public.answer_suggestion(p_id uuid, p_helpful boolean, p_reply text) returns void
+language sql security definer set search_path = public as $$
+  update project_suggestions s set helpful = coalesce(p_helpful, s.helpful), reply = case when p_reply is null then s.reply else nullif(trim(p_reply), '') end
+  where s.id = p_id and owns_project(s.project_id);
+$$;
+
+drop function if exists public.list_projects();
+create function public.list_projects()
+returns table (id uuid, owner uuid, owner_name text, owner_avatar text, mine boolean, car_id text, car_name text, title text, kind text, status text, about text, shared boolean,
+  created_at timestamptz, last_at timestamptz, updates bigint, suggestions bigint, cheers bigint, me_cheered boolean)
+language sql stable security definer set search_path = public as $$
+  select p.id, p.user_id, display_name(p.user_id), avatar_of(p.user_id), p.user_id = auth.uid(), p.car_id, p.car_name, p.title, p.kind, p.status, p.about, p.shared, p.created_at,
+    greatest(p.updated_at, coalesce((select max(u.created_at) from project_updates u where u.project_id = p.id), p.created_at)),
+    (select count(*) from project_updates u where u.project_id = p.id),
+    (select count(*) from project_suggestions s where s.project_id = p.id),
+    (select count(*) from project_cheers c where c.project_id = p.id),
+    exists (select 1 from project_cheers c where c.project_id = p.id and c.user_id = auth.uid())
+  from projects p where can_see_project(p.id)
+  order by 14 desc limit 200;
+$$;
+
+drop function if exists public.list_project_updates(uuid);
+create function public.list_project_updates(p_project uuid)
+returns table (id uuid, body text, photo text, created_at timestamptz)
+language sql stable security definer set search_path = public as $$
+  select u.id, u.body, u.photo, u.created_at from project_updates u
+  where u.project_id = p_project and can_see_project(p_project) order by u.created_at desc limit 200;
+$$;
+
+drop function if exists public.list_project_suggestions(uuid);
+create function public.list_project_suggestions(p_project uuid)
+returns table (id uuid, author text, author_id uuid, avatar text, mine boolean, kind text, body text, link text, helpful boolean, reply text, created_at timestamptz)
+language sql stable security definer set search_path = public as $$
+  select s.id, display_name(s.user_id), s.user_id, avatar_of(s.user_id), s.user_id = auth.uid(), s.kind, s.body, s.link, s.helpful, s.reply, s.created_at
+  from project_suggestions s
+  where s.project_id = p_project and can_see_project(p_project) and not blocked_with(s.user_id)
+  order by s.helpful desc, s.created_at desc limit 200;
+$$;
+
+-- Friends can open the photos on updates of projects shared with them.
+create or replace function public.project_photo_visible(p_name text) returns boolean
+language sql stable security definer set search_path = public as $$
+  select exists (select 1 from project_updates u where u.photo = p_name and can_see_project(u.project_id));
+$$;
+drop policy if exists "project update photos" on storage.objects;
+create policy "project update photos" on storage.objects for select to authenticated
+  using (bucket_id = 'car-files' and public.project_photo_visible(name));
+
+-- Notifications, now including projects.
+drop function if exists public.my_notifications();
+create function public.my_notifications()
+returns table (kind text, at timestamptz, who text, what text, ref text)
+language sql stable security definer set search_path = public as $$
+  select * from (
+    select 'request'::text, f.created_at, coalesce(nullif(display_name(f.requester), 'A member'), u.email::text), null::text, f.id::text
+      from friendships f join auth.users u on u.id = f.requester where f.addressee = auth.uid() and f.status = 'pending'
+    union all
+    select 'accepted', f.accepted_at, coalesce(nullif(display_name(f.addressee), 'A member'), u.email::text), null, f.addressee::text
+      from friendships f join auth.users u on u.id = f.addressee where f.requester = auth.uid() and f.status = 'accepted' and f.accepted_at is not null
+    union all
+    select 'car', c.created_at, coalesce(nullif(display_name(c.user_id), 'A member'), u.email::text), c.data->>'name', c.user_id::text || '/' || c.id
+      from cars c join garages g on g.user_id = c.user_id and g.shared join auth.users u on u.id = c.user_id
+      where c.user_id <> auth.uid() and are_friends(auth.uid(), c.user_id)
+    union all
+    select 'post', p.created_at, display_name(p.user_id), m.name, m.id::text
+      from community_posts p join communities m on m.id = p.community_id
+      where p.user_id <> auth.uid() and is_member(p.community_id) and not blocked_with(p.user_id)
+    union all
+    select 'event', e.created_at, display_name(e.creator), e.title, e.id::text
+      from events e where e.creator <> auth.uid() and e.starts_at > now() and can_see_event(e.id) and not blocked_with(e.creator)
+    union all
+    select 'going', r.created_at, display_name(r.user_id), e.title, e.id::text
+      from event_rsvps r join events e on e.id = r.event_id where e.creator = auth.uid() and r.user_id <> auth.uid() and not blocked_with(r.user_id)
+    union all
+    select 'project', p.created_at, display_name(p.user_id), p.title, p.id::text
+      from projects p where p.user_id <> auth.uid() and can_see_project(p.id)
+    union all
+    select 'pupdate', u.created_at, display_name(p.user_id), p.title, p.id::text
+      from project_updates u join projects p on p.id = u.project_id where p.user_id <> auth.uid() and can_see_project(p.id)
+    union all
+    select 'suggest', s.created_at, display_name(s.user_id), p.title, p.id::text
+      from project_suggestions s join projects p on p.id = s.project_id where p.user_id = auth.uid() and s.user_id <> auth.uid() and not blocked_with(s.user_id)
+    union all
+    select 'helpful', s.created_at, display_name(p.user_id), p.title, p.id::text
+      from project_suggestions s join projects p on p.id = s.project_id where s.user_id = auth.uid() and p.user_id <> auth.uid() and (s.helpful or s.reply is not null) and can_see_project(p.id)
+    union all
+    select 'cheer', c.created_at, display_name(c.user_id), p.title, p.id::text
+      from project_cheers c join projects p on p.id = c.project_id where p.user_id = auth.uid() and c.user_id <> auth.uid() and not blocked_with(c.user_id)
+  ) n (kind, at, who, what, ref)
+  where n.at > now() - interval '30 days'
+  order by n.at desc limit 60;
+$$;
+
+revoke all on function public.owns_project(uuid), public.can_see_project(uuid), public.answer_suggestion(uuid, boolean, text), public.list_projects(), public.list_project_updates(uuid), public.list_project_suggestions(uuid), public.project_photo_visible(text), public.my_notifications() from public, anon;
+grant execute on function public.owns_project(uuid), public.can_see_project(uuid), public.answer_suggestion(uuid, boolean, text), public.list_projects(), public.list_project_updates(uuid), public.list_project_suggestions(uuid), public.project_photo_visible(text), public.my_notifications() to authenticated;
+
+notify pgrst, 'reload schema';
