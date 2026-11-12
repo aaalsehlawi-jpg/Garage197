@@ -195,6 +195,22 @@
   .bell .count { position: absolute; top: 2px; inset-inline-end: 0; min-width: 1.15rem; height: 1.15rem; padding: 0 4px; border-radius: 999px; background: var(--bad); color: #fff; font-size: .68rem; font-weight: 700; display: grid; place-items: center; }
   .postphoto { display: block; padding: 0; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--soft); cursor: pointer; max-width: min(100%, 26rem); }
   .postphoto img { display: block; width: 100%; height: auto; max-height: 26rem; object-fit: cover; }
+  .avatar { width: 2.6rem; height: 2.6rem; flex: none; border-radius: 999px; background: var(--accent-soft); color: var(--accent); display: inline-grid; place-items: center; font-weight: 700; overflow: hidden; }
+  .avatar.sm { width: 1.9rem; height: 1.9rem; font-size: .8rem; } .avatar.lg { width: 5rem; height: 5rem; font-size: 1.6rem; }
+  .avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .headtools { display: inline-flex; align-items: center; gap: 6px; margin-inline-start: auto; } .headtools .bell { margin: 0; }
+  .mebtn { display: inline-grid; border-radius: 999px; text-decoration: none; }
+  .evidence { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; margin: 0; }
+  .conf { font-weight: 700; font-size: .72rem; letter-spacing: .04em; text-transform: uppercase; border-radius: 999px; padding: 2px 9px; border: 1px solid currentColor; }
+  .conf.c-strong { color: var(--ok); } .conf.c-fair { color: var(--warn); } .conf.c-thin { color: var(--muted); }
+  html[lang="ar"] .conf { letter-spacing: 0; font-size: .8rem; }
+  .foot { margin-top: 40px; padding: 18px 0 8px; border-top: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: 8px 20px; justify-content: space-between; align-items: center; }
+  .foot nav { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: .85rem; }
+  .signin .foot { margin-top: 20px; }
+  .prose h2 { font-size: 1.1rem; margin: 10px 0 0; } .prose p, .prose ul { margin: 0; } .prose ul { padding-inline-start: 1.2rem; display: flex; flex-direction: column; gap: 4px; }
+  .steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; text-align: start; color: var(--ink); }
+  .steps li { display: flex; gap: 10px; align-items: center; } .steps .n { width: 1.7rem; height: 1.7rem; flex: none; border-radius: 999px; border: 1.5px solid var(--accent); color: var(--accent); display: grid; place-items: center; font-weight: 700; font-size: .85rem; }
+  .steps li.done { color: var(--muted); } .steps li.done .n { background: var(--accent); color: #fff; }
   .socials { display: flex; flex-wrap: wrap; gap: 6px; }
   .check { display: flex; gap: 10px; align-items: center; font-weight: 600; cursor: pointer; }
   .check input { width: 1.2rem; height: 1.2rem; accent-color: var(--accent); }

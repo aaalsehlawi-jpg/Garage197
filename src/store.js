@@ -50,6 +50,8 @@
     api.shared = false; api.links = {}; api.social = true;
     try { var g = await parse(await call('/rest/v1/garages?select=name,shared,links')); api.garageName = g && g[0] && g[0].name ? g[0].name : ''; api.shared = !!(g && g[0] && g[0].shared); api.links = (g && g[0] && g[0].links) || {}; }
     catch (e) { api.social = false; try { var g2 = await parse(await call('/rest/v1/garages?select=name')); api.garageName = g2 && g2[0] && g2[0].name ? g2[0].name : ''; } catch (e2) { api.garageName = ''; } }
+    api.profile = { name: '', city: '', avatar: '' }; api.profiles = false;
+    try { var pr = await parse(await call('/rest/v1/garages?select=display_name,city,avatar')); api.profiles = true; if (pr && pr[0]) api.profile = { name: pr[0].display_name || '', city: pr[0].city || '', avatar: pr[0].avatar || '' }; } catch (e) {}
     api.loaded = true; emit(); emitAuth();
     if (api.social) api.loadSocial();
   }
@@ -79,6 +81,7 @@
     signOut: async function () { try { await call('/auth/v1/logout', { method: 'POST' }); } catch (e) {} setSession(null); cloud = {}; api.garageName = ''; api.setupError = ''; api.friends = []; api.feed = []; api.communities = []; api.events = []; api.notes = []; api.blocks = []; api.seenAt = ''; api.shared = false; api.links = {}; api.socialLoaded = false; emit(); emitAuth(); },
     saveGarageName: function (name) { return call('/rest/v1/garages?on_conflict=user_id', { method: 'POST', headers: Object.assign({ Prefer: 'resolution=merge-duplicates,return=minimal' }, JSONH), body: JSON.stringify({ user_id: session.user.id, name: name, updated_at: new Date().toISOString() }) }).then(parse).then(function () { api.garageName = name; }); },
     // Friends, shared garages and social links
+    profile: { name: '', city: '', avatar: '' }, profiles: false,
     shared: false, links: {}, social: true, friends: [], feed: [], socialLoaded: false,
     loadSocial: async function () {
       if (!session) return;
@@ -113,7 +116,7 @@
     acceptFriend: async function (id) { await rpc('accept_friend', { p_id: id }); await api.loadSocial(); },
     removeFriend: async function (id) { await parse(await call('/rest/v1/friendships?id=eq.' + encodeURIComponent(id), { method: 'DELETE' })); await api.loadSocial(); },
     friendCars: function (owner) { return rpc('friends_cars', { p_owner: owner }); },
-    saveProfile: function (patch) { return call('/rest/v1/garages?on_conflict=user_id', { method: 'POST', headers: Object.assign({ Prefer: 'resolution=merge-duplicates,return=minimal' }, JSONH), body: JSON.stringify(Object.assign({ user_id: session.user.id, updated_at: new Date().toISOString() }, patch)) }).then(parse).then(function () { if ('shared' in patch) api.shared = patch.shared; if ('links' in patch) api.links = patch.links; }); },
+    saveProfile: function (patch) { return call('/rest/v1/garages?on_conflict=user_id', { method: 'POST', headers: Object.assign({ Prefer: 'resolution=merge-duplicates,return=minimal' }, JSONH), body: JSON.stringify(Object.assign({ user_id: session.user.id, updated_at: new Date().toISOString() }, patch)) }).then(parse).then(function () { if ('shared' in patch) api.shared = patch.shared; if ('links' in patch) api.links = patch.links; if ('display_name' in patch) api.profile.name = patch.display_name || ''; if ('city' in patch) api.profile.city = patch.city || ''; if ('avatar' in patch) api.profile.avatar = patch.avatar || ''; }); },
     localCount: function () { return Object.keys(local()).length; },
     importLocal: async function () { var o = local(), ids = Object.keys(o); for (var i = 0; i < ids.length; i++) { var id = cloud[ids[i]] ? ids[i] + '-d' : ids[i]; await upsertCar(id, o[ids[i]]); cloud[id] = o[ids[i]]; } jset(LKEY, null); emit(); return ids.length; },
     upload: async function (carId, file) {

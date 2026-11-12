@@ -195,6 +195,22 @@
   .bell .count { position: absolute; top: 2px; inset-inline-end: 0; min-width: 1.15rem; height: 1.15rem; padding: 0 4px; border-radius: 999px; background: var(--bad); color: #fff; font-size: .68rem; font-weight: 700; display: grid; place-items: center; }
   .postphoto { display: block; padding: 0; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--soft); cursor: pointer; max-width: min(100%, 26rem); }
   .postphoto img { display: block; width: 100%; height: auto; max-height: 26rem; object-fit: cover; }
+  .avatar { width: 2.6rem; height: 2.6rem; flex: none; border-radius: 999px; background: var(--accent-soft); color: var(--accent); display: inline-grid; place-items: center; font-weight: 700; overflow: hidden; }
+  .avatar.sm { width: 1.9rem; height: 1.9rem; font-size: .8rem; } .avatar.lg { width: 5rem; height: 5rem; font-size: 1.6rem; }
+  .avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .headtools { display: inline-flex; align-items: center; gap: 6px; margin-inline-start: auto; } .headtools .bell { margin: 0; }
+  .mebtn { display: inline-grid; border-radius: 999px; text-decoration: none; }
+  .evidence { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; margin: 0; }
+  .conf { font-weight: 700; font-size: .72rem; letter-spacing: .04em; text-transform: uppercase; border-radius: 999px; padding: 2px 9px; border: 1px solid currentColor; }
+  .conf.c-strong { color: var(--ok); } .conf.c-fair { color: var(--warn); } .conf.c-thin { color: var(--muted); }
+  html[lang="ar"] .conf { letter-spacing: 0; font-size: .8rem; }
+  .foot { margin-top: 40px; padding: 18px 0 8px; border-top: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: 8px 20px; justify-content: space-between; align-items: center; }
+  .foot nav { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: .85rem; }
+  .signin .foot { margin-top: 20px; }
+  .prose h2 { font-size: 1.1rem; margin: 10px 0 0; } .prose p, .prose ul { margin: 0; } .prose ul { padding-inline-start: 1.2rem; display: flex; flex-direction: column; gap: 4px; }
+  .steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; text-align: start; color: var(--ink); }
+  .steps li { display: flex; gap: 10px; align-items: center; } .steps .n { width: 1.7rem; height: 1.7rem; flex: none; border-radius: 999px; border: 1.5px solid var(--accent); color: var(--accent); display: grid; place-items: center; font-weight: 700; font-size: .85rem; }
+  .steps li.done { color: var(--muted); } .steps li.done .n { background: var(--accent); color: #fff; }
   .socials { display: flex; flex-wrap: wrap; gap: 6px; }
   .check { display: flex; gap: 10px; align-items: center; font-weight: 600; cursor: pointer; }
   .check input { width: 1.2rem; height: 1.2rem; accent-color: var(--accent); }
@@ -280,6 +296,8 @@
     api.shared = false; api.links = {}; api.social = true;
     try { var g = await parse(await call('/rest/v1/garages?select=name,shared,links')); api.garageName = g && g[0] && g[0].name ? g[0].name : ''; api.shared = !!(g && g[0] && g[0].shared); api.links = (g && g[0] && g[0].links) || {}; }
     catch (e) { api.social = false; try { var g2 = await parse(await call('/rest/v1/garages?select=name')); api.garageName = g2 && g2[0] && g2[0].name ? g2[0].name : ''; } catch (e2) { api.garageName = ''; } }
+    api.profile = { name: '', city: '', avatar: '' }; api.profiles = false;
+    try { var pr = await parse(await call('/rest/v1/garages?select=display_name,city,avatar')); api.profiles = true; if (pr && pr[0]) api.profile = { name: pr[0].display_name || '', city: pr[0].city || '', avatar: pr[0].avatar || '' }; } catch (e) {}
     api.loaded = true; emit(); emitAuth();
     if (api.social) api.loadSocial();
   }
@@ -309,6 +327,7 @@
     signOut: async function () { try { await call('/auth/v1/logout', { method: 'POST' }); } catch (e) {} setSession(null); cloud = {}; api.garageName = ''; api.setupError = ''; api.friends = []; api.feed = []; api.communities = []; api.events = []; api.notes = []; api.blocks = []; api.seenAt = ''; api.shared = false; api.links = {}; api.socialLoaded = false; emit(); emitAuth(); },
     saveGarageName: function (name) { return call('/rest/v1/garages?on_conflict=user_id', { method: 'POST', headers: Object.assign({ Prefer: 'resolution=merge-duplicates,return=minimal' }, JSONH), body: JSON.stringify({ user_id: session.user.id, name: name, updated_at: new Date().toISOString() }) }).then(parse).then(function () { api.garageName = name; }); },
     // Friends, shared garages and social links
+    profile: { name: '', city: '', avatar: '' }, profiles: false,
     shared: false, links: {}, social: true, friends: [], feed: [], socialLoaded: false,
     loadSocial: async function () {
       if (!session) return;
@@ -343,7 +362,7 @@
     acceptFriend: async function (id) { await rpc('accept_friend', { p_id: id }); await api.loadSocial(); },
     removeFriend: async function (id) { await parse(await call('/rest/v1/friendships?id=eq.' + encodeURIComponent(id), { method: 'DELETE' })); await api.loadSocial(); },
     friendCars: function (owner) { return rpc('friends_cars', { p_owner: owner }); },
-    saveProfile: function (patch) { return call('/rest/v1/garages?on_conflict=user_id', { method: 'POST', headers: Object.assign({ Prefer: 'resolution=merge-duplicates,return=minimal' }, JSONH), body: JSON.stringify(Object.assign({ user_id: session.user.id, updated_at: new Date().toISOString() }, patch)) }).then(parse).then(function () { if ('shared' in patch) api.shared = patch.shared; if ('links' in patch) api.links = patch.links; }); },
+    saveProfile: function (patch) { return call('/rest/v1/garages?on_conflict=user_id', { method: 'POST', headers: Object.assign({ Prefer: 'resolution=merge-duplicates,return=minimal' }, JSONH), body: JSON.stringify(Object.assign({ user_id: session.user.id, updated_at: new Date().toISOString() }, patch)) }).then(parse).then(function () { if ('shared' in patch) api.shared = patch.shared; if ('links' in patch) api.links = patch.links; if ('display_name' in patch) api.profile.name = patch.display_name || ''; if ('city' in patch) api.profile.city = patch.city || ''; if ('avatar' in patch) api.profile.avatar = patch.avatar || ''; }); },
     localCount: function () { return Object.keys(local()).length; },
     importLocal: async function () { var o = local(), ids = Object.keys(o); for (var i = 0; i < ids.length; i++) { var id = cloud[ids[i]] ? ids[i] + '-d' : ids[i]; await upsertCar(id, o[ids[i]]); cloud[id] = o[ids[i]]; } jset(LKEY, null); emit(); return ids.length; },
     upload: async function (carId, file) {
@@ -984,7 +1003,114 @@ const AR = {
   '{who} created the event {what}': '{who} أنشأ فعالية {what}',
   '{who} is going to {what}': '{who} سيحضر {what}',
   'Nothing new yet. Friend requests, new cars, posts and events will show here.': 'لا جديد بعد. ستظهر هنا طلبات الصداقة والسيارات الجديدة والمنشورات والفعاليات.',
-  'These show while the app is open. Alerts on your phone when the app is closed are not available yet.': 'تظهر هذه أثناء فتح التطبيق. التنبيهات على هاتفك والتطبيق مغلق غير متاحة بعد.'
+  'These show while the app is open. Alerts on your phone when the app is closed are not available yet.': 'تظهر هذه أثناء فتح التطبيق. التنبيهات على هاتفك والتطبيق مغلق غير متاحة بعد.',
+  'About Garage 197': 'عن Garage 197',
+  'About this app': 'عن التطبيق',
+  'Add your first car and see what it is worth': 'أضف سيارتك الأولى واعرف قيمتها',
+  'Be respectful. No insults, harassment, hate or threats.': 'كن محترمًا. لا إهانات ولا مضايقات ولا كراهية ولا تهديدات.',
+  'Before your first post: be respectful, stay on cars, no abuse, spam or other people’s private details. Posts that break the community guidelines are removed and accounts can be closed. Do you agree?': 'قبل منشورك الأول: كن محترمًا، والتزم بموضوع السيارات، ولا إساءة ولا رسائل مزعجة ولا بيانات خاصة للآخرين. تُحذف المنشورات المخالفة لإرشادات المجتمع وقد تُغلق الحسابات. هل توافق؟',
+  'Behaviour': 'السلوك',
+  'By creating an account you agree to the': 'بإنشاء حساب فإنك توافق على',
+  'Change photo': 'غيّر الصورة',
+  'Changes': 'التغييرات',
+  'City': 'المدينة',
+  'Classic models in the catalogue, from public auction results.': 'الطرازات الكلاسيكية في الفهرس، من نتائج المزادات العلنية.',
+  'Community guidelines': 'إرشادات المجتمع',
+  'Contact': 'تواصل معنا',
+  'Continue to your first car': 'تابع إلى سيارتك الأولى',
+  'Couldn’t send your message. Try again later.': 'تعذّر إرسال رسالتك. حاول لاحقًا.',
+  'Data is stored with our hosting provider, Supabase, on servers in Australia. We do not sell your data and we do not show adverts.': 'تُحفظ البيانات لدى مزوّد الاستضافة Supabase على خوادم في أستراليا. لا نبيع بياناتك ولا نعرض إعلانات.',
+  'Do not share other people’s private details, such as addresses, phone numbers or number plates they have not made public.': 'لا تشارك البيانات الخاصة للآخرين، مثل العناوين وأرقام الهواتف أو لوحات السيارات التي لم ينشروها.',
+  'Every value in Garage 197 comes from real, publicly reported sales. We never invent a number, and we always show how many sales stand behind it.': 'كل قيمة في Garage 197 مصدرها مبيعات حقيقية معلنة. لا نختلق رقمًا أبدًا، ونعرض دائمًا عدد المبيعات التي تستند إليها القيمة.',
+  'Fair evidence': 'أدلة مقبولة',
+  'Fair evidence: several recent sales, but fewer close matches.': 'أدلة مقبولة: عدة مبيعات حديثة، لكن المطابقات القريبة أقل.',
+  'Garage 197 communities are for people who enjoy classic cars. These rules keep them worth visiting.': 'مجتمعات Garage 197 لمحبي السيارات الكلاسيكية. هذه القواعد تجعلها جديرة بالزيارة.',
+  'Garage 197 does not sell cars, and its values are a guide, not a formal valuation.': 'لا يبيع Garage 197 السيارات، وقيمه استرشادية وليست تقييمًا رسميًا.',
+  'Garage 197 is a home for classic car owners: a private record of your cars and their history, a view of what cars like yours are selling for, and a community of people who care about the same things.': 'Garage 197 بيت لملّاك السيارات الكلاسيكية: سجل خاص بسياراتك وتاريخها، ونظرة على أسعار بيع السيارات المشابهة، ومجتمع يهتم بما تهتم به.',
+  'Garage sharing and blocked people are on': 'مشاركة الكراج والمحظورون موجودان في',
+  'How the estimate is worked out': 'كيف يُحسب التقدير',
+  'How we value cars': 'كيف نقيّم السيارات',
+  'If enough recent sales of your model had a similar mileage, we use the typical (middle) price of those sales.': 'إذا توفّر عدد كافٍ من المبيعات الحديثة لطرازك بعدّاد مشابه، نستخدم السعر الوسيط لتلك المبيعات.',
+  'If there are too few recent sales, we use every sale on file and say so.': 'إذا كانت المبيعات الحديثة قليلة جدًا، نستخدم كل المبيعات المسجلة ونوضح ذلك.',
+  'If this page changes in a way that matters, we will say so in the app.': 'إذا تغيّرت هذه الصفحة تغييرًا مهمًا فسنعلن ذلك في التطبيق.',
+  'If you see a problem': 'إذا رأيت مشكلة',
+  'If you switch on sharing, friends see each car’s name, year, model, colour, mileage and photos, and nothing else.': 'إذا فعّلت المشاركة، يرى الأصدقاء اسم كل سيارة وسنتها وطرازها ولونها وعدّادها وصورها فقط.',
+  'It does not know your car’s condition, history, specification or originality, and it reflects mainly American and European sales. It is not a formal valuation and should not be used for insurance, finance or a sale without professional advice.': 'لا يعرف التقدير حالة سيارتك ولا تاريخها ولا مواصفاتها ولا أصالتها، ويعكس في الغالب مبيعات أمريكا وأوروبا. ليس تقييمًا رسميًا، ولا ينبغي الاعتماد عليه في التأمين أو التمويل أو البيع دون مشورة مختص.',
+  'It was started by a collector in Qatar who wanted one place for a car’s paperwork, its service history and its place in the market.': 'أسّسه هاوٍ لجمع السيارات في قطر أراد مكانًا واحدًا لأوراق السيارة وسجل صيانتها وموقعها في السوق.',
+  'Keep each car’s details, photos, service records, documents and reminders in one logbook.': 'احفظ تفاصيل كل سيارة وصورها وسجلات صيانتها ومستنداتها وتذكيراتها في سجل واحد.',
+  'Last updated 12 November 2026.': 'آخر تحديث: 12 نوفمبر 2026.',
+  'Market data updated {d}.': 'آخر تحديث لبيانات السوق: {d}.',
+  'Message sent. We will reply to {e}.': 'أُرسلت الرسالة. سنرد على {e}.',
+  'Name your garage': 'سمِّ كراجك',
+  'No spam, scams or misleading adverts.': 'لا رسائل مزعجة ولا احتيال ولا إعلانات مضللة.',
+  'Nothing illegal, violent or sexual.': 'لا محتوى غير قانوني أو عنيف أو جنسي.',
+  'Only post photos you have the right to share.': 'انشر فقط الصور التي يحق لك مشاركتها.',
+  'Otherwise we use the typical price of all sales of your model in the last 12 months.': 'وإلا نستخدم السعر الوسيط لكل مبيعات طرازك في آخر 12 شهرًا.',
+  'Photo updated': 'تم تحديث الصورة',
+  'Posts follow the': 'المنشورات تخضع لـ',
+  'Privacy': 'الخصوصية',
+  'Questions about these terms can be sent from the Contact page.': 'يمكن إرسال الأسئلة عن هذه الشروط من صفحة تواصل معنا.',
+  'Questions, problems, ideas, or a request to delete your account: write to us here and the Garage 197 team will read it.': 'أسئلة أو مشكلات أو أفكار أو طلب حذف حسابك: اكتب لنا هنا وسيقرأ فريق Garage 197 رسالتك.',
+  'Save profile': 'احفظ الملف الشخصي',
+  'See what similar cars have sold for, with the evidence shown.': 'اعرف بكم بيعت السيارات المشابهة، مع عرض الأدلة.',
+  'Send message': 'أرسل الرسالة',
+  'Share your garage with friends, join communities and plan events.': 'شارك كراجك مع الأصدقاء، وانضم إلى المجتمعات، ونظّم الفعاليات.',
+  'Shown to friends and in communities in place of your email.': 'يظهر للأصدقاء وفي المجتمعات بدلًا من بريدك الإلكتروني.',
+  'Shown to friends only.': 'تظهر للأصدقاء فقط.',
+  'Sign in first so we know who to reply to.': 'سجّل الدخول أولًا لنعرف على من نرد.',
+  'Stay on cars, events and the hobby.': 'التزم بموضوع السيارات والفعاليات والهواية.',
+  'Strong evidence': 'أدلة قوية',
+  'Strong evidence: eight or more recent sales of cars with similar mileage.': 'أدلة قوية: ثماني مبيعات حديثة أو أكثر لسيارات بعدّاد مشابه.',
+  'Tell us your name': 'أخبرنا باسمك',
+  'Terms': 'الشروط',
+  'Terms of use': 'شروط الاستخدام',
+  'The Garage 197 team can access stored data to run the service and to review reports.': 'يستطيع فريق Garage 197 الوصول إلى البيانات المحفوظة لتشغيل الخدمة ومراجعة البلاغات.',
+  'The range shows the lowest and highest of those sales. Prices are converted between currencies at fixed approximate rates.': 'يعرض النطاق أدنى وأعلى تلك المبيعات. تُحوَّل الأسعار بين العملات بأسعار صرف ثابتة تقريبية.',
+  'The service': 'الخدمة',
+  'There is no tolerance for abusive, hateful, illegal or misleading content. Follow the community guidelines. We may remove content and close accounts that break them.': 'لا تسامح مع المحتوى المسيء أو المحرّض على الكراهية أو غير القانوني أو المضلل. التزم بإرشادات المجتمع. قد نحذف المحتوى ونغلق الحسابات المخالفة.',
+  'Thin evidence': 'أدلة ضعيفة',
+  'Thin evidence: few sales on file. Treat the value as a rough guide.': 'أدلة ضعيفة: مبيعات قليلة مسجلة. اعتبر القيمة مؤشرًا تقريبيًا.',
+  'Track what classic cars sell for, keep your cars and their history in one place, and see how your garage sits against the market.': 'تابع أسعار بيع السيارات الكلاسيكية، واحفظ سياراتك وتاريخها في مكان واحد، واعرف موقع كراجك من السوق.',
+  'Uploading…': 'جارٍ الرفع…',
+  'Use Report on the post, event or community. Reports go to the Garage 197 team and the other person is not told. You can also block anyone, which hides you from each other.': 'استخدم «إبلاغ» على المنشور أو الفعالية أو المجتمع. تصل البلاغات إلى فريق Garage 197 ولا يُبلَّغ الطرف الآخر. يمكنك أيضًا حظر أي شخص فيختفي كل منكما عن الآخر.',
+  'Using Garage 197': 'استخدام Garage 197',
+  'Values and market information are estimates from public sales. They are not a formal valuation or financial advice, and we are not liable for decisions made using them.': 'القيم ومعلومات السوق تقديرات من مبيعات علنية. ليست تقييمًا رسميًا ولا مشورة مالية، ولسنا مسؤولين عن القرارات المبنية عليها.',
+  'Values are a guide': 'القيم استرشادية',
+  'We couldn’t match this car to a model in the catalogue, which covers classic Porsche and Mercedes-Benz SL models. Edit the car and pick the model under “More details”. Meanwhile these searches open public results:': 'لم نتمكن من مطابقة هذه السيارة مع طراز في الفهرس، الذي يغطي طرازات بورشه الكلاسيكية ومرسيدس-بنز SL. عدّل السيارة واختر الطراز من «تفاصيل أكثر». وحتى ذلك الحين تفتح هذه الروابط نتائج علنية:',
+  'We record sold prices published by auction houses and online auction platforms, with the date, the model, the price and, where it was published, the mileage.': 'نسجل أسعار البيع التي تنشرها دور المزادات ومنصات المزادات الإلكترونية، مع التاريخ والطراز والسعر، والعدّاد إن نُشر.',
+  'We review reports and remove content that breaks these rules. Accounts that do it repeatedly or seriously are closed.': 'نراجع البلاغات ونحذف المحتوى المخالف لهذه القواعد. تُغلق الحسابات التي تكرر المخالفة أو ترتكب مخالفة جسيمة.',
+  'We work to keep Garage 197 available and your data safe, but the service is provided as it is, and features may change.': 'نعمل على إبقاء Garage 197 متاحًا وبياناتك آمنة، لكن الخدمة تُقدَّم كما هي وقد تتغير المزايا.',
+  'What a value cannot tell you': 'ما لا تخبرك به القيمة',
+  'What it is not': 'ما ليس عليه',
+  'What the evidence label means': 'معنى مؤشر الأدلة',
+  'What we do': 'ما نفعله',
+  'What we keep': 'ما نحتفظ به',
+  'What you add stays yours. You allow us to store it and to show it to the people you choose to share it with. Only add content you have the right to share.': 'ما تضيفه يبقى ملكك. تسمح لنا بحفظه وعرضه لمن تختار مشاركته معهم. أضف فقط المحتوى الذي يحق لك مشاركته.',
+  'What you can do': 'ما يمكنك فعله',
+  'What you do in the community: friends, communities, posts, events and reports.': 'نشاطك في المجتمع: الأصدقاء والمجتمعات والمنشورات والفعاليات والبلاغات.',
+  'Where it is stored': 'أين تُحفظ',
+  'Where the sales come from': 'مصدر المبيعات',
+  'You can change or remove your cars, records, photos and profile at any time. To have your account and everything in it deleted, send us a message from the Contact page and we will do it.': 'يمكنك تعديل أو حذف سياراتك وسجلاتك وصورك وملفك الشخصي في أي وقت. لحذف حسابك وكل ما فيه، أرسل لنا رسالة من صفحة تواصل معنا وسننفذ ذلك.',
+  'You need an account, and you are responsible for keeping your password safe and for what is done with your account.': 'تحتاج إلى حساب، وأنت مسؤول عن حفظ كلمة المرور وعمّا يُفعل بحسابك.',
+  'Your cars, logbooks, documents, prices paid and chassis numbers are private to you.': 'سياراتك وسجلاتها ومستنداتها والأسعار المدفوعة وأرقام الشاصي خاصة بك وحدك.',
+  'Your choices': 'خياراتك',
+  'Your content': 'محتواك',
+  'Your email address and a protected form of your password, to sign you in.': 'بريدك الإلكتروني وصيغة محمية من كلمة المرور، لتسجيل دخولك.',
+  'Your garage: cars, photos, logbook records, documents and reminders.': 'كراجك: السيارات والصور وسجلات الصيانة والمستندات والتذكيرات.',
+  'Your message': 'رسالتك',
+  'Your name': 'اسمك',
+  'Your name and photo are shown to friends and beside your posts. Your email is shown only to friends.': 'يظهر اسمك وصورتك للأصدقاء وبجانب منشوراتك. يظهر بريدك للأصدقاء فقط.',
+  'Your name and photo are shown to friends and in communities. Your email is only shown to friends.': 'يظهر اسمك وصورتك للأصدقاء وفي المجتمعات. يظهر بريدك للأصدقاء فقط.',
+  'Your name, photo, social links, sharing and sign-out are on': 'اسمك وصورتك وروابط التواصل والمشاركة وتسجيل الخروج موجودة في',
+  'Your profile': 'ملفك الشخصي',
+  'Your profile: name, city, photo and social links, if you add them.': 'ملفك الشخصي: الاسم والمدينة والصورة وروابط التواصل، إن أضفتها.',
+  'and': 'و',
+  'community guidelines': 'إرشادات المجتمع',
+  'e.g. Abdulhadi': 'مثال: عبدالهادي',
+  'e.g. Doha': 'مثال: الدوحة',
+  'e.g. Garage 197': 'مثال: Garage 197',
+  'your profile': 'ملفك الشخصي',
+  '{n} sales, newest {d}.': '{n} مبيعات، أحدثها {d}.'
 };
 /* ===== Screens. Every visible string goes through t() so it can be shown in Arabic (see i18n.js). ===== */
 const CLOUD = window.g197cloud;
@@ -1030,6 +1156,12 @@ function estimate(car) {
   if (m.enoughComps) return { gbp: m.compMedian, low: m.compLow, high: m.compHigh, basis: 'similar', n: m.comps.length, model };
   if (m.n12 >= 3) return { gbp: m.median12, low: m.low12, high: m.high12, basis: 'year', n: m.n12, model };
   return { gbp: m.medianAll, basis: 'all', n: m.total, model };
+}
+function evidence(model, basis, n) {
+  const newest = S.sales ? S.sales.reduce((d, r) => r.model === model && r.date > d ? r.date : d, '') : '';
+  const conf = basis === 'similar' && n >= 8 ? 'strong' : basis === 'similar' || (basis === 'year' && n >= 6) ? 'fair' : 'thin';
+  return el('p', { class: 'evidence small' }, el('span', { class: 'conf c-' + conf, text: t({ strong: 'Strong evidence', fair: 'Fair evidence', thin: 'Thin evidence' }[conf]) }),
+    el('span', { class: 'muted', text: t('{n} sales, newest {d}.', { n, d: newest ? fmtDate(newest) : '—' }) }), el('a', { href: '#/values', text: t('How we value cars') }));
 }
 function remStatus(car, r) {
   const now = today(), soon = new Date(Date.now() + 30 * 864e5).toISOString().slice(0, 10), odo = +car.miles || 0;
@@ -1130,11 +1262,12 @@ function viewLogin() {
       el('div', { class: 'row' }, el('button', { type: 'submit', class: 'btn primary', id: 'b-signin', text: t('Sign in') }), el('button', { type: 'button', class: 'btn', id: 'b-signup', text: t('Create account'), onclick: () => go(true) })),
       el('button', { type: 'button', class: 'linkbtn small', id: 'b-forgot', text: t('Forgot your password?'), onclick: () => { S.mode = 'forgot'; render(); } }));
   }
-  const art = el('div', { class: 'art' }, brand(), el('div', {}), el('p', { text: t('Track what classic Porsches sell for, keep your cars and their history in one place, and see how your garage sits against the market.') }));
+  const art = el('div', { class: 'art' }, brand(), el('div', {}), el('p', { text: t('Track what classic cars sell for, keep your cars and their history in one place, and see how your garage sits against the market.') }));
   art.children[1].innerHTML = CAR_SVG.replace('<svg ', '<svg class="car" ');
   return el('div', { class: 'signin' }, art,
     el('div', { class: 'form' }, el('div', { class: 'row between' }, el('h2', { text: t(S.mode === 'newpass' ? 'Choose a new password' : S.mode === 'forgot' ? 'Reset your password' : 'Sign in'), style: 'font-size:1.4rem' }), langToggle()), body, status,
-      S.mode === 'signin' ? el('p', { class: 'muted small', text: t('New here? Enter your email, choose a password of at least 8 characters and press Create account.') }) : null));
+      S.mode === 'signin' ? el('p', { class: 'muted small', text: t('New here? Enter your email, choose a password of at least 8 characters and press Create account.') }) : null,
+      S.mode === 'signin' ? el('p', { class: 'muted small' }, el('span', { text: t('By creating an account you agree to the') + ' ' }), el('a', { href: '#/terms', text: t('Terms') }), el('span', { text: ' ' + t('and') + ' ' }), el('a', { href: '#/privacy', text: t('Privacy') }), el('span', { text: '.' })) : null, footer()));
 }
 
 /* ----- market read-out ----- */
@@ -1200,7 +1333,7 @@ function marketView(model, car) {
   const out = el('div', { class: 'col' }), q = [car && car.year, (car && car.name) || model].filter(Boolean).join(' ') || 'classic car';
   if (S.salesError) return el('p', { class: 'empty', text: t('The sold results didn’t load. Reload the page to try again.') });
   if (!S.sales) return el('p', { class: 'empty', text: t('Loading sold results…') });
-  if (!model) { out.append(el('p', { class: 'empty', text: t('We couldn’t match this car to a model in the catalogue, which covers Porsche models built before 2003. Edit the car and pick the model under “More details”. Meanwhile these searches open public results:') }), searchLinks(q)); return out; }
+  if (!model) { out.append(el('p', { class: 'empty', text: t('We couldn’t match this car to a model in the catalogue, which covers classic Porsche and Mercedes-Benz SL models. Edit the car and pick the model under “More details”. Meanwhile these searches open public results:') }), searchLinks(q)); return out; }
   const miles = car ? carMiles(car) : null, cat = catOf(model), m = marketFor(S.sales, model, miles, today()), name = shortModel(model);
   if (!m.total) { out.append(el('p', { class: 'empty', text: t('No sold results are on file yet for the {model}. It is in the catalogue, so sales will show here as soon as they are added. Meanwhile these searches open public results:', { model: name }) }), searchLinks(q)); return out; }
   const head = el('div', { class: 'col', style: 'gap:6px' });
@@ -1211,6 +1344,7 @@ function marketView(model, car) {
     head.append(el('span', { class: 'label', text: t(few ? 'Typical price, all sales on file' : 'Typical price, last 12 months') }), el('div', { class: 'big', text: money(few ? m.medianAll : m.median12) }),
       el('p', { class: 'muted small', text: few ? t('From the {n} sales on file since {d}. Only {k} sold in the last 12 months, so this is a longer-run figure.', { n: m.total, d: fmtDate(m.firstDate), k: m.n12 }) : !car ? t('From {n} sales at any mileage.', { n: m.n12 }) : miles && !m.points.length ? t('From {n} sales at any mileage. The sales on file for this model don’t record mileage yet, so we can’t narrow it to cars like yours.', { n: m.n12 }) : miles ? t('From {n} sales at any mileage. Too few recent sales have mileage close to this car’s to narrow it further.', { n: m.n12 }) : t('From {n} sales at any mileage. Add the odometer reading to narrow this to cars like yours.', { n: m.n12 }) }));
   }
+  head.append(evidence(model, m.enoughComps ? 'similar' : m.n12 >= 3 ? 'year' : 'all', m.enoughComps ? m.comps.length : m.n12 >= 3 ? m.n12 : m.total));
   out.append(head);
   const stats = el('div', { class: 'stats' },
     stat(t('This year'), money(m.medianYtd), t('{n} sales', { n: m.nYtd })),
@@ -1246,13 +1380,13 @@ function viewHome() {
   const out = el('div', { class: 'col' });
   if (!CLOUD.loaded) { out.append(skel('11rem'), skel('6rem')); return out; }
   if (CLOUD.setupError) out.append(panel(null, null, el('p', { style: 'color:var(--bad)', text: t('Your garage could not be loaded from the cloud. Check your connection and reload the page.') })));
-  if (!S.cars.length) { const b = el('div', { class: 'blank' }); b.innerHTML = CAR_SVG; b.append(el('h2', { text: t('Welcome to Garage 197'), style: 'font-size:1.3rem' }), el('p', { style: 'max-width:46ch', text: t('Start by adding your first car. It takes a minute: give its name, year and mileage, and you will see what cars like it sell for and can start its logbook.') }), el('a', { class: 'btn primary', href: '#/car/new' }, ico('plus', t('Add your first car')))); out.append(b); }
+  if (!S.cars.length) out.append(welcome());
   else {
     const g = garageValue(), first = valueHistory(g.total), stats = [];
     if (g.paidN) { const d = g.nowPaid - g.paid; stats.push(stat(t('Against what you paid'), (d >= 0 ? '+' : '−') + money(Math.abs(d)), t('Cars with a purchase price: {n}', { n: g.paidN }), d >= 0 ? 'up' : 'down')); }
     if (first && first.v) { const d = g.total - first.v; stats.push(stat(t('Since {d}', { d: fmtDate(first.d) }), (d >= 0 ? '+' : '−') + money(Math.abs(d)), t('Change in the estimate since you first opened the app'), d >= 0 ? 'up' : 'down')); }
     stats.push(stat(t('Cars'), String(S.cars.length), t('{a} of {b} cars valued from recent sales.', { a: g.valued, b: S.cars.length })));
-    out.append(panel(null, null, el('span', { class: 'label', text: t('Your garage is worth about') }), el('div', { class: 'big', style: 'font-size:clamp(2.2rem,8vw,3.4rem)', text: g.valued ? money(g.total) : '—' }), el('div', { class: 'stats' }, stats), el('p', { class: 'muted small', text: t('An estimate from public sales, not a formal valuation.') }), el('div', { class: 'row' }, el('a', { class: 'btn primary', href: '#/garage' }, ico('garage', t('Open my garage'))))));
+    out.append(panel(null, null, el('span', { class: 'label', text: t('Your garage is worth about') }), el('div', { class: 'big', style: 'font-size:clamp(2.2rem,8vw,3.4rem)', text: g.valued ? money(g.total) : '—' }), el('div', { class: 'stats' }, stats), el('p', { class: 'muted small' }, el('span', { text: t('An estimate from public sales, not a formal valuation.') + ' ' }), el('a', { href: '#/values', text: t('How we value cars') })), el('div', { class: 'row' }, el('a', { class: 'btn primary', href: '#/garage' }, ico('garage', t('Open my garage'))))));
     const due = S.cars.flatMap(dueOf);
     if (due.length) out.append(panel(t('Coming up'), null, el('ul', { class: 'due-list' }, due.map((x) => el('li', {}, el('span', {}, el('a', { href: '#/car/' + x.car.id + '/logbook', text: x.r.title }), el('span', { class: 'muted', text: ' · ' + (x.car.name || '') })), el('span', { class: 'tag s-' + x.st, text: remText(x.car, x.r, x.st) }))))));
   }
@@ -1260,7 +1394,7 @@ function viewHome() {
   out.append(searchPanel());
   if (S.sales) {
     const latest = [...S.sales].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 4);
-    out.append(panel(t('Latest sales'), null, table([[t('Sold')], [t('Model')], [t('Price'), 'num']], latest.map((r) => el('tr', {}, el('td', { text: fmtDate(r.date) }), el('td', {}, mlink(r.model)), el('td', { class: 'num', text: money(r.gbp) })))), el('div', { class: 'row' }, el('a', { class: 'btn', href: '#/market' }, ico('market', t('See the whole market'))))));
+    out.append(panel(t('Latest sales'), t('Market data updated {d}.', { d: fmtDate(latest[0].date) }), table([[t('Sold')], [t('Model')], [t('Price'), 'num']], latest.map((r) => el('tr', {}, el('td', { text: fmtDate(r.date) }), el('td', {}, mlink(r.model)), el('td', { class: 'num', text: money(r.gbp) })))), el('div', { class: 'row' }, el('a', { class: 'btn', href: '#/market' }, ico('market', t('See the whole market'))))));
   }
   return out;
 }
@@ -1278,7 +1412,7 @@ function viewMarket() {
   const last12 = S.sales.filter((r) => r.date >= y1), byModel = {};
   for (const r of last12) (byModel[r.model] = byModel[r.model] || []).push(r.gbp);
   const top = last12.reduce((a, r) => (!a || r.gbp > a.gbp ? r : a), null), latest = [...S.sales].sort((a, b) => b.date.localeCompare(a.date));
-  out.append(panel(t('Market at a glance'), t('Classic Porsche models built before 2003, from public auction results.'), el('div', { class: 'stats' },
+  out.append(panel(t('Market at a glance'), t('Classic models in the catalogue, from public auction results.'), el('div', { class: 'stats' },
     stat(t('Sold results on file'), num(S.sales.length), t('{n} models covered', { n: Object.keys(S.counts).length })),
     stat(t('Sold in the last 90 days'), num(S.sales.filter((r) => r.date >= d90).length), t('Latest on {d}', { d: fmtDate(latest[0].date) })),
     stat(t('Top sale, last 12 months'), top ? money(top.gbp) : '—', top ? shortModel(top.model) + ', ' + fmtDate(top.date) : ''))));
@@ -1434,6 +1568,7 @@ function viewCar(car, sub) {
     const value = el('div', { class: 'col', style: 'gap:8px' }, el('span', { class: 'label', text: t('Worth about') }), el('div', { class: 'big', text: e ? money(e.gbp) : '—' }));
     if (e && e.low != null && e.high > e.low) value.append(el('div', { class: 'range' }, el('div', { class: 'track' }, el('span', { class: 'dot', style: 'left:' + Math.max(0, Math.min(100, (e.gbp - e.low) / (e.high - e.low) * 100)) + '%' })), el('div', { class: 'ends' }, el('span', { text: money(e.low) }), el('span', { text: money(e.high) })), el('span', { class: 'muted small', text: t('Where the typical price sits in the range these cars sold for.') })));
     value.append(el('p', { class: 'muted small', text: basis }));
+    if (e) value.append(evidence(e.model, e.basis, e.n));
     if (e && +car.paid && FX[car.paidCur || 'USD']) { const d = e.gbp - +car.paid * FX[car.paidCur || 'USD']; value.append(el('p', { class: 'small ' + (d >= 0 ? 'up' : 'down'), style: 'font-weight:600', text: t('{d} against the {p} you paid', { d: (d >= 0 ? '+' : '−') + money(Math.abs(d)), p: cash(+car.paid, car.paidCur) }) })); }
     const tr = e ? trendOf(e.model) : null; if (tr != null) value.append(el('p', { class: 'trend ' + (tr >= 0 ? 'up' : 'down'), text: (tr >= 0 ? '▲ ' : '▼ ') + t('{p} against its long-run price', { p: pct(tr) }) }));
     const due = dueOf(car);
@@ -1552,9 +1687,10 @@ function viewSettings() {
       field(t('Show prices in'), pick('cur', 'g197-cur', [['USD', t('US dollars')], ['GBP', t('Pounds')], ['EUR', t('Euros')], ['QAR', t('Qatari riyals')], ['AED', t('UAE dirhams')], ['SAR', t('Saudi riyals')]]), t('Conversions use fixed approximate exchange rates.')),
       field(t('Show distances in'), pick('unit', 'g197-unit', [['mi', t('Miles')], ['km', t('Kilometres')]])),
       field(t('Appearance'), pick('theme', 'g197-theme', [['light', t('Light')], ['dark', t('Dark')], ['auto', t('Match my device')]]))),
-    linksPanel(),
-    panel(t('Account'), null, el('p', { class: 'small', text: t('Signed in as {email}. Your garage is saved to your account and follows you to any device.', { email: CLOUD.user.email || '' }) }),
-      el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn', id: 'b-signout', text: t('Sign out'), onclick: async () => { await CLOUD.signOut(); location.hash = '#/home'; } }))));
+    panel(t('Account'), null, el('p', { class: 'small' }, el('span', { text: t('Your name, photo, social links, sharing and sign-out are on') + ' ' }), el('a', { href: '#/profile', text: t('your profile') }), el('span', { text: '.' }))));
+  const accountPanel = () => panel(t('Account'), null, el('p', { class: 'small', text: t('Signed in as {email}. Your garage is saved to your account and follows you to any device.', { email: CLOUD.user.email || '' }) }),
+      el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn', id: 'b-signout', text: t('Sign out'), onclick: async () => { await CLOUD.signOut(); location.hash = '#/home'; } })));
+  S.accountPanel = accountPanel;
   const n = CLOUD.localCount();
   if (n) out.append(panel(t('Cars saved on this device'), null, el('p', { class: 'small', text: t('Cars saved on this device before accounts existed: {n}.', { n }) }), el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn primary', id: 'b-import', text: t('Add them to my account'), onclick: async () => { try { await CLOUD.importLocal(); toast(t('Cars added to your account')); } catch (e) { toast(t('Couldn’t save. Try again.')); } render(); } }))));
   return out;
@@ -1562,7 +1698,7 @@ function viewSettings() {
 
 /* ----- friends ----- */
 const incoming = () => CLOUD.friends.filter((f) => f.status === 'pending' && f.incoming);
-const friendName = (f) => f.garage || f.email || t('A friend');
+const friendName = (f) => f.name || f.garage || f.email || t('A friend');
 const SOCIALS = [['instagram', 'Instagram', 'https://www.instagram.com/'], ['youtube', 'YouTube', 'https://www.youtube.com/@'], ['tiktok', 'TikTok', 'https://www.tiktok.com/@'], ['x', 'X', 'https://x.com/'], ['facebook', 'Facebook', 'https://www.facebook.com/'], ['website', 'Website', '']];
 // Turns a handle or address into a safe https link, or null when it can't be one.
 function socialUrl(key, v) {
@@ -1616,16 +1752,12 @@ function viewFriends() {
   if (req.length) out.append(panel(t('Friend requests'), null, el('ul', { class: 'due-list' }, req.map((f) => el('li', {}, el('span', {}, el('b', { text: f.email }), f.garage ? el('span', { class: 'muted', text: ' · ' + f.garage }) : null),
     el('span', { class: 'row' }, el('button', { type: 'button', class: 'btn sm primary', text: t('Accept'), onclick: act(() => CLOUD.acceptFriend(f.id), t('You are now friends.')) }), el('button', { type: 'button', class: 'btn sm', text: t('Decline'), onclick: act(() => CLOUD.removeFriend(f.id)) })))))));
   out.append(panel(t('Your friends'), null, friends.length ? el('ul', { class: 'due-list' }, friends.map((f) => el('li', {},
-    el('span', { class: 'col', style: 'gap:4px;min-width:0' }, el('b', { text: friendName(f), style: 'overflow-wrap:anywhere' }), f.garage ? el('span', { class: 'muted small', text: f.email }) : null, socialLinks(f.links)),
+    el('span', { class: 'row', style: 'gap:12px;min-width:0;flex-wrap:nowrap;align-items:flex-start' }, avatarEl(f.avatar, friendName(f)), el('span', { class: 'col', style: 'gap:4px;min-width:0' }, el('b', { text: friendName(f), style: 'overflow-wrap:anywhere' }), el('span', { class: 'muted small', style: 'overflow-wrap:anywhere', text: [f.garage && f.name ? f.garage : '', f.city, f.email].filter(Boolean).join(' · ') }), socialLinks(f.links))),
     el('span', { class: 'row' }, f.shared ? el('a', { class: 'btn sm primary', href: '#/friend/' + f.other, text: t('Open garage') }) : el('span', { class: 'muted small', text: t('Garage not shared') }),
       el('button', { type: 'button', class: 'btn sm', text: t('Remove'), onclick: () => { if (confirm(t('Remove {n} from your friends?', { n: friendName(f) }))) act(() => CLOUD.removeFriend(f.id), t('Friend removed'))(); } }), CLOUD.extras ? el('button', { type: 'button', class: 'linkbtn small', text: t('Block'), onclick: () => blockAsk(f.other, friendName(f)) }) : null))))
     : el('p', { class: 'empty', text: t('No friends yet. Send a request above to get started.') })));
   if (sent.length) out.append(panel(t('Requests you sent'), null, el('ul', { class: 'due-list' }, sent.map((f) => el('li', {}, el('span', { text: f.email }), el('span', { class: 'row' }, el('span', { class: 'muted small', text: t('Waiting for a reply') }), el('button', { type: 'button', class: 'btn sm', text: t('Cancel'), onclick: act(() => CLOUD.removeFriend(f.id)) })))))));
-  if (CLOUD.blocks.length) out.append(panel(t('Blocked people'), t('You and a blocked person do not see each other’s posts or events, and cannot send each other friend requests.'), el('ul', { class: 'due-list' }, CLOUD.blocks.map((b) => el('li', {}, el('span', { text: memberName(b.name) }), el('button', { type: 'button', class: 'btn sm', text: t('Unblock'), onclick: act(() => CLOUD.unblock(b.blocked), t('Unblocked')) }))))));
-  const box = el('input', { type: 'checkbox', id: 'c-share' }); box.checked = !!CLOUD.shared;
-  box.addEventListener('change', async () => { try { await CLOUD.saveProfile({ shared: box.checked }); toast(box.checked ? t('Your friends can now see your garage') : t('Your garage is private again')); } catch (e) { box.checked = !box.checked; toast(t('Couldn’t save. Try again.')); } });
-  out.append(panel(t('Sharing'), null, el('label', { class: 'check', for: 'c-share' }, box, el('span', { text: t('Show my garage to my friends') })),
-    el('p', { class: 'muted small', text: t('Friends see each car’s name, year, model, colour, mileage and photos, and your newest cars appear on their Home page. They never see what you paid, values, chassis numbers, registration, logbooks or documents.') })));
+  out.append(el('p', { class: 'muted small' }, el('span', { text: t('Garage sharing and blocked people are on') + ' ' }), el('a', { href: '#/profile', text: t('your profile') }), el('span', { text: '.' })));
   return out;
 }
 function viewFriend(uid, carId) {
@@ -1698,8 +1830,9 @@ function viewCommunity(id) {
   const body = el('textarea', { id: 'p-body', rows: 3, maxlength: 2000, placeholder: t('Share news, a question or a photo link with the community') }), status = el('span', { class: 'status' });
   const got = (S.posts || {})[id]; if (!got) loadPosts(id);
   out.append(panel(t('Posts'), null,
-    el('form', { class: 'col', style: 'gap:8px', onsubmit: async (ev) => { ev.preventDefault(); const v = body.value.trim(), f = CLOUD.extras && pfile.files[0]; if (!v && !f) { status.textContent = t('Write something or add a photo.'); return; } status.textContent = t('Sending…'); try { let ph = null; if (f) ph = (await CLOUD.upload('community-' + id, await shrink(f))).path; await CLOUD.post(id, v, ph); body.value = ''; status.textContent = ''; body.blur(); await loadPosts(id); } catch (e) { status.textContent = t('Couldn’t save. Try again.'); } } }, body, el('div', { class: 'row' }, el('button', { type: 'submit', class: 'btn primary', id: 'b-post', text: t('Post') }), CLOUD.extras ? el('button', { type: 'button', class: 'btn', onclick: () => pfile.click() }, ico('camera', t('Add a photo'))) : null, pfile, pname, status)),
-    !got || got.loading ? skel('5rem') : got.rows.length ? el('ul', { class: 'posts' }, got.rows.map((p) => el('li', {}, el('div', { class: 'row between' }, el('span', {}, el('b', { text: p.mine ? t('You') : memberName(p.author) }), el('span', { class: 'muted small', text: ' · ' + fmtWhen(p.created_at) })),
+    el('form', { class: 'col', style: 'gap:8px', onsubmit: async (ev) => { ev.preventDefault(); const v = body.value.trim(), f = CLOUD.extras && pfile.files[0]; if (!v && !f) { status.textContent = t('Write something or add a photo.'); return; } if (!ls.get('g197-rules-' + CLOUD.user.id, '')) { if (!confirm(t('Before your first post: be respectful, stay on cars, no abuse, spam or other people’s private details. Posts that break the community guidelines are removed and accounts can be closed. Do you agree?'))) return; ls.set('g197-rules-' + CLOUD.user.id, '1'); } status.textContent = t('Sending…'); try { let ph = null; if (f) ph = (await CLOUD.upload('community-' + id, await shrink(f))).path; await CLOUD.post(id, v, ph); body.value = ''; status.textContent = ''; body.blur(); await loadPosts(id); } catch (e) { status.textContent = t('Couldn’t save. Try again.'); } } }, body, el('div', { class: 'row' }, el('button', { type: 'submit', class: 'btn primary', id: 'b-post', text: t('Post') }), CLOUD.extras ? el('button', { type: 'button', class: 'btn', onclick: () => pfile.click() }, ico('camera', t('Add a photo'))) : null, pfile, pname, status)),
+    el('p', { class: 'muted small' }, el('span', { text: t('Posts follow the') + ' ' }), el('a', { href: '#/guidelines', text: t('community guidelines') }), el('span', { text: '.' })),
+    !got || got.loading ? skel('5rem') : got.rows.length ? el('ul', { class: 'posts' }, got.rows.map((p) => el('li', {}, el('div', { class: 'row between' }, el('span', { class: 'row', style: 'gap:8px' }, avatarEl(p.avatar, memberName(p.author), 'sm'), el('b', { text: p.mine ? t('You') : memberName(p.author) }), el('span', { class: 'muted small', text: fmtWhen(p.created_at) })),
       el('span', { class: 'row', style: 'gap:12px' }, p.mine || c.mine ? el('button', { type: 'button', class: 'linkbtn small', text: t('Remove'), onclick: async () => { try { await CLOUD.deletePost(p.id); if (p.mine && p.photo) CLOUD.removeFiles([p.photo]); await loadPosts(id); } catch (e) { toast(t('Couldn’t save. Try again.')); } } }) : null,
         !p.mine && CLOUD.extras ? el('button', { type: 'button', class: 'linkbtn small', text: t('Report'), onclick: () => reportAsk('post', p.id, p.author + ': ' + p.body + (p.photo ? ' [' + p.photo + ']' : '')) }) : null,
         !p.mine && CLOUD.extras && p.author_id ? el('button', { type: 'button', class: 'linkbtn small', text: t('Block'), onclick: () => blockAsk(p.author_id, memberName(p.author)) }) : null)), p.body ? el('p', { text: p.body }) : null, p.photo ? postPhoto(p.photo) : null)))
@@ -1765,15 +1898,112 @@ function viewNotifications() {
   return out;
 }
 
+/* ----- profile, onboarding and information pages ----- */
+function avatarEl(path, name, size) {
+  const a = el('span', { class: 'avatar' + (size ? ' ' + size : ''), 'aria-hidden': 'true', text: ((name || '?').trim()[0] || '?').toUpperCase() });
+  if (path) CLOUD.fileUrl(path).then((url) => { const im = el('img', { src: url, alt: '' }); im.addEventListener('load', () => a.replaceChildren(im)); }).catch(() => {});
+  return a;
+}
+function footer() {
+  return el('footer', { class: 'foot' }, el('nav', { 'aria-label': t('About this app') }, [['about', t('About')], ['values', t('How we value cars')], ['guidelines', t('Community guidelines')], ['privacy', t('Privacy')], ['terms', t('Terms')], ['contact', t('Contact')]].map((x) => el('a', { href: '#/' + x[0], text: x[1] }))),
+    el('span', { class: 'muted small', text: '© 2026 Garage 197' }));
+}
+function welcome() {
+  const needName = CLOUD.profiles && !CLOUD.profile.name, needGarage = !CLOUD.garageName;
+  const b = el('div', { class: 'blank' }); b.innerHTML = CAR_SVG;
+  b.append(el('h2', { text: t('Welcome to Garage 197'), style: 'font-size:1.3rem' }));
+  const step = (n, done, label) => el('li', { class: done ? 'done' : '' }, el('span', { class: 'n', text: done ? '✓' : String(n) }), el('span', { text: label }));
+  b.append(el('ol', { class: 'steps' }, step(1, !needName, t('Tell us your name')), step(2, !needGarage, t('Name your garage')), step(3, false, t('Add your first car and see what it is worth'))));
+  if (needName || needGarage) {
+    const name = el('input', { type: 'text', id: 'w-name', maxlength: 40, autocomplete: 'name', placeholder: t('e.g. Abdulhadi') }), garage = el('input', { type: 'text', id: 'w-garage', maxlength: 40, placeholder: t('e.g. Garage 197') }), status = el('span', { class: 'status' });
+    b.append(el('form', { class: 'col', style: 'gap:12px;width:min(100%,24rem);text-align:start', onsubmit: async (ev) => {
+      ev.preventDefault(); const patch = {};
+      if (needName && name.value.trim()) patch.display_name = name.value.trim().slice(0, 40);
+      try { if (Object.keys(patch).length) await CLOUD.saveProfile(patch); if (needGarage && garage.value.trim()) await CLOUD.saveGarageName(garage.value.trim().slice(0, 40)); document.activeElement && document.activeElement.blur(); nav('#/car/new'); } catch (e) { status.textContent = t('Couldn’t save. Try again.'); }
+    } }, needName ? field(t('Your name'), name, t('Shown to friends and in communities in place of your email.')) : null, needGarage ? field(t('Garage name'), garage) : null,
+      el('div', { class: 'row' }, el('button', { type: 'submit', class: 'btn primary', id: 'b-w-next' }, ico('plus', t('Continue to your first car'))), status)));
+  } else b.append(el('p', { style: 'max-width:46ch', text: t('Start by adding your first car. It takes a minute: give its name, year and mileage, and you will see what cars like it sell for and can start its logbook.') }), el('a', { class: 'btn primary', href: '#/car/new' }, ico('plus', t('Add your first car'))));
+  return b;
+}
+function viewProfile() {
+  const out = el('div', { class: 'col', style: 'max-width:40rem' }, el('h1', { text: t('Your profile') }));
+  if (!CLOUD.loaded) { out.append(skel('10rem')); return out; }
+  if (CLOUD.profiles) {
+    const name = el('input', { type: 'text', id: 'pr-name', maxlength: 40, autocomplete: 'name', value: CLOUD.profile.name }), city = el('input', { type: 'text', id: 'pr-city', maxlength: 60, value: CLOUD.profile.city, placeholder: t('e.g. Doha') }), status = el('span', { class: 'status' });
+    const file = el('input', { type: 'file', accept: 'image/*', id: 'pr-photo', style: 'display:none' });
+    file.addEventListener('change', async () => { const f = file.files[0]; if (!f) return; status.textContent = t('Uploading…'); try { const old = CLOUD.profile.avatar, up = await CLOUD.upload('profile', await shrink(f)); await CLOUD.saveProfile({ avatar: up.path }); if (old) CLOUD.removeFiles([old]); toast(t('Photo updated')); render(); } catch (e) { status.textContent = t('Couldn’t save: {m}', { m: (e && e.message) || '' }); } });
+    out.append(el('section', { class: 'panel' }, el('div', { class: 'row', style: 'gap:16px' }, avatarEl(CLOUD.profile.avatar, CLOUD.profile.name || CLOUD.user.email || '', 'lg'), el('div', { class: 'col', style: 'gap:6px' }, el('button', { type: 'button', class: 'btn', id: 'b-pr-photo', onclick: () => file.click() }, ico('camera', t(CLOUD.profile.avatar ? 'Change photo' : 'Add a photo'))), file, el('span', { class: 'muted small', text: t('Your name and photo are shown to friends and in communities. Your email is only shown to friends.') }))),
+      el('form', { class: 'col', style: 'gap:12px', onsubmit: async (ev) => { ev.preventDefault(); try { await CLOUD.saveProfile({ display_name: name.value.trim().slice(0, 40) || null, city: city.value.trim().slice(0, 60) || null }); document.activeElement && document.activeElement.blur(); toast(t('Saved')); render(); } catch (e) { status.textContent = t('Couldn’t save. Try again.'); } } },
+        field(t('Your name'), name), field(t('City'), city, t('Shown to friends only.')), el('div', { class: 'row' }, el('button', { type: 'submit', class: 'btn primary', id: 'b-pr-save', text: t('Save profile') }), status))));
+  }
+  const lp = linksPanel(); if (lp) out.append(lp);
+  if (CLOUD.social) {
+  if (CLOUD.blocks.length) out.append(panel(t('Blocked people'), t('You and a blocked person do not see each other’s posts or events, and cannot send each other friend requests.'), el('ul', { class: 'due-list' }, CLOUD.blocks.map((b) => el('li', {}, el('span', { text: memberName(b.name) }), el('button', { type: 'button', class: 'btn sm', text: t('Unblock'), onclick: doing(() => CLOUD.unblock(b.blocked), t('Unblocked')) }))))));
+    const box = el('input', { type: 'checkbox', id: 'c-share' }); box.checked = !!CLOUD.shared;
+  box.addEventListener('change', async () => { try { await CLOUD.saveProfile({ shared: box.checked }); toast(box.checked ? t('Your friends can now see your garage') : t('Your garage is private again')); } catch (e) { box.checked = !box.checked; toast(t('Couldn’t save. Try again.')); } });
+  out.append(panel(t('Sharing'), null, el('label', { class: 'check', for: 'c-share' }, box, el('span', { text: t('Show my garage to my friends') })),
+    el('p', { class: 'muted small', text: t('Friends see each car’s name, year, model, colour, mileage and photos, and your newest cars appear on their Home page. They never see what you paid, values, chassis numbers, registration, logbooks or documents.') })));
+  }
+  viewSettings(); out.append(S.accountPanel());
+  return out;
+}
+const PAGES = { about: 1, values: 1, guidelines: 1, privacy: 1, terms: 1, contact: 1 };
+function viewPage(name) {
+  const out = el('div', { class: 'col prose', style: 'max-width:44rem' }), h = (x) => el('h2', { text: t(x) }), p = (x, v) => el('p', { text: t(x, v) }), ul = (...xs) => el('ul', {}, xs.map((x) => el('li', { text: t(x) })));
+  const draft = () => el('p', { class: 'muted small', text: t('Last updated 12 November 2026.') });
+  if (name === 'about') out.append(el('h1', { text: t('About Garage 197') }),
+    p('Garage 197 is a home for classic car owners: a private record of your cars and their history, a view of what cars like yours are selling for, and a community of people who care about the same things.'),
+    p('It was started by a collector in Qatar who wanted one place for a car’s paperwork, its service history and its place in the market.'),
+    h('What you can do'), ul('Keep each car’s details, photos, service records, documents and reminders in one logbook.', 'See what similar cars have sold for, with the evidence shown.', 'Share your garage with friends, join communities and plan events.'),
+    h('What it is not'), p('Garage 197 does not sell cars, and its values are a guide, not a formal valuation.'));
+  else if (name === 'values') out.append(el('h1', { text: t('How we value cars') }),
+    p('Every value in Garage 197 comes from real, publicly reported sales. We never invent a number, and we always show how many sales stand behind it.'),
+    h('Where the sales come from'), p('We record sold prices published by auction houses and online auction platforms, with the date, the model, the price and, where it was published, the mileage.'),
+    h('How the estimate is worked out'), ul('If enough recent sales of your model had a similar mileage, we use the typical (middle) price of those sales.', 'Otherwise we use the typical price of all sales of your model in the last 12 months.', 'If there are too few recent sales, we use every sale on file and say so.'),
+    p('The range shows the lowest and highest of those sales. Prices are converted between currencies at fixed approximate rates.'),
+    h('What the evidence label means'), ul('Strong evidence: eight or more recent sales of cars with similar mileage.', 'Fair evidence: several recent sales, but fewer close matches.', 'Thin evidence: few sales on file. Treat the value as a rough guide.'),
+    h('What a value cannot tell you'), p('It does not know your car’s condition, history, specification or originality, and it reflects mainly American and European sales. It is not a formal valuation and should not be used for insurance, finance or a sale without professional advice.'));
+  else if (name === 'guidelines') out.append(el('h1', { text: t('Community guidelines') }),
+    p('Garage 197 communities are for people who enjoy classic cars. These rules keep them worth visiting.'),
+    ul('Be respectful. No insults, harassment, hate or threats.', 'Stay on cars, events and the hobby.', 'No spam, scams or misleading adverts.', 'Do not share other people’s private details, such as addresses, phone numbers or number plates they have not made public.', 'Only post photos you have the right to share.', 'Nothing illegal, violent or sexual.'),
+    h('If you see a problem'), p('Use Report on the post, event or community. Reports go to the Garage 197 team and the other person is not told. You can also block anyone, which hides you from each other.'),
+    h('What we do'), p('We review reports and remove content that breaks these rules. Accounts that do it repeatedly or seriously are closed.'));
+  else if (name === 'privacy') out.append(el('h1', { text: t('Privacy') }), draft(),
+    h('What we keep'), ul('Your email address and a protected form of your password, to sign you in.', 'Your profile: name, city, photo and social links, if you add them.', 'Your garage: cars, photos, logbook records, documents and reminders.', 'What you do in the community: friends, communities, posts, events and reports.'),
+    h('Who can see it'), ul('Your cars, logbooks, documents, prices paid and chassis numbers are private to you.', 'If you switch on sharing, friends see each car’s name, year, model, colour, mileage and photos, and nothing else.', 'Your name and photo are shown to friends and beside your posts. Your email is shown only to friends.', 'The Garage 197 team can access stored data to run the service and to review reports.'),
+    h('Where it is stored'), p('Data is stored with our hosting provider, Supabase, on servers in Australia. We do not sell your data and we do not show adverts.'),
+    h('Your choices'), p('You can change or remove your cars, records, photos and profile at any time. To have your account and everything in it deleted, send us a message from the Contact page and we will do it.'),
+    h('Changes'), p('If this page changes in a way that matters, we will say so in the app.'));
+  else if (name === 'terms') out.append(el('h1', { text: t('Terms of use') }), draft(),
+    h('Using Garage 197'), p('You need an account, and you are responsible for keeping your password safe and for what is done with your account.'),
+    h('Values are a guide'), p('Values and market information are estimates from public sales. They are not a formal valuation or financial advice, and we are not liable for decisions made using them.'),
+    h('Your content'), p('What you add stays yours. You allow us to store it and to show it to the people you choose to share it with. Only add content you have the right to share.'),
+    h('Behaviour'), p('There is no tolerance for abusive, hateful, illegal or misleading content. Follow the community guidelines. We may remove content and close accounts that break them.'),
+    h('The service'), p('We work to keep Garage 197 available and your data safe, but the service is provided as it is, and features may change.'),
+    h('Contact'), p('Questions about these terms can be sent from the Contact page.'));
+  else {
+    out.append(el('h1', { text: t('Contact') }), p('Questions, problems, ideas, or a request to delete your account: write to us here and the Garage 197 team will read it.'));
+    if (!CLOUD.user) out.append(p('Sign in first so we know who to reply to.'));
+    else {
+      const body = el('textarea', { id: 'ct-body', rows: 5, maxlength: 450, required: true, placeholder: t('Your message') }), status = el('span', { class: 'status', role: 'status' });
+      out.append(el('form', { class: 'col', style: 'gap:10px', onsubmit: async (ev) => { ev.preventDefault(); const v = body.value.trim(); if (!v) return; status.textContent = t('Sending…'); try { await CLOUD.report('contact', '-', v, CLOUD.user.email || ''); body.value = ''; body.blur(); status.textContent = t('Message sent. We will reply to {e}.', { e: CLOUD.user.email || '' }); } catch (e) { status.textContent = t('Couldn’t send your message. Try again later.'); } } }, body, el('div', { class: 'row' }, el('button', { type: 'submit', class: 'btn primary', id: 'b-ct', text: t('Send message') }), status)));
+    }
+  }
+  return out;
+}
+
 /* ----- frame ----- */
 function render() {
   const app = $('app'); document.documentElement.lang = S.lang; document.documentElement.dir = S.lang === 'ar' ? 'rtl' : 'ltr'; document.documentElement.dataset.theme = S.theme; S.redraw = null;
   const dark = S.theme === 'dark' || (S.theme === 'auto' && window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches), tc = document.querySelector('meta[name=theme-color]'); if (tc) tc.content = dark ? '#120d1c' : '#ffffff';
+  const r = route();
+  if (!CLOUD.user && PAGES[r.name]) { app.replaceChildren(el('header', { class: 'head' }, brand('#/home'), el('a', { class: 'btn sm', href: '#/home', text: t('Sign in') })), el('main', {}, viewPage(r.name)), footer()); return; }
   if (!CLOUD.user || S.mode === 'newpass') { app.replaceChildren(viewLogin()); return; }
-  const r = route(), top = r.name === 'home' ? 'home' : ['friends', 'friend', 'communities', 'community', 'events'].includes(r.name) ? 'friends' : r.name === 'market' || r.name === 'model' ? 'market' : r.name === 'settings' ? 'settings' : 'garage';
+  const top = r.name === 'home' ? 'home' : ['friends', 'friend', 'communities', 'community', 'events'].includes(r.name) ? 'friends' : r.name === 'market' || r.name === 'model' ? 'market' : r.name === 'settings' ? 'settings' : r.name === 'profile' || r.name === 'notifications' || PAGES[r.name] ? '' : 'garage';
   const tab = (id, href, label) => el('a', { class: 'tab', id: 't-' + id, href, 'aria-current': top === id ? 'page' : 'false' }, ico(id, label));
   const nUnread = CLOUD.extras ? CLOUD.unread() : 0, bell = CLOUD.extras ? el('a', { class: 'bell', id: 'a-bell', href: '#/notifications', 'aria-label': nUnread ? t('Notifications, {n} new', { n: nUnread }) : t('Notifications'), 'aria-current': r.name === 'notifications' ? 'page' : 'false' }, svgIcon(ICONS.bell), nUnread ? el('span', { class: 'count', text: nUnread > 9 ? '9+' : String(nUnread) }) : null) : null;
-  const head = el('header', { class: 'head' }, brand('#/home'), bell, el('nav', { class: 'tabs', 'aria-label': t('Sections') }, tab('home', '#/home', t('Home')), tab('garage', '#/garage', CLOUD.garageName || t('My garage')), tab('market', '#/market', t('Market')), tab('friends', '#/friends', t('Community') + (incoming().length ? ' (' + incoming().length + ')' : '')), tab('settings', '#/settings', t('Settings'))));
+  const me = CLOUD.profiles ? el('a', { class: 'mebtn', id: 'a-me', href: '#/profile', 'aria-label': t('Your profile') }, avatarEl(CLOUD.profile.avatar, CLOUD.profile.name || CLOUD.user.email || '', 'sm')) : null;
+  const head = el('header', { class: 'head' }, brand('#/home'), el('span', { class: 'headtools' }, bell, me), el('nav', { class: 'tabs', 'aria-label': t('Sections') }, tab('home', '#/home', t('Home')), tab('garage', '#/garage', CLOUD.garageName || t('My garage')), tab('market', '#/market', t('Market')), tab('friends', '#/friends', t('Community') + (incoming().length ? ' (' + incoming().length + ')' : '')), tab('settings', '#/settings', t('Settings'))));
   let main;
   if (r.name !== 'notifications') S.noteSeen = null;
   if (r.name === 'garage') main = viewGarage();
@@ -1784,12 +2014,14 @@ function render() {
   else if (r.name === 'community') main = viewCommunity(r.a);
   else if (r.name === 'events') main = viewEvents();
   else if (r.name === 'notifications') main = viewNotifications();
+  else if (r.name === 'profile') main = viewProfile();
+  else if (PAGES[r.name]) main = viewPage(r.name);
   else if (r.name === 'friend') main = viewFriend(r.a, r.b);
-  else if (r.name === 'model') { const m = catOf(r.a); main = el('div', { class: 'col' }, el('div', { class: 'col', style: 'gap:6px' }, el('a', { class: 'small', href: '#/market', text: '‹ ' + t('Market') }), el('h1', { text: m ? shortModel(m.name) : t('Model not found') }), m ? el('p', { class: 'muted', text: t('Built {a} to {b}', { a: m.from, b: m.to }) }) : null), m ? panel(null, null, marketView(m.name, null)) : null, m ? el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn primary', text: t('Add this car to my garage'), onclick: () => { S.prefill = m.name; nav('#/car/new'); } })) : null); }
+  else if (r.name === 'model') { const m = catOf(r.a); main = el('div', { class: 'col' }, el('div', { class: 'col', style: 'gap:6px' }, el('a', { class: 'small', href: '#/market', text: '‹ ' + t('Market') }), m ? banner({ name: shortModel(m.name) }, null) : el('h1', { text: t('Model not found') }), m ? el('p', { class: 'muted', text: t('Built {a} to {b}', { a: m.from, b: m.to }) }) : null), m ? panel(null, null, marketView(m.name, null)) : null, m ? el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn primary', text: t('Add this car to my garage'), onclick: () => { S.prefill = m.name; nav('#/car/new'); } })) : null); }
   else if (r.name === 'car' && r.a === 'new') main = carForm(null);
   else if (r.name === 'car') { const car = S.cars.find((c) => c.id === r.a); main = !car ? el('p', { class: 'empty', text: t(CLOUD.loaded ? 'That car is no longer in your garage.' : 'Loading your garage…') }) : r.b === 'edit' ? carForm(car) : viewCar(car, r.b || 'overview'); }
   else main = viewHome();
-  app.replaceChildren(head, el('main', {}, main));
+  app.replaceChildren(head, el('main', {}, main), footer());
 }
 let rz; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { if (S.redraw) S.redraw(); }, 150); });
 

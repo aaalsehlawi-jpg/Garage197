@@ -434,3 +434,62 @@ revoke all on function public.blocked_with(uuid), public.block_user(uuid), publi
 grant execute on function public.blocked_with(uuid), public.block_user(uuid), public.my_blocks(), public.member_can_view(text), public.my_notifications(), public.list_posts(uuid), public.list_events(), public.request_friend(text), public.accept_friend(uuid) to authenticated;
 
 notify pgrst, 'reload schema';
+
+-- ===== Profiles and contact messages. Safe to run more than once. =====
+
+alter table public.garages add column if not exists display_name text check (char_length(display_name) <= 40);
+alter table public.garages add column if not exists city text check (char_length(city) <= 60);
+alter table public.garages add column if not exists avatar text check (char_length(avatar) <= 300);
+
+alter table public.reports drop constraint if exists reports_kind_check;
+alter table public.reports add constraint reports_kind_check check (kind in ('post', 'event', 'community', 'user', 'contact'));
+
+-- The name other people see: the profile name, then the garage name, never the email address.
+create or replace function public.display_name(p_user uuid) returns text
+language sql stable security definer set search_path = public as $$
+  select coalesce(
+    nullif(trim((select g.display_name from garages g where g.user_id = p_user)), ''),
+    nullif(trim((select g.name from garages g where g.user_id = p_user)), ''),
+    'A member');
+$$;
+create or replace function public.avatar_of(p_user uuid) returns text
+language sql stable security definer set search_path = public as $$
+  select g.avatar from garages g where g.user_id = p_user;
+$$;
+
+-- Profile photos can be opened by any signed-in user, because they appear beside posts.
+create or replace function public.is_avatar(p_name text) returns boolean
+language sql stable security definer set search_path = public as $$
+  select exists (select 1 from garages g where g.avatar = p_name and g.user_id::text = split_part(p_name, '/', 1));
+$$;
+drop policy if exists "profile photos" on storage.objects;
+create policy "profile photos" on storage.objects for select to authenticated
+  using (bucket_id = 'car-files' and public.is_avatar(name));
+
+drop function if exists public.my_friends();
+create function public.my_friends()
+returns table (id uuid, other uuid, email text, garage text, shared boolean, status text, incoming boolean, links jsonb, name text, city text, avatar text)
+language sql stable security definer set search_path = public as $$
+  select f.id, o.id, o.email::text, g.name, coalesce(g.shared, false) and f.status = 'accepted', f.status, f.addressee = auth.uid(),
+    case when f.status = 'accepted' then coalesce(g.links, '{}'::jsonb) else '{}'::jsonb end,
+    nullif(trim(g.display_name), ''), case when f.status = 'accepted' then g.city end, g.avatar
+  from friendships f
+  join auth.users o on o.id = case when f.requester = auth.uid() then f.addressee else f.requester end
+  left join garages g on g.user_id = o.id
+  where auth.uid() in (f.requester, f.addressee)
+  order by f.created_at desc;
+$$;
+
+drop function if exists public.list_posts(uuid);
+create function public.list_posts(p_community uuid)
+returns table (id uuid, author text, author_id uuid, mine boolean, body text, photo text, created_at timestamptz, avatar text)
+language sql stable security definer set search_path = public as $$
+  select p.id, display_name(p.user_id), p.user_id, p.user_id = auth.uid(), p.body, p.photo, p.created_at, avatar_of(p.user_id)
+  from community_posts p where p.community_id = p_community and is_member(p_community) and not blocked_with(p.user_id)
+  order by p.created_at desc limit 100;
+$$;
+
+revoke all on function public.avatar_of(uuid), public.is_avatar(text), public.my_friends(), public.list_posts(uuid), public.display_name(uuid) from public, anon;
+grant execute on function public.avatar_of(uuid), public.is_avatar(text), public.my_friends(), public.list_posts(uuid), public.display_name(uuid) to authenticated;
+
+notify pgrst, 'reload schema';
