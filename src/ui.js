@@ -220,7 +220,7 @@ function marketView(model, car) {
   const out = el('div', { class: 'col' }), q = [car && car.year, (car && car.name) || model].filter(Boolean).join(' ') || 'classic car';
   if (S.salesError) return el('p', { class: 'empty', text: t('The sold results didn’t load. Reload the page to try again.') });
   if (!S.sales) return el('p', { class: 'empty', text: t('Loading sold results…') });
-  if (!model) { out.append(el('p', { class: 'empty', text: t('We couldn’t match this car to a model in the catalogue, which covers classic Porsche, Mercedes-Benz SL and Mercedes-AMG models. Edit the car and pick the model under “More details”. Meanwhile these searches open public results:') }), searchLinks(q)); return out; }
+  if (!model) { out.append(el('p', { class: 'empty', text: t('We couldn’t match this car to a model in the catalogue, which covers classic Porsche, Mercedes-Benz SL, Mercedes-AMG and Alfa Romeo models. Edit the car and pick the model under “More details”. Meanwhile these searches open public results:') }), searchLinks(q)); return out; }
   const miles = car ? carMiles(car) : null, cat = catOf(model), m = marketFor(S.sales, model, miles, today()), name = shortModel(model);
   if (!m.total) { out.append(el('p', { class: 'empty', text: t('No sold results are on file yet for the {model}. It is in the catalogue, so sales will show here as soon as they are added. Meanwhile these searches open public results:', { model: name }) }), searchLinks(q)); return out; }
   const head = el('div', { class: 'col', style: 'gap:6px' });
@@ -1033,8 +1033,8 @@ const HELP = {
   set(patch) { const h = { ...this.get(), ...patch }; ls.set(this.key(), JSON.stringify(h)); this.push(); return h; },
   mark(what) { const h = this.get(), did = h.did || {}; if (!did[what]) { did[what] = 1; this.set({ did }); } }
 };
-const NEWS_V = 1;
-const NEWS = ['Build a logbook from your documents: upload photos or PDFs of your paperwork and the app drafts the records for you.', 'Car projects: track a service, an upgrade or a restoration and get advice from friends.', 'Community on Home: see friends’ new cars, projects and upcoming events.', 'Mercedes-AMG models from 1995 to 2020 are now in the market data.'];
+const NEWS_V = 2;
+const NEWS = ['Build a logbook from your documents: upload photos or PDFs of your paperwork and the app drafts the records for you.', 'Car projects: track a service, an upgrade or a restoration and get advice from friends.', 'Community on Home: see friends’ new cars, projects and upcoming events.', 'Mercedes-AMG models from 1995 to 2020 are now in the market data.', 'Alfa Romeo models from the last five years of sales are now in the market data.'];
 function startSteps() {
   const c = S.cars[0], did = HELP.get().did || {}, base = c ? '#/car/' + c.id + '/' : '#/car/new';
   const steps = [
