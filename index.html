@@ -213,6 +213,8 @@
   .steps li { display: flex; gap: 10px; align-items: center; } .steps .n { width: 1.7rem; height: 1.7rem; flex: none; border-radius: 999px; border: 1.5px solid var(--accent); color: var(--accent); display: grid; place-items: center; font-weight: 700; font-size: .85rem; }
   .steps li.done { color: var(--muted); } .steps li.done .n { background: var(--accent); color: #fff; }
   .clamp { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
+  .aidraft { border: 1px solid var(--line); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 10px; background: var(--soft); }
+  .aidraft.off > :not(:first-child) { display: none; } .aidraft.off { opacity: .7; }
   .pcard { align-items: flex-start; padding: 12px; }
   .badge.k-maintenance { background: #e7f1fb; color: #1d5a96; } .badge.k-upgrade { background: #f9eeda; color: #8a5a08; } .badge.k-restoration { background: #e5f4e4; color: #2a6b2a; }
   .posts li.helpful { border-inline-start: 3px solid var(--ok); padding-inline-start: 10px; }
@@ -353,6 +355,9 @@
       api.socialLoaded = true; emitAuth();
     },
     notes: [], blocks: [], seenAt: '', extras: false,
+    // AI logbook (Edge Function logbook-ai)
+    aiDraft: async function (car, files) { return parse(await call('/functions/v1/logbook-ai', { method: 'POST', headers: JSONH, body: JSON.stringify({ car: { name: car.name || '', year: car.year || '' }, files: files.map(function (f) { return { path: f.path, name: f.name, type: f.type }; }) }) })); },
+    aiProbe: async function () { try { return await parse(await call('/functions/v1/logbook-ai', { method: 'POST', headers: JSONH, body: JSON.stringify({ probe: true }) })); } catch (e) { return null; } },
     // Car projects
     projects: [], projectsOn: false, activity: [], activityOn: false,
     createProject: async function (row) { var id = (crypto.randomUUID ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xxx-8xxx-xxxxxxxxxxxx'.replace(/x/g, function () { return (Math.random() * 16 | 0).toString(16); })); await ins('projects', Object.assign({ id: id, user_id: session.user.id }, row)); await api.loadSocial(); return id; },
@@ -1264,6 +1269,45 @@ const AR = {
   'SLS and AMG GT': 'SLS و AMG GT',
   'G-Class and SUV AMG': 'الفئة G وسيارات AMG الرياضية متعددة الاستخدامات',
   'Compact AMG': 'AMG المدمجة',
+  'AI reading of documents': 'قراءة المستندات بالذكاء الاصطناعي',
+  'Also fill in the car’s details: {d}': 'املأ أيضاً بيانات السيارة: {d}',
+  'Amount on the document: {a} {c}': 'المبلغ في المستند: {a} {c}',
+  'Build from my documents': 'أنشئ السجل من مستنداتي',
+  'Build the logbook from your documents': 'أنشئ السجل من مستنداتك',
+  'Check the draft': 'راجع المسودة',
+  'Choose at least one file.': 'اختر ملفاً واحداً على الأقل.',
+  'Choose photos or PDFs of invoices, inspection reports, registration papers, certificates and anything else you hold for this car, all at once. The app reads them and drafts one logbook record per document. You check the draft before anything is saved.': 'اختر صوراً أو ملفات PDF للفواتير وتقارير الفحص وأوراق التسجيل والشهادات وكل ما لديك عن هذه السيارة دفعة واحدة. يقرأها التطبيق ويعدّ مسودة سجل لكل مستند. تراجع المسودة قبل حفظ أي شيء.',
+  'Discard the draft': 'تجاهل المسودة',
+  'Discard the draft and remove the uploaded files?': 'تجاهل المسودة وحذف الملفات المرفوعة؟',
+  'Every record you keep needs a title and a date. Check “{t}”.': 'كل سجل تحتفظ به يحتاج إلى عنوان وتاريخ. راجع «{t}».',
+  'Hard to read': 'صعب القراءة',
+  'If you choose “Build from my documents”, the files you pick are sent to Anthropic, the maker of the Claude AI service, so they can be read and turned into draft logbook records. This happens only when you start it. Anthropic processes the files to provide that reading and does not use them to train its AI models.': 'إذا اخترت «أنشئ السجل من مستنداتي» تُرسل الملفات التي تختارها إلى Anthropic، الشركة المطوّرة لخدمة الذكاء الاصطناعي Claude، لقراءتها وتحويلها إلى مسودات سجلات. يحدث ذلك فقط عندما تبدأه أنت. تعالج Anthropic الملفات لتقديم هذه القراءة ولا تستخدمها لتدريب نماذجها.',
+  'Include this record': 'أضف هذا السجل',
+  'Keep this page open until it finishes.': 'أبقِ هذه الصفحة مفتوحة حتى ينتهي.',
+  'Mostly clear': 'واضح في معظمه',
+  'No records yet. Add the first one yourself, or choose “Build from my documents” to upload your paperwork and have the logbook drafted for you.': 'لا توجد سجلات بعد. أضف أول سجل بنفسك، أو اختر «أنشئ السجل من مستنداتي» لرفع أوراقك وإعداد مسودة السجل لك.',
+  'Not added': 'لم تُضف',
+  'Odometer on the document: {a} {u}': 'العداد في المستند: {a} {u}',
+  'Over 9 MB. Use a smaller scan.': 'أكبر من 9 ميغابايت. استخدم نسخة أصغر.',
+  'Please check: {m}': 'يرجى التحقق: {m}',
+  'Read clearly': 'قُرئ بوضوح',
+  'Read my documents': 'اقرأ مستنداتي',
+  'Reading documents {a} to {b} of {n}. This can take a minute…': 'جارٍ قراءة المستندات {a} إلى {b} من {n}. قد يستغرق ذلك دقيقة…',
+  'Reading your documents': 'جارٍ قراءة مستنداتك',
+  'Save {n} records to the logbook': 'احفظ {n} سجلات في السجل',
+  'Sign in again, then retry.': 'سجّل الدخول من جديد ثم أعد المحاولة.',
+  'Starting…': 'جارٍ البدء…',
+  'That is more than {n} files. Add them in smaller groups.': 'هذا أكثر من {n} ملفاً. أضفها على مجموعات أصغر.',
+  'The AI logbook is not switched on yet. You can still add records yourself.': 'لم يُفعَّل سجل الذكاء الاصطناعي بعد. ما زال بإمكانك إضافة السجلات بنفسك.',
+  'The AI service is busy. Wait a minute and try again.': 'خدمة الذكاء الاصطناعي مشغولة. انتظر دقيقة ثم حاول مجدداً.',
+  'The documents could not be read just now. Try again.': 'تعذّرت قراءة المستندات الآن. حاول مجدداً.',
+  'The records below were read before it stopped.': 'السجلات أدناه قُرئت قبل التوقف.',
+  'To read them, your files are sent to Anthropic’s Claude AI service. They stay private to your account and are not used to train AI.': 'لقراءتها تُرسل ملفاتك إلى خدمة الذكاء الاصطناعي Claude من Anthropic. تبقى خاصة بحسابك ولا تُستخدم لتدريب الذكاء الاصطناعي.',
+  'Untitled': 'بلا عنوان',
+  'Up to {n} files at a time. Clear, straight photos read best.': 'حتى {n} ملفاً في المرة. الصور الواضحة والمستقيمة تُقرأ أفضل.',
+  'You have reached this month’s limit for documents read by AI. It resets on the first of the month.': 'بلغت حد هذا الشهر للمستندات المقروءة بالذكاء الاصطناعي. يُعاد الحد في أول الشهر.',
+  '{n} records added to the logbook': 'أُضيف {n} سجلات إلى السجل',
+  '{n} records were drafted from your documents. Correct anything that was misread, untick anything you do not want, then save.': 'أُعدّت {n} مسودات سجلات من مستنداتك. صحّح ما قُرئ خطأً، وألغِ تحديد ما لا تريده، ثم احفظ.',
 };
 /* ===== Screens. Every visible string goes through t() so it can be shown in Arabic (see i18n.js). ===== */
 const CLOUD = window.g197cloud;
@@ -1753,10 +1797,11 @@ function logbookView(car) {
   } else remPanel.append(el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn', id: 'b-rem-new', text: t('Add a reminder'), onclick: () => { S.remOpen = true; render(); } })));
   out.append(remPanel);
   // records
-  const head = el('div', { class: 'row between' }, el('h2', { text: t('History') }), el('div', { class: 'row' }, recs.length ? el('button', { type: 'button', class: 'btn', id: 'b-pdf', onclick: () => printLogbook(car) }, ico('pdf', t('Download as PDF'))) : null, S.rec ? null : el('button', { type: 'button', class: 'btn primary', id: 'b-rec-new', onclick: () => { S.rec = { files: [], removed: [] }; render(); } }, ico('plus', t('Add a record')))));
+  const head = el('div', { class: 'row between' }, el('h2', { text: t('History') }), el('div', { class: 'row' }, recs.length ? el('button', { type: 'button', class: 'btn', id: 'b-pdf', onclick: () => printLogbook(car) }, ico('pdf', t('Download as PDF'))) : null, S.rec || S.ai || !CLOUD.user ? null : el('button', { type: 'button', class: 'btn', id: 'b-ai-new', onclick: () => { S.ai = { car: car.id, stage: 'pick' }; render(); } }, ico('camera', t('Build from my documents'))), S.rec || S.ai ? null : el('button', { type: 'button', class: 'btn primary', id: 'b-rec-new', onclick: () => { S.rec = { files: [], removed: [] }; render(); } }, ico('plus', t('Add a record')))));
   const hist = el('section', { class: 'panel' }, head);
   if (S.rec) hist.append(recordForm(car));
-  if (!recs.length) { if (!S.rec) hist.append(el('p', { class: 'empty', text: t('No records yet. Add the first service, condition check or document for this car.') })); out.append(hist); return out; }
+  if (S.ai && S.ai.car === car.id) hist.append(aiPanel(car)); else if (S.ai && S.ai.stage !== 'working') S.ai = null;
+  if (!recs.length) { if (!S.rec && !S.ai) hist.append(el('p', { class: 'empty', text: t(CLOUD.user ? 'No records yet. Add the first one yourself, or choose “Build from my documents” to upload your paperwork and have the logbook drafted for you.' : 'No records yet. Add the first service, condition check or document for this car.') })); out.append(hist); return out; }
   const spend = {}; for (const r of recs) if (+r.cost && r.type !== 'purchase') spend[r.cur || 'USD'] = (spend[r.cur || 'USD'] || 0) + +r.cost;
   const lastSvc = recs.find((r) => r.type === 'service'), odo = Math.max(0, ...recs.map((r) => +r.odometer || 0)), flagged = recs.filter((r) => r.status === 'attention').length;
   hist.append(el('div', { class: 'stats' },
@@ -1777,6 +1822,102 @@ function logbookView(car) {
       el('span', {}, el('button', { type: 'button', class: 'linkbtn small', text: t('Edit'), onclick: () => { S.rec = { editing: r.id, files: (r.files || []).slice(), removed: [] }; render(); window.scrollTo(0, 0); } })))))));
   out.append(hist);
   return out;
+}
+/* ----- AI logbook ----- */
+async function shrinkDoc(file) {
+  if (!/^image\//.test(file.type || '') && !/\.(jpe?g|png|webp|heic|heif)$/i.test(file.name || '')) return file;
+  try {
+    const bmp = await createImageBitmap(file), k = Math.min(1, 2400 / Math.max(bmp.width, bmp.height));
+    if (k === 1 && /image\/(jpeg|png|webp)/.test(file.type) && file.size < 4e6) return file;
+    const c = document.createElement('canvas'); c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k);
+    c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
+    const blob = await new Promise((res) => c.toBlob(res, 'image/jpeg', 0.88));
+    return blob ? new File([blob], (file.name || 'scan').replace(/\.[^.]+$/, '') + '.jpg', { type: 'image/jpeg' }) : file;
+  } catch (e) { return file; }
+}
+const AI_BATCH = 5, AI_MAX = 40;
+const aiError = (e) => { const m = (e && e.message) || ''; return e && e.status === 404 || m === 'not_configured' ? t('The AI logbook is not switched on yet. You can still add records yourself.') : m === 'limit' ? t('You have reached this month’s limit for documents read by AI. It resets on the first of the month.') : m === 'busy' ? t('The AI service is busy. Wait a minute and try again.') : m === 'signin' ? t('Sign in again, then retry.') : t('The documents could not be read just now. Try again.'); };
+async function aiRun(car, picked) {
+  const a = S.ai; a.stage = 'working'; a.uploaded = []; a.drafts = []; a.skipped = []; a.profile = {}; a.error = ''; a.msg = ''; render();
+  const say = (m) => { a.msg = m; const n = $('ai-msg'); if (n) n.textContent = m; };
+  try {
+    let n = 0;
+    for (const f0 of picked) { say(t('Uploading file {a} of {b}…', { a: ++n, b: picked.length })); const f = await shrinkDoc(f0); if (f.size > 9 * 1024 * 1024) { a.skipped.push({ name: f0.name, reason: t('Over 9 MB. Use a smaller scan.') }); continue; } const up = await CLOUD.upload(car.id, f); up.name = f0.name || up.name; a.uploaded.push(up); }
+    for (let i = 0; i < a.uploaded.length; i += AI_BATCH) {
+      const batch = a.uploaded.slice(i, i + AI_BATCH);
+      say(t('Reading documents {a} to {b} of {n}. This can take a minute…', { a: i + 1, b: i + batch.length, n: a.uploaded.length }));
+      const r = await CLOUD.aiDraft(car, batch), at = (id) => batch[+String(id).slice(1) - 1];
+      for (const d of (r && r.records) || []) { const files = [...new Set((d.file_ids || []).map(at).filter(Boolean))]; if (files.length) a.drafts.push({ ...d, files, keep: true }); }
+      for (const k of (r && r.skipped) || []) { const f = at(k.file_id); if (f) a.skipped.push({ name: f.name, reason: k.reason, file: f }); }
+      for (const k of ['vin', 'year', 'colour', 'interior', 'reg']) if (r && r.profile && r.profile[k] && !a.profile[k]) a.profile[k] = String(r.profile[k]).slice(0, 60);
+    }
+    a.drafts.sort((x, y) => (x.date || '').localeCompare(y.date || ''));
+    a.stage = 'review';
+  } catch (e) {
+    // Keep what was already read; anything not yet read is removed from storage.
+    const used = new Set(a.drafts.flatMap((d) => d.files.map((f) => f.path)));
+    const orphan = a.uploaded.filter((f) => !used.has(f.path)); if (orphan.length) CLOUD.removeFiles(orphan.map((f) => f.path));
+    a.uploaded = a.uploaded.filter((f) => used.has(f.path)); a.error = aiError(e); a.stage = a.drafts.length ? 'review' : 'pick';
+  }
+  render();
+}
+function aiCancel() { const a = S.ai; if (a && a.uploaded && a.uploaded.length) CLOUD.removeFiles(a.uploaded.map((f) => f.path)); S.ai = null; render(); }
+function aiPanel(car) {
+  const a = S.ai, box = el('div', { id: 'ai-panel', style: 'border:1px solid var(--line);border-radius:8px;padding:14px', class: 'col' });
+  if (a.stage === 'pick') {
+    const input = el('input', { type: 'file', multiple: true, accept: 'image/*,application/pdf', id: 'ai-files' }), st = el('p', { class: 'status', role: 'status', text: a.error || '' });
+    box.append(el('h3', { text: t('Build the logbook from your documents') }),
+      el('p', { class: 'small', text: t('Choose photos or PDFs of invoices, inspection reports, registration papers, certificates and anything else you hold for this car, all at once. The app reads them and drafts one logbook record per document. You check the draft before anything is saved.') }),
+      field(t('Photos and documents'), input, t('Up to {n} files at a time. Clear, straight photos read best.', { n: AI_MAX })),
+      el('p', { class: 'muted small', text: t('To read them, your files are sent to Anthropic’s Claude AI service. They stay private to your account and are not used to train AI.') }),
+      el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn primary', id: 'b-ai-go', text: t('Read my documents'), onclick: () => { const picked = [...input.files]; if (!picked.length) { st.textContent = t('Choose at least one file.'); return; } if (picked.length > AI_MAX) { st.textContent = t('That is more than {n} files. Add them in smaller groups.', { n: AI_MAX }); return; } aiRun(car, picked); } }),
+        el('button', { type: 'button', class: 'btn', text: t('Cancel'), onclick: aiCancel })), st);
+    return box;
+  }
+  if (a.stage === 'working') { box.append(el('h3', { text: t('Reading your documents') }), el('p', { id: 'ai-msg', role: 'status', text: a.msg || t('Starting…') }), skel('4rem'), el('p', { class: 'muted small', text: t('Keep this page open until it finishes.') })); return box; }
+  // review
+  const kept = () => a.drafts.filter((d) => d.keep), saveBtn = el('button', { type: 'button', class: 'btn primary', id: 'b-ai-save' }), st = el('p', { class: 'status', role: 'status' });
+  const label = () => { saveBtn.textContent = t('Save {n} records to the logbook', { n: kept().length }); saveBtn.disabled = !kept().length; };
+  box.append(el('h3', { text: t('Check the draft') }), el('p', { class: 'small', text: t('{n} records were drafted from your documents. Correct anything that was misread, untick anything you do not want, then save.', { n: a.drafts.length }) }));
+  if (a.error) box.append(el('p', { class: 'status', text: a.error + ' ' + t('The records below were read before it stopped.') }));
+  const unit = car.unit || 'mi';
+  a.drafts.forEach((d, i) => {
+    if (d.odo == null) { const v = +String(d.odometer || '').replace(/[^\d.]/g, ''); d.odo = v ? String(Math.round(d.odometer_unit && d.odometer_unit !== unit ? (unit === 'mi' ? v * 0.621371 : v / 0.621371) : v)) : ''; d.curOk = CURS.includes(d.currency) ? d.currency : (car.lastCur || S.cur || 'USD'); d.costV = String(d.cost || '').replace(/[^\d.]/g, ''); if (d.costV && d.currency && !CURS.includes(d.currency)) { d.notes = [d.notes, t('Amount on the document: {a} {c}', { a: d.costV, c: d.currency })].filter(Boolean).join('\n'); d.costV = ''; } if (d.odometer && d.odometer_unit && d.odometer_unit !== unit) d.notes = [d.notes, t('Odometer on the document: {a} {u}', { a: d.odometer, u: d.odometer_unit })].filter(Boolean).join('\n'); }
+    const bind = (node, key, ev) => { node.addEventListener(ev || 'input', () => { d[key] = node.type === 'checkbox' ? node.checked : node.value; if (key === 'keep') { card.classList.toggle('off', !d.keep); label(); } }); return node; };
+    const keep = bind(el('input', { type: 'checkbox', id: 'ai-keep-' + i }), 'keep', 'change'); keep.checked = d.keep;
+    const notes = bind(el('textarea', { maxlength: 2000, rows: 3 }), 'notes'); notes.value = d.notes || '';
+    const card = el('div', { class: 'aidraft' + (d.keep ? '' : ' off') },
+      el('div', { class: 'row between' }, el('label', { class: 'check', for: 'ai-keep-' + i }, keep, el('span', { text: t('Include this record') })), el('span', { class: 'tag s-' + (d.confidence === 'high' ? 'good' : d.confidence === 'low' ? 'attention' : 'soon'), text: t(d.confidence === 'high' ? 'Read clearly' : d.confidence === 'low' ? 'Hard to read' : 'Mostly clear') })),
+      d.unsure ? el('p', { class: 'status', text: t('Please check: {m}', { m: d.unsure }) }) : null,
+      el('div', { class: 'row2' }, field(t('Type'), bind(select(Object.keys(REC_TYPES).map((k) => [k, t(REC_TYPES[k])]), REC_TYPES[d.type] ? d.type : 'note'), 'type', 'change')), field(t('Date'), bind(el('input', { type: 'date', value: /^\d{4}-\d{2}-\d{2}$/.test(d.date || '') ? d.date : '' }), 'date'))),
+      field(t('What happened'), bind(el('input', { type: 'text', maxlength: 120, value: (d.title || '').slice(0, 120) }), 'title')),
+      el('div', { class: 'row2' }, field(t('Odometer ({u})', { u: unitName(unit) }), bind(el('input', { type: 'number', min: 0, inputmode: 'numeric', value: d.odo }), 'odo')), field(t('Done by'), bind(el('input', { type: 'text', maxlength: 80, value: (d.by || '').slice(0, 80) }), 'by'))),
+      el('div', { class: 'row2' }, field(t('Cost'), bind(el('input', { type: 'number', min: 0, inputmode: 'decimal', value: d.costV }), 'costV')), field(t('Currency'), bind(select(CURS.map((x) => [x, x]), d.curOk), 'curOk', 'change'))),
+      field(t('Notes'), notes),
+      el('span', { class: 'row small' }, d.files.map((f) => { const b = el('button', { type: 'button', class: 'linkbtn', text: f.name }); b.addEventListener('click', async () => { const w = window.open('', '_blank'); try { const url = await CLOUD.fileUrl(f.path); if (w) w.location = url; else location.href = url; } catch (e) { if (w) w.close(); toast(t('Couldn’t open the file.')); } }); return b; })));
+    box.append(card);
+  });
+  if (a.skipped.length) box.append(el('div', { class: 'col', style: 'gap:2px' }, el('span', { class: 'label', text: t('Not added') }), el('ul', { class: 'small', style: 'margin:0;padding-inline-start:1.2rem' }, a.skipped.map((k) => el('li', { text: k.name + ': ' + k.reason })))));
+  const pk = Object.keys(a.profile).filter((k) => a.profile[k] && !car[k]), plabel = { vin: 'Chassis number (VIN)', year: 'Model year', colour: 'Colour', interior: 'Interior', reg: 'Registration' };
+  const pbox = el('input', { type: 'checkbox', id: 'ai-profile' }); pbox.checked = true;
+  if (pk.length) box.append(el('label', { class: 'check', for: 'ai-profile' }, pbox, el('span', { text: t('Also fill in the car’s details: {d}', { d: pk.map((k) => t(plabel[k]) + ' ' + a.profile[k]).join(', ') }) })));
+  label();
+  saveBtn.addEventListener('click', async () => {
+    const good = kept(); const bad = good.find((d) => !(d.title || '').trim() || !/^\d{4}-\d{2}-\d{2}$/.test(d.date || ''));
+    if (bad) { st.textContent = t('Every record you keep needs a title and a date. Check “{t}”.', { t: bad.title || t('Untitled') }); return; }
+    saveBtn.disabled = true; st.textContent = t('Saving…');
+    const recs = good.map((d, i) => ({ id: 'r' + Date.now().toString(36) + i.toString(36) + Math.random().toString(36).slice(2, 5), type: REC_TYPES[d.type] ? d.type : 'note', date: d.date, title: d.title.trim().slice(0, 120), odometer: d.odo || '', by: (d.by || '').trim().slice(0, 80), cost: d.costV || '', cur: d.curOk, status: STATUS[d.status] ? d.status : '', notes: (d.notes || '').trim().slice(0, 2000), files: d.files, ai: true }));
+    const patch = { records: (car.records || []).concat(recs) }, top = Math.max(0, ...recs.map((r) => +r.odometer || 0));
+    if (top > (+car.miles || 0)) patch.miles = String(top);
+    if (pk.length && pbox.checked) for (const k of pk) patch[k] = a.profile[k];
+    try {
+      await saveCar(car, patch);
+      const used = new Set(recs.flatMap((r) => r.files.map((f) => f.path))), gone = a.uploaded.filter((f) => !used.has(f.path)).map((f) => f.path); if (gone.length) CLOUD.removeFiles(gone);
+      S.ai = null; toast(t('{n} records added to the logbook', { n: recs.length })); render();
+    } catch (e) { st.textContent = t('Couldn’t save: {m}', { m: (e && e.message) || '' }); saveBtn.disabled = false; }
+  });
+  box.append(el('div', { class: 'row' }, saveBtn, el('button', { type: 'button', class: 'btn', id: 'b-ai-cancel', text: t('Discard the draft'), onclick: () => { if (confirm(t('Discard the draft and remove the uploaded files?'))) aiCancel(); } })), st);
+  return box;
 }
 function recordForm(car) {
   const st0 = S.rec, r = (car.records || []).find((x) => x.id === st0.editing) || { type: 'service', date: today(), cur: car.lastCur || S.cur };
@@ -2157,6 +2298,7 @@ function viewPage(name) {
     h('What we keep'), ul('Your email address and a protected form of your password, to sign you in.', 'Your profile: name, city, photo and social links, if you add them.', 'Your garage: cars, photos, logbook records, documents and reminders.', 'What you do in the community: friends, communities, posts, events and reports.'),
     h('Who can see it'), ul('Your cars, logbooks, documents, prices paid and chassis numbers are private to you.', 'If you switch on sharing, friends see each car’s name, year, model, colour, mileage and photos, and nothing else.', 'Your name and photo are shown to friends and beside your posts. Your email is shown only to friends.', 'The Garage 197 team can access stored data to run the service and to review reports.'),
     h('Where it is stored'), p('Data is stored with our hosting provider, Supabase, on servers in Australia. We do not sell your data and we do not show adverts.'),
+    h('AI reading of documents'), p('If you choose “Build from my documents”, the files you pick are sent to Anthropic, the maker of the Claude AI service, so they can be read and turned into draft logbook records. This happens only when you start it. Anthropic processes the files to provide that reading and does not use them to train its AI models.'),
     h('Your choices'), p('You can change or remove your cars, records, photos and profile at any time. To delete your account and everything in it, use Delete my account on your profile page.'),
     h('Changes'), p('If this page changes in a way that matters, we will say so in the app.'));
   else if (name === 'terms') out.append(el('h1', { text: t('Terms of use') }), draft(),

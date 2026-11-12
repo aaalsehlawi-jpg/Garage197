@@ -98,6 +98,9 @@
       api.socialLoaded = true; emitAuth();
     },
     notes: [], blocks: [], seenAt: '', extras: false,
+    // AI logbook (Edge Function logbook-ai)
+    aiDraft: async function (car, files) { return parse(await call('/functions/v1/logbook-ai', { method: 'POST', headers: JSONH, body: JSON.stringify({ car: { name: car.name || '', year: car.year || '' }, files: files.map(function (f) { return { path: f.path, name: f.name, type: f.type }; }) }) })); },
+    aiProbe: async function () { try { return await parse(await call('/functions/v1/logbook-ai', { method: 'POST', headers: JSONH, body: JSON.stringify({ probe: true }) })); } catch (e) { return null; } },
     // Car projects
     projects: [], projectsOn: false, activity: [], activityOn: false,
     createProject: async function (row) { var id = (crypto.randomUUID ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xxx-8xxx-xxxxxxxxxxxx'.replace(/x/g, function () { return (Math.random() * 16 | 0).toString(16); })); await ins('projects', Object.assign({ id: id, user_id: session.user.id }, row)); await api.loadSocial(); return id; },

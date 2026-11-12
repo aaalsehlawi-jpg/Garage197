@@ -715,3 +715,23 @@ revoke all on function public.friends_activity() from public, anon;
 grant execute on function public.friends_activity() to authenticated;
 
 notify pgrst, 'reload schema';
+
+-- ---------------------------------------------------------------------------
+-- AI logbook: usage log for the monthly allowance (written by the logbook-ai function as the user)
+-- ---------------------------------------------------------------------------
+create table if not exists public.ai_usage (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null default auth.uid() references auth.users (id) on delete cascade,
+  at timestamptz not null default now(),
+  files integer not null check (files between 1 and 50),
+  input_tokens integer,
+  output_tokens integer
+);
+create index if not exists ai_usage_user_at on public.ai_usage (user_id, at);
+alter table public.ai_usage enable row level security;
+drop policy if exists "see own ai usage" on public.ai_usage;
+create policy "see own ai usage" on public.ai_usage for select to authenticated using (user_id = auth.uid());
+drop policy if exists "log own ai usage" on public.ai_usage;
+create policy "log own ai usage" on public.ai_usage for insert to authenticated with check (user_id = auth.uid());
+
+notify pgrst, 'reload schema';
