@@ -735,3 +735,12 @@ drop policy if exists "log own ai usage" on public.ai_usage;
 create policy "log own ai usage" on public.ai_usage for insert to authenticated with check (user_id = auth.uid());
 
 notify pgrst, 'reload schema';
+
+-- ---------------------------------------------------------------------------
+-- Help state per account: getting-started checklist, tips seen, last "What's new" read
+-- ---------------------------------------------------------------------------
+alter table public.garages add column if not exists prefs jsonb not null default '{}'::jsonb;
+alter table public.garages drop constraint if exists garages_prefs_small;
+alter table public.garages add constraint garages_prefs_small check (pg_column_size(prefs) < 4000);
+
+notify pgrst, 'reload schema';

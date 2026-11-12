@@ -1015,9 +1015,22 @@ function viewPage(name) {
 
 /* ----- help: checklist, tips, what's new, how it works ----- */
 const HELP = {
+  merged: null, timer: null,
   key() { return 'g197-help-' + (CLOUD.user ? CLOUD.user.id : 'anon'); },
-  get() { try { return JSON.parse(ls.get(this.key(), '{}')) || {}; } catch (e) { return {}; } },
-  set(patch) { const h = { ...this.get(), ...patch }; ls.set(this.key(), JSON.stringify(h)); return h; },
+  local() { try { return JSON.parse(ls.get(this.key(), '{}')) || {}; } catch (e) { return {}; } },
+  // The account copy is merged in once per sign-in, so a second device starts from what the account has already done.
+  get() {
+    let h = this.local();
+    if (!CLOUD.user) this.merged = null;
+    if (CLOUD.user && CLOUD.loaded && CLOUD.prefsOn && this.merged !== CLOUD.user.id) {
+      this.merged = CLOUD.user.id; const c = CLOUD.prefs || {};
+      h = { did: { ...(c.did || {}), ...(h.did || {}) }, tips: { ...(c.tips || {}), ...(h.tips || {}) }, hideList: h.hideList || c.hideList ? 1 : 0, news: h.news == null && c.news == null ? undefined : Math.max(h.news || 0, c.news || 0) };
+      ls.set(this.key(), JSON.stringify(h)); if (JSON.stringify(h) !== JSON.stringify(c)) this.push();
+    }
+    return h;
+  },
+  push() { clearTimeout(this.timer); this.timer = setTimeout(() => { if (CLOUD.user && CLOUD.prefsOn) CLOUD.savePrefs(this.local()); }, 800); },
+  set(patch) { const h = { ...this.get(), ...patch }; ls.set(this.key(), JSON.stringify(h)); this.push(); return h; },
   mark(what) { const h = this.get(), did = h.did || {}; if (!did[what]) { did[what] = 1; this.set({ did }); } }
 };
 const NEWS_V = 1;
@@ -1036,7 +1049,7 @@ function startSteps() {
   return steps;
 }
 function startPanel() {
-  if (!CLOUD.user || !S.cars.length || HELP.get().hideList) return null;
+  if (!CLOUD.user || !CLOUD.loaded || !S.cars.length || HELP.get().hideList) return null;
   if ((CLOUD.social && !CLOUD.socialLoaded)) return null;
   const steps = startSteps(), n = steps.filter((s) => s.done).length, all = n === steps.length;
   const hide = el('button', { type: 'button', class: 'linkbtn small', id: 'b-start-hide', text: t(all ? 'Close' : 'Hide this list'), onclick: () => { HELP.set({ hideList: 1 }); if (!all) toast(t('You can bring the list back from the How it works page.')); render(); } });
@@ -1059,7 +1072,7 @@ const TIPS = {
   projects: ['Projects', 'Track a service, an upgrade or a restoration step by step. Share it and friends can cheer and suggest tools, equipment and know-how.']
 };
 function tip(key) {
-  if (!CLOUD.user || !TIPS[key]) return null; const h = HELP.get(), seen = h.tips || {}; if (seen[key]) return null;
+  if (!CLOUD.user || !CLOUD.loaded || !TIPS[key]) return null; const h = HELP.get(), seen = h.tips || {}; if (seen[key]) return null;
   const box = el('aside', { class: 'coach', id: 'tip-' + key }, el('div', { class: 'col', style: 'gap:2px;flex:1;min-width:0' }, el('b', { text: t(TIPS[key][0]) }), el('span', { class: 'small', text: t(TIPS[key][1]) })),
     el('button', { type: 'button', class: 'btn sm', text: t('Got it'), onclick: () => { const s = HELP.get().tips || {}; s[key] = 1; HELP.set({ tips: s }); box.remove(); } }));
   return box;
