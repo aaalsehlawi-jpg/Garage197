@@ -34,7 +34,7 @@ const carOdo = (c) => c.miles ? num(+c.miles) + ' ' + unitName(c.unit || 'mi') :
 const pct = (d) => (d >= 0 ? '+' : '−') + Math.abs(d * 100).toFixed(0) + '%';
 function toast(msg) { const b = $('toast'); b.firstChild.textContent = msg; b.hidden = false; clearTimeout(toast.h); toast.h = setTimeout(() => { b.hidden = true; }, 2200); }
 
-function modelOf(car) { if (car.model && car.model !== 'auto' && car.model !== 'other') return car.model; if (car.model === 'other') return null; return suggestModel(car, decodeVin(car.vin)).model; }
+function modelOf(car) { if (car.model && car.model !== 'auto' && car.model !== 'other') return car.model; if (car.model === 'other') return null; return suggestModel(car.make && car.modelText ? { ...car, name: car.make + ' ' + car.modelText } : car, decodeVin(car.vin)).model; }
 function estimate(car) {
   if (!S.sales) return null;
   const model = modelOf(car); if (!model) return null;
@@ -344,7 +344,7 @@ function viewGarage() {
   out.append(el('div', { class: 'cards' }, S.cars.map((c) => {
     const e = estimate(c), due = dueOf(c).length, tr = e ? trendOf(e.model) : null;
     return el('a', { class: 'card', href: '#/car/' + c.id + '/overview' }, photoBox(c), el('div', { class: 'body' },
-      el('b', { text: c.name || t('Unnamed car') }), el('span', { class: 'muted small', text: [c.year, carOdo(c)].filter(Boolean).join(' · ') }),
+      el('b', { text: c.name || t('Unnamed car') }), el('span', { class: 'muted small', text: [c.nick ? [c.make, c.modelText].filter(Boolean).join(' ') : '', c.year, carOdo(c)].filter(Boolean).join(' · ') }),
       el('span', { class: 'small', text: e ? t('Worth about {p}', { p: money(e.gbp) }) : t('No market data yet') }),
       tr == null ? null : el('span', { class: 'trend ' + (tr >= 0 ? 'up' : 'down'), text: (tr >= 0 ? '▲ ' : '▼ ') + t('{p} against its long-run price', { p: pct(tr) }) }),
       due ? el('span', {}, el('span', { class: 'badge due', text: t('{n} due', { n: due }) })) : null));
@@ -353,10 +353,34 @@ function viewGarage() {
 }
 
 /* ----- car form ----- */
+const CAT_MAKES = ['Porsche', 'Mercedes-Benz', 'Alfa Romeo'];
+const MAKES = CAT_MAKES.concat(['AC', 'Alpine', 'Aston Martin', 'Audi', 'Austin-Healey', 'Bentley', 'BMW', 'Bugatti', 'Cadillac', 'Chevrolet', 'Citroën', 'Datsun', 'De Tomaso', 'Dodge', 'Ferrari', 'Fiat', 'Ford', 'GMC', 'Honda', 'Jaguar', 'Jeep', 'Lamborghini', 'Lancia', 'Land Rover', 'Lexus', 'Lotus', 'Maserati', 'Mazda', 'McLaren', 'MG', 'Mini', 'Mitsubishi', 'Morgan', 'Nissan', 'Peugeot', 'Pontiac', 'Renault', 'Rolls-Royce', 'Saab', 'Shelby', 'Subaru', 'Toyota', 'Triumph', 'TVR', 'Volkswagen', 'Volvo']);
+const makeOf = (name) => CAT_MAKES.concat(MAKES).find((m) => (name || '').toLowerCase().startsWith(m.toLowerCase() + ' ')) || (/^mercedes(-amg)?\s/i.test(name || '') ? 'Mercedes-Benz' : /^alfa\s/i.test(name || '') ? 'Alfa Romeo' : '');
+// A text box with a list of matches under it. options() returns [{ label, sub, value }]; typing anything else is allowed.
+function combo(input, options, onPick) {
+  const list = el('ul', { class: 'combo-list', role: 'listbox', hidden: true }), box = el('div', { class: 'combo' }, input, list);
+  input.setAttribute('role', 'combobox'); input.setAttribute('aria-autocomplete', 'list'); input.setAttribute('aria-expanded', 'false');
+  const close = () => { list.hidden = true; input.setAttribute('aria-expanded', 'false'); };
+  const pick = (o) => { input.value = o.label; close(); if (onPick) onPick(o); };
+  const show = () => {
+    const q = input.value.trim().toLowerCase().split(/\s+/).filter(Boolean), all = options();
+    const hits = all.filter((o) => q.every((w) => o.label.toLowerCase().includes(w))).slice(0, 150);
+    if (!hits.length || (hits.length === 1 && hits[0].label.toLowerCase() === input.value.trim().toLowerCase())) { close(); return; }
+    list.replaceChildren(...hits.map((o) => { const li = el('li', { role: 'option' }, el('span', { text: o.label }), o.sub ? el('span', { class: 'muted small', text: o.sub }) : null); li.addEventListener('pointerdown', (ev) => { ev.preventDefault(); pick(o); }); return li; }));
+    list.hidden = false; input.setAttribute('aria-expanded', 'true');
+  };
+  input.addEventListener('focus', show); input.addEventListener('input', () => { if (onPick) onPick(null); show(); });
+  input.addEventListener('blur', () => setTimeout(close, 150));
+  input.addEventListener('keydown', (ev) => { if (ev.key === 'Escape') close(); if (ev.key === 'Enter' && !list.hidden && list.children.length === 1) { ev.preventDefault(); list.firstChild.dispatchEvent(new Event('pointerdown')); } });
+  return box;
+}
 function carForm(car) {
-  const isNew = !car, c = car || { unit: S.unit, paidCur: S.cur, name: S.prefill || '' }; S.prefill = '';
+  const isNew = !car, c = car || { unit: S.unit, paidCur: S.cur, name: S.prefill || '', model: S.prefill || 'auto' }; S.prefill = '';
+  const nm0 = c.name || '', mk0 = c.make != null ? c.make : makeOf(nm0), md0 = c.modelText != null ? c.modelText : !mk0 ? nm0 : nm0.toLowerCase().startsWith(mk0.toLowerCase() + ' ') ? nm0.slice(mk0.length + 1).trim() : nm0.replace(/^\S+\s*/, '');
   const f = {
-    name: el('input', { type: 'text', value: c.name || '', list: 'dl-names', placeholder: t('e.g. Porsche 964 Turbo'), autocomplete: 'off', id: 'f-name' }),
+    make: el('input', { type: 'text', value: mk0, placeholder: t('e.g. Porsche'), autocomplete: 'off', id: 'f-make', maxlength: 40 }),
+    mtext: el('input', { type: 'text', value: md0, placeholder: t('e.g. 911 (964) Turbo 3.3'), autocomplete: 'off', id: 'f-modeltext', maxlength: 60 }),
+    nick: el('input', { type: 'text', value: c.nick || '', placeholder: t('e.g. The weekend car'), autocomplete: 'off', id: 'f-nick', maxlength: 40 }),
     year: el('input', { type: 'number', min: 1900, max: 2030, inputmode: 'numeric', value: c.year || '', placeholder: '1991', id: 'f-year' }),
     miles: el('input', { type: 'number', min: 0, inputmode: 'numeric', value: c.miles || '', id: 'f-miles' }),
     unit: select([['mi', t('Miles')], ['km', t('Kilometres')]], c.unit || 'mi', { id: 'f-unit' }),
@@ -368,16 +392,25 @@ function carForm(car) {
     photo: el('input', { type: 'file', accept: 'image/*', id: 'f-photo' })
   };
   const groups = {}; for (const m of CATALOG) (groups[m.family] = groups[m.family] || []).push(m);
-  f.model = el('select', { id: 'f-model' }, el('option', { value: 'auto', text: t('Work it out from the name') }), Object.keys(groups).map((g) => el('optgroup', { label: t(g) }, groups[g].map((m) => el('option', { value: m.name, text: shortModel(m.name) + ', ' + m.from + '–' + String(m.to).slice(2) })))), el('option', { value: 'other', text: t('Another model (not in the catalogue)') }));
+  f.model = el('select', { id: 'f-model' }, el('option', { value: 'auto', text: t('Work it out from the make and model') }), Object.keys(groups).map((g) => el('optgroup', { label: t(g) }, groups[g].map((m) => el('option', { value: m.name, text: shortModel(m.name) + ', ' + m.from + '–' + String(m.to).slice(2) })))), el('option', { value: 'other', text: t('Another model (not in the catalogue)') }));
   f.model.value = [...f.model.options].some((o) => o.value === c.model) ? c.model : 'auto';
+  const short = (m, mk) => m.name.startsWith(mk + ' ') ? m.name.slice(mk.length + 1) : m.name;
+  const curMake = () => { const v = f.make.value.trim().toLowerCase(); return MAKES.find((m) => m.toLowerCase() === v) || ''; };
+  const modelHint = el('p', { class: 'hint', id: 'f-modelhint', style: 'margin:0' });
+  const hintModel = () => { const mk = curMake(), has = CAT_MAKES.includes(mk); modelHint.textContent = !f.make.value.trim() ? '' : has ? t('Pick the model from the list to get its market value, or type it if it is not there.') : t('We have no sales on file for this make yet, so type the model. The car’s logbook, photos and projects all work as normal.'); };
+  const makeBox = combo(f.make, () => MAKES.map((m) => ({ label: m, sub: CAT_MAKES.includes(m) ? t('Market data') : '' })), () => { hintModel(); });
+  const modelBox = combo(f.mtext, () => { const mk = curMake(); return CATALOG.filter((m) => m.name.startsWith(mk + ' ')).map((m) => ({ label: short(m, mk), sub: m.from + '–' + String(m.to).slice(2), value: m.name })); }, (o) => { f.model.value = o && o.value ? o.value : f.model.value !== 'other' ? 'auto' : 'other'; });
+  f.make.addEventListener('change', hintModel); f.make.addEventListener('blur', () => setTimeout(hintModel, 160)); hintModel();
   const vinHint = el('span', { class: 'hint' }), status = el('p', { class: 'status', role: 'status' });
   const hint = () => { const d = decodeVin(f.vin.value); vinHint.textContent = !d.vin ? t('Optional. On cars built from 1981 it has 17 characters and tells us the exact model.') : d.full ? [d.maker, d.year, d.type ? t('type {x}', { x: d.type }) : ''].filter(Boolean).join(' · ') + (d.checkOk === false ? ' · ' + t('check digit fails, one character may be mistyped') : '') : t('{n} characters so far', { n: d.length }); };
   f.vin.addEventListener('input', hint); hint();
   const save = el('button', { type: 'submit', class: 'btn primary', id: 'b-save', text: t(isNew ? 'Add to my garage' : 'Save changes') });
   const form = el('form', { novalidate: true, id: 'car-form', onsubmit: async (ev) => {
     ev.preventDefault();
-    const body = { name: f.name.value.trim(), year: f.year.value, miles: f.miles.value, unit: f.unit.value, vin: f.vin.value.toUpperCase().replace(/[\s-]/g, ''), condition: f.condition.value, model: f.model.value, colour: f.colour.value.trim(), interior: f.interior.value.trim(), reg: f.reg.value.trim(), acquired: f.acquired.value, paid: f.paid.value, paidCur: f.paidCur.value };
-    if (!body.name) { status.textContent = t('Give the car a name first, for example its model.'); f.name.focus(); return; }
+    const mk = f.make.value.trim(), md = f.mtext.value.trim(), nk = f.nick.value.trim();
+    const body = { name: nk || [mk, md].filter(Boolean).join(' '), make: mk, modelText: md, nick: nk, year: f.year.value, miles: f.miles.value, unit: f.unit.value, vin: f.vin.value.toUpperCase().replace(/[\s-]/g, ''), condition: f.condition.value, model: f.model.value, colour: f.colour.value.trim(), interior: f.interior.value.trim(), reg: f.reg.value.trim(), acquired: f.acquired.value, paid: f.paid.value, paidCur: f.paidCur.value };
+    if (!mk) { status.textContent = t('Choose the make first.'); f.make.focus(); return; }
+    if (!md) { status.textContent = t('Choose or type the model.'); f.mtext.focus(); return; }
     save.disabled = true; status.textContent = t('Saving…');
     try {
       const id = isNew ? CLOUD.newId() : car.id, pic = f.photo.files[0];
@@ -386,7 +419,8 @@ function carForm(car) {
       toast(t(isNew ? 'Car added' : 'Saved')); nav('#/car/' + id + '/overview');
     } catch (e) { status.textContent = t('Couldn’t save: {m}', { m: (e && e.message) || '' }); save.disabled = false; }
   } },
-    field(t('Car name'), f.name), el('datalist', { id: 'dl-names' }, CATALOG.map((m) => el('option', { value: m.name }))),
+    field(t('Make'), makeBox), field(t('Model'), modelBox), modelHint,
+    field(t('Name (optional)'), f.nick, t('A name of your own for this car. Leave empty to use the make and model.')),
     el('div', { class: 'row2' }, field(t('Model year'), f.year), el('div', { class: 'row2' }, field(t('Odometer'), f.miles), field(t('Unit'), f.unit))),
     field(t('Photo'), f.photo, car && car.photo ? t('Choose a file to replace the current photo.') : t('Optional. One photo to show on the car’s card.')),
     el('details', { class: 'more', open: !isNew }, el('summary', { text: t('More details') }), el('div', {},
@@ -396,7 +430,7 @@ function carForm(car) {
       el('div', { class: 'row2' }, field(t('Purchase price'), f.paid), field(t('Currency'), f.paidCur)),
       el('div', { class: 'row2' }, field(t('Condition'), f.condition), field(t('Model to compare against'), f.model)))),
     el('div', { class: 'row' }, save, el('a', { class: 'btn', href: isNew ? '#/garage' : '#/car/' + car.id + '/overview', text: t('Cancel') })), status);
-  const out = el('div', { class: 'col', style: 'max-width:40rem' }, el('h1', { text: t(isNew ? 'Add a car' : 'Edit {name}', { name: c.name || '' }) }), isNew ? el('p', { class: 'muted', text: t('Three things are enough to start: the name, the year and the mileage. Everything else can wait.') }) : null, panel(null, null, form));
+  const out = el('div', { class: 'col', style: 'max-width:40rem' }, el('h1', { text: t(isNew ? 'Add a car' : 'Edit {name}', { name: c.name || '' }) }), isNew ? el('p', { class: 'muted', text: t('Four things are enough to start: the make, the model, the year and the mileage. Everything else can wait.') }) : null, panel(null, null, form));
   if (!isNew) {
     let sure = false; const del = el('button', { type: 'button', class: 'btn danger', id: 'b-del', text: t('Remove this car') });
     del.addEventListener('click', async () => {
@@ -455,7 +489,7 @@ function viewCar(car, sub) {
   else if (sub === 'logbook') { const tp = tip('logbook'); if (tp) out.append(tp); out.append(logbookView(car)); }
   else {
     if (CLOUD.user && !(car.records || []).length) out.append(el('section', { class: 'panel next', id: 'next-step' }, el('h2', { text: t('Next: build this car’s logbook') }), el('p', { text: t('Upload photos or PDFs of your invoices, inspection reports and papers. The app reads them and drafts the car’s history for you to check.') }), el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn primary', id: 'b-next-ai', onclick: () => { S.ai = { car: car.id, stage: 'pick' }; nav(base + 'logbook'); } }, ico('camera', t('Build from my documents'))))));
-    const facts = [[t('Model year'), car.year], [t('Odometer'), carOdo(car)], [t('Colour'), car.colour], [t('Interior'), car.interior], [t('Registration'), car.reg], [t('Acquired'), car.acquired ? fmtDate(car.acquired) : ''], [t('Paid'), car.paid ? cash(+car.paid, car.paidCur) : ''], [t('Condition'), car.condition ? t({ 1: '1 Concours', 2: '2 Excellent', 3: '3 Good', 4: '4 Fair' }[car.condition]) : ''], [t('Compared against'), e ? shortModel(e.model) : '']].filter((x) => x[1]);
+    const facts = [[t('Make'), car.make], [t('Model'), car.modelText], [t('Model year'), car.year], [t('Odometer'), carOdo(car)], [t('Colour'), car.colour], [t('Interior'), car.interior], [t('Registration'), car.reg], [t('Acquired'), car.acquired ? fmtDate(car.acquired) : ''], [t('Paid'), car.paid ? cash(+car.paid, car.paidCur) : ''], [t('Condition'), car.condition ? t({ 1: '1 Concours', 2: '2 Excellent', 3: '3 Good', 4: '4 Fair' }[car.condition]) : ''], [t('Compared against'), e ? shortModel(e.model) : '']].filter((x) => x[1]);
     const basis = !e ? t('We couldn’t value this car yet. Open the Market tab to see why.') : e.basis === 'similar' ? t('From {n} recent sales of cars with similar mileage.', { n: e.n }) : e.basis === 'year' ? t('The typical price of {n} sales in the last 12 months.', { n: e.n }) : t('The typical price of the {n} sales on file. Few are recent, so treat it as a rough guide.', { n: e.n });
     const value = el('div', { class: 'col', style: 'gap:8px' }, el('span', { class: 'label', text: t('Worth about') }), el('div', { class: 'big', text: e ? money(e.gbp) : '—' }));
     if (e && e.low != null && e.high > e.low) value.append(el('div', { class: 'range' }, el('div', { class: 'track' }, el('span', { class: 'dot', style: 'left:' + Math.max(0, Math.min(100, (e.gbp - e.low) / (e.high - e.low) * 100)) + '%' })), el('div', { class: 'ends' }, el('span', { text: money(e.low) }), el('span', { text: money(e.high) })), el('span', { class: 'muted small', text: t('Where the typical price sits in the range these cars sold for.') })));
@@ -1233,7 +1267,7 @@ function render() {
   else if (r.name === 'profile') main = viewProfile();
   else if (PAGES[r.name]) main = viewPage(r.name);
   else if (r.name === 'friend') main = viewFriend(r.a, r.b);
-  else if (r.name === 'model') { HELP.mark('market'); const m = catOf(r.a); main = el('div', { class: 'col' }, el('div', { class: 'col', style: 'gap:6px' }, el('a', { class: 'small', href: '#/market', text: '‹ ' + t('Market') }), m ? banner({ name: shortModel(m.name) }, null) : el('h1', { text: t('Model not found') }), m ? el('p', { class: 'muted', text: t('Built {a} to {b}', { a: m.from, b: m.to }) }) : null), m ? panel(null, null, marketView(m.name, null)) : null, m ? el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn primary', text: t('Add this car to my garage'), onclick: () => { S.prefill = m.name; nav('#/car/new'); } })) : null); }
+  else if (r.name === 'model') { HELP.mark('market'); const m = catOf(r.a); main = el('div', { class: 'col' }, el('div', { class: 'col', style: 'gap:6px' }, el('a', { class: 'small', href: '#/market', text: '‹ ' + t('Market') }), m ? banner({ name: shortModel(m.name) }, null) : el('h1', { text: t('Model not found') }), m ? el('p', { class: 'muted', text: t('Built {a} to {b}', { a: m.from, b: m.to }) }) : null), m ? panel(null, null, marketView(m.name, null)) : null, m ? el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn primary', id: 'b-own-one', text: t('I own one: add it to my garage'), onclick: () => { S.prefill = m.name; nav('#/car/new'); } })) : null); }
   else if (r.name === 'projects') main = viewProjects();
   else if (r.name === 'project') main = r.a === 'new' ? projectForm() : viewProject(r.a);
   else if (r.name === 'car' && r.a === 'new') main = carForm(null);
