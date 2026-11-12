@@ -461,7 +461,7 @@ function vinPlate(car) {
 }
 function banner(car, e) {
   const b = el('div', { class: 'banner' }); b.innerHTML = CAR_SVG;
-  if (car.photo && car.photo.path) CLOUD.fileUrl(car.photo.path).then((url) => { const im = el('img', { src: url, alt: '' }); im.addEventListener('error', () => im.remove()); b.prepend(im); }).catch(() => {});
+  if (car.photo && car.photo.path) CLOUD.fileUrl(car.photo.path).then((url) => { const im = el('img', { src: url, alt: '' }); im.addEventListener('load', () => b.classList.add('has-photo')); im.addEventListener('error', () => { im.remove(); b.classList.remove('has-photo'); }); b.prepend(im); }).catch(() => {});
   b.append(el('div', { class: 'over' }, el('h1', { text: car.name || t('Unnamed car') }), e ? el('div', { class: 'v' }, el('small', { text: t('Worth about') }), el('span', { text: money(e.gbp) })) : null));
   return b;
 }

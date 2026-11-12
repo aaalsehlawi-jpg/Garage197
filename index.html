@@ -170,6 +170,7 @@
   @media (max-width: 760px) { .banner { aspect-ratio: 4 / 3; } }
   .banner > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
   .banner > svg { width: 34%; opacity: .5; }
+  .banner.has-photo > svg { display: none; }
   .banner .over { position: absolute; inset-inline: 0; bottom: 0; padding: 48px 20px 16px; background: linear-gradient(to top, rgb(20 8 40 / .82), rgb(20 8 40 / 0)); display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 6px 20px; }
   .banner .over h1 { color: #fff; overflow-wrap: anywhere; } .banner .over .v { color: #fff; font-family: var(--f-display); font-weight: 700; font-size: 1.5rem; font-variant-numeric: tabular-nums; }
   .banner .over small { display: block; font-size: .75rem; opacity: .85; font-weight: 500; font-family: var(--f-body); }
@@ -1911,7 +1912,7 @@ function vinPlate(car) {
 }
 function banner(car, e) {
   const b = el('div', { class: 'banner' }); b.innerHTML = CAR_SVG;
-  if (car.photo && car.photo.path) CLOUD.fileUrl(car.photo.path).then((url) => { const im = el('img', { src: url, alt: '' }); im.addEventListener('error', () => im.remove()); b.prepend(im); }).catch(() => {});
+  if (car.photo && car.photo.path) CLOUD.fileUrl(car.photo.path).then((url) => { const im = el('img', { src: url, alt: '' }); im.addEventListener('load', () => b.classList.add('has-photo')); im.addEventListener('error', () => { im.remove(); b.classList.remove('has-photo'); }); b.prepend(im); }).catch(() => {});
   b.append(el('div', { class: 'over' }, el('h1', { text: car.name || t('Unnamed car') }), e ? el('div', { class: 'v' }, el('small', { text: t('Worth about') }), el('span', { text: money(e.gbp) })) : null));
   return b;
 }
