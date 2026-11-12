@@ -493,3 +493,21 @@ revoke all on function public.avatar_of(uuid), public.is_avatar(text), public.my
 grant execute on function public.avatar_of(uuid), public.is_avatar(text), public.my_friends(), public.list_posts(uuid), public.display_name(uuid) to authenticated;
 
 notify pgrst, 'reload schema';
+
+-- ===== Delete my account. Safe to run more than once. =====
+
+-- Removes the signed-in user and, through the links between tables, everything they own:
+-- garage, cars, logbooks, friendships, communities they started, posts, events and reports.
+-- Called first with p_confirm false, which changes nothing and only shows the function is installed.
+create or replace function public.delete_my_account(p_confirm boolean default false) returns boolean
+language plpgsql security definer set search_path = public as $$
+begin
+  if auth.uid() is null then raise exception 'Sign in first'; end if;
+  if not coalesce(p_confirm, false) then return false; end if;
+  delete from auth.users where id = auth.uid();
+  return true;
+end $$;
+revoke all on function public.delete_my_account(boolean) from public, anon;
+grant execute on function public.delete_my_account(boolean) to authenticated;
+
+notify pgrst, 'reload schema';

@@ -831,6 +831,15 @@ function viewProfile() {
     el('p', { class: 'muted small', text: t('Friends see each car’s name, year, model, colour, mileage and photos, and your newest cars appear on their Home page. They never see what you paid, values, chassis numbers, registration, logbooks or documents.') })));
   }
   viewSettings(); out.append(S.accountPanel());
+  const dstatus = el('span', { class: 'status', role: 'status' });
+  out.append(panel(t('Delete my account'), t('This permanently removes your account, garage, cars, logbooks, photos, documents, posts, events and friendships. It cannot be undone.'),
+    el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn danger', id: 'b-delete', text: t('Delete my account'), onclick: async () => {
+      const word = prompt(t('This cannot be undone. Type DELETE to permanently delete your account and everything in it.')); if (word == null) return;
+      if (word.trim().toUpperCase() !== 'DELETE') { dstatus.textContent = t('Nothing was deleted. Type DELETE exactly to confirm.'); return; }
+      dstatus.textContent = t('Deleting…');
+      try { await CLOUD.deleteAccount(); location.hash = '#/home'; render(); toast(t('Your account and everything in it has been deleted.')); }
+      catch (e) { dstatus.textContent = e && (e.status === 404 || e.code === 'PGRST202') ? t('Account deletion is not switched on yet. Use the Contact page and we will delete it for you.') : t('Couldn’t delete the account: {m}', { m: (e && e.message) || '' }); }
+    } }), dstatus)));
   return out;
 }
 const PAGES = { about: 1, values: 1, guidelines: 1, privacy: 1, terms: 1, contact: 1 };
@@ -838,9 +847,10 @@ function viewPage(name) {
   const out = el('div', { class: 'col prose', style: 'max-width:44rem' }), h = (x) => el('h2', { text: t(x) }), p = (x, v) => el('p', { text: t(x, v) }), ul = (...xs) => el('ul', {}, xs.map((x) => el('li', { text: t(x) })));
   const draft = () => el('p', { class: 'muted small', text: t('Last updated 12 November 2026.') });
   if (name === 'about') out.append(el('h1', { text: t('About Garage 197') }),
-    p('Garage 197 is a home for classic car owners: a private record of your cars and their history, a view of what cars like yours are selling for, and a community of people who care about the same things.'),
-    p('It was started by a collector in Qatar who wanted one place for a car’s paperwork, its service history and its place in the market.'),
-    h('What you can do'), ul('Keep each car’s details, photos, service records, documents and reminders in one logbook.', 'See what similar cars have sold for, with the evidence shown.', 'Share your garage with friends, join communities and plan events.'),
+    p('Garage 197 began with a collector and a simple frustration. The paperwork was in one folder, the service history in another, the market in a dozen browser tabs, and the people who love the same cars were scattered across group chats.'),
+    p('So we set out to make the hobby easier for everyone who loves cars. One place to keep a car’s story. One place to see what the cars you love are really selling for. One place to find the people who love them too.'),
+    p('Garage 197 is built by enthusiasts, for enthusiasts. Whether you own one cherished car or a whole collection, or you are still looking for the one, there is a place for you here.'),
+    h('What you can do'), ul('Keep each car’s details, photos, service records, documents and reminders in one logbook.', 'Track what the cars you love are selling for, with the evidence shown.', 'Share your garage with friends, join communities and plan events.', 'Look up any model you are searching for and see where its market is heading.'),
     h('What it is not'), p('Garage 197 does not sell cars, and its values are a guide, not a formal valuation.'));
   else if (name === 'values') out.append(el('h1', { text: t('How we value cars') }),
     p('Every value in Garage 197 comes from real, publicly reported sales. We never invent a number, and we always show how many sales stand behind it.'),
@@ -858,7 +868,7 @@ function viewPage(name) {
     h('What we keep'), ul('Your email address and a protected form of your password, to sign you in.', 'Your profile: name, city, photo and social links, if you add them.', 'Your garage: cars, photos, logbook records, documents and reminders.', 'What you do in the community: friends, communities, posts, events and reports.'),
     h('Who can see it'), ul('Your cars, logbooks, documents, prices paid and chassis numbers are private to you.', 'If you switch on sharing, friends see each car’s name, year, model, colour, mileage and photos, and nothing else.', 'Your name and photo are shown to friends and beside your posts. Your email is shown only to friends.', 'The Garage 197 team can access stored data to run the service and to review reports.'),
     h('Where it is stored'), p('Data is stored with our hosting provider, Supabase, on servers in Australia. We do not sell your data and we do not show adverts.'),
-    h('Your choices'), p('You can change or remove your cars, records, photos and profile at any time. To have your account and everything in it deleted, send us a message from the Contact page and we will do it.'),
+    h('Your choices'), p('You can change or remove your cars, records, photos and profile at any time. To delete your account and everything in it, use Delete my account on your profile page.'),
     h('Changes'), p('If this page changes in a way that matters, we will say so in the app.'));
   else if (name === 'terms') out.append(el('h1', { text: t('Terms of use') }), draft(),
     h('Using Garage 197'), p('You need an account, and you are responsible for keeping your password safe and for what is done with your account.'),

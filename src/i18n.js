@@ -560,5 +560,19 @@ const AR = {
   'e.g. Doha': 'مثال: الدوحة',
   'e.g. Garage 197': 'مثال: Garage 197',
   'your profile': 'ملفك الشخصي',
-  '{n} sales, newest {d}.': '{n} مبيعات، أحدثها {d}.'
+  '{n} sales, newest {d}.': '{n} مبيعات، أحدثها {d}.',
+  'Delete my account': 'احذف حسابي',
+  'This permanently removes your account, garage, cars, logbooks, photos, documents, posts, events and friendships. It cannot be undone.': 'يحذف هذا نهائيًا حسابك وكراجك وسياراتك وسجلاتها وصورك ومستنداتك ومنشوراتك وفعالياتك وصداقاتك. لا يمكن التراجع.',
+  'This cannot be undone. Type DELETE to permanently delete your account and everything in it.': 'لا يمكن التراجع. اكتب DELETE لحذف حسابك وكل ما فيه نهائيًا.',
+  'Nothing was deleted. Type DELETE exactly to confirm.': 'لم يُحذف شيء. اكتب DELETE كما هي للتأكيد.',
+  'Deleting…': 'جارٍ الحذف…',
+  'Your account and everything in it has been deleted.': 'حُذف حسابك وكل ما فيه.',
+  'Account deletion is not switched on yet. Use the Contact page and we will delete it for you.': 'حذف الحساب غير مفعّل بعد. استخدم صفحة تواصل معنا وسنحذفه لك.',
+  'Couldn’t delete the account: {m}': 'تعذّر حذف الحساب: {m}',
+  'Garage 197 began with a collector and a simple frustration. The paperwork was in one folder, the service history in another, the market in a dozen browser tabs, and the people who love the same cars were scattered across group chats.': 'بدأ Garage 197 بهاوٍ لجمع السيارات وإحباط بسيط: الأوراق في ملف، وسجل الصيانة في ملف آخر، والسوق موزّع على عشرات الصفحات، ومحبو السيارات نفسها متفرقون بين مجموعات المحادثة.',
+  'So we set out to make the hobby easier for everyone who loves cars. One place to keep a car’s story. One place to see what the cars you love are really selling for. One place to find the people who love them too.': 'فقررنا أن نجعل الهواية أسهل لكل من يحب السيارات. مكان واحد يحفظ قصة السيارة. مكان واحد يعرض الأسعار الحقيقية للسيارات التي تحبها. ومكان واحد تجد فيه من يحبونها مثلك.',
+  'Garage 197 is built by enthusiasts, for enthusiasts. Whether you own one cherished car or a whole collection, or you are still looking for the one, there is a place for you here.': 'Garage 197 صنعه الهواة للهواة. سواء كنت تملك سيارة عزيزة واحدة أو مجموعة كاملة، أو ما زلت تبحث عن سيارة أحلامك، فلك مكان هنا.',
+  'Track what the cars you love are selling for, with the evidence shown.': 'تابع أسعار بيع السيارات التي تحبها، مع عرض الأدلة.',
+  'Look up any model you are searching for and see where its market is heading.': 'ابحث عن أي طراز يهمك واعرف اتجاه سوقه.',
+  'You can change or remove your cars, records, photos and profile at any time. To delete your account and everything in it, use Delete my account on your profile page.': 'يمكنك تعديل أو حذف سياراتك وسجلاتك وصورك وملفك الشخصي في أي وقت. لحذف حسابك وكل ما فيه، استخدم «احذف حسابي» في صفحة ملفك الشخصي.'
 };

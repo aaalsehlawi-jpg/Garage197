@@ -145,6 +145,16 @@
       return q.get('type') === 'recovery' ? 'recovery' : 'signin';
     },
     setPassword: async function (password) { await parse(await call('/auth/v1/user', { method: 'PUT', headers: JSONH, body: JSON.stringify({ password: password }) })); },
+    // Deletes every stored file, then the account and all its data. Cannot be undone.
+    deleteAccount: async function () {
+      var uid = session.user.id, paths = [];
+      await rpc('delete_my_account', { p_confirm: false });
+      async function list(prefix) { return parse(await call('/storage/v1/object/list/' + BUCKET, { method: 'POST', headers: JSONH, body: JSON.stringify({ prefix: prefix, limit: 1000, offset: 0 }) })); }
+      try { var top = await list(uid + '/'); for (var i = 0; i < top.length; i++) { if (top[i].id) paths.push(uid + '/' + top[i].name); else { var inner = await list(uid + '/' + top[i].name + '/'); inner.forEach(function (f) { if (f.id) paths.push(uid + '/' + top[i].name + '/' + f.name); }); } } } catch (e) {}
+      for (var k = 0; k < paths.length; k += 100) await api.removeFiles(paths.slice(k, k + 100));
+      await rpc('delete_my_account', { p_confirm: true });
+      setSession(null); cloud = {}; api.garageName = ''; api.friends = []; api.feed = []; api.communities = []; api.events = []; api.notes = []; api.blocks = []; api.socialLoaded = false; emit(); emitAuth();
+    },
     removeFiles: async function (paths) { if (!paths || !paths.length || !session) return; try { await call('/storage/v1/object/' + BUCKET, { method: 'DELETE', headers: JSONH, body: JSON.stringify({ prefixes: paths }) }); } catch (e) {} }
   };
   window.g197cloud = api;
