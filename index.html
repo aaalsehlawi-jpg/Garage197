@@ -2208,7 +2208,6 @@ function viewCar(car, sub) {
     out.append(el('div', { class: 'grid2' }, panel(null, null, value, el('div', { class: 'row' }, el('a', { class: 'btn', href: base + 'market' }, ico('market', t('See the market'))))),
       panel(t('Coming up'), null, due.length ? el('ul', { class: 'due-list' }, due.map((x) => el('li', {}, el('span', { text: x.r.title }), el('span', { class: 'tag s-' + x.st, text: remText(car, x.r, x.st) })))) : el('p', { class: 'empty' }, el('span', { text: t('Nothing is due. Reminders you add in the logbook show here.') + ' ' }), el('a', { href: base + 'logbook', text: t('Set a reminder') })))));
     out.append(galleryPanel(car));
-    if (CLOUD.user) out.append(regPanel(car));
     const det = el('details', { class: 'fold', id: 'car-details' }, el('summary', {}, el('h2', { text: t('Details') }), el('span', { class: 'muted small', text: [car.year, carOdo(car), car.colour].filter(Boolean).join(' · ') })), facts.length ? el('dl', { class: 'facts' }, facts.map((x) => el('div', {}, el('dt', { text: x[0] }), el('dd', { text: x[1] })))) : el('p', { class: 'empty', text: t('No details yet.') }), vinPlate(car));
     if (S.detOpen === car.id) det.open = true; det.addEventListener('toggle', () => { S.detOpen = det.open ? car.id : null; });
     out.append(el('section', { class: 'panel' }, det, el('div', { class: 'row' }, el('a', { class: 'btn', id: 'b-edit', href: base + 'edit' }, ico('edit', t('Edit details'))))));
@@ -2234,6 +2233,7 @@ function logbookView(car) {
   } else remPanel.append(el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn', id: 'b-rem-new', text: t('Add a reminder'), onclick: () => { S.remOpen = true; render(); } })));
   out.append(remPanel);
   // records
+  if (CLOUD.user) out.append(regPanel(car));
   const head = el('div', { class: 'row between' }, el('h2', { text: t('History') }), el('div', { class: 'row' }, recs.length ? el('button', { type: 'button', class: 'btn', id: 'b-pdf', onclick: () => printLogbook(car) }, ico('pdf', t('Download as PDF'))) : null, S.rec || S.ai || !CLOUD.user ? null : el('button', { type: 'button', class: 'btn', id: 'b-ai-new', onclick: () => { S.ai = { car: car.id, stage: 'pick' }; render(); } }, ico('camera', t('Build from my documents'))), S.rec || S.ai ? null : el('button', { type: 'button', class: 'btn primary', id: 'b-rec-new', onclick: () => { S.rec = { files: [], removed: [] }; render(); } }, ico('plus', t('Add a record')))));
   const hist = el('section', { class: 'panel' }, head);
   if (S.rec) hist.append(recordForm(car));
