@@ -208,7 +208,7 @@
   .posts { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
   .posts li { border-top: 1px solid var(--line); padding: 12px 0; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
   .posts p { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
-  .blank .btn, .btn { white-space: nowrap; }
+  .btn { white-space: nowrap; }
   .bell { position: relative; display: inline-grid; place-items: center; width: 2.6rem; height: 2.6rem; border-radius: 999px; color: var(--muted); margin-inline-start: auto; }
   .bell svg { width: 1.45rem; height: 1.45rem; }
   .bell:hover, .bell[aria-current="page"] { color: var(--strong); background: var(--soft); }
@@ -257,7 +257,7 @@
   .starter p { margin: 0; max-width: 52ch; }
   .panel.news, .panel.next { border-color: var(--accent); }
   .faq details { border-top: 1px solid var(--line); padding: 10px 0; } .faq summary { cursor: pointer; font-weight: 600; } .faq details p { margin: 8px 0 0; color: var(--muted); }
-  .blank svg { width: min(15rem, 60%); color: var(--accent); opacity: .45; }
+  .blank > svg { width: min(15rem, 60%); color: var(--accent); opacity: .45; }
   .skel { border-radius: 12px; background: linear-gradient(100deg, var(--soft) 30%, var(--accent-soft) 50%, var(--soft) 70%); background-size: 300% 100%; animation: shimmer 1.3s linear infinite; min-height: 5rem; }
   @keyframes shimmer { from { background-position: 100% 0; } to { background-position: -100% 0; } }
   @keyframes pagein { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
@@ -318,6 +318,15 @@
   .fold > summary::-webkit-details-marker { display: none; }
   .fold > summary h2 { margin: 0; font-size: 1.2rem; } .fold > summary h2::after { content: " ▾"; color: var(--muted); font-size: .9em; } .fold[open] > summary h2::after { content: " ▴"; }
   .fold[open] > summary { margin-bottom: 14px; } .fold > * + * { margin-top: 14px; }
+
+  /* ----- alignment: buttons always centre their label and never clip it ----- */
+  .btn, .fab { justify-content: center; text-align: center; max-width: 100%; min-width: 0; white-space: normal; overflow-wrap: anywhere; line-height: 1.25; }
+  .btn > span, .fab > span { min-width: 0; }
+  .btn svg { flex: none; }
+  .subtabs .tab { flex: none; max-width: none; overflow: visible; }
+  .linkbtn { align-self: flex-start; text-align: start; }
+  .row > .linkbtn { align-self: center; }
+  @media (max-width: 640px) { .fab span { display: none; } }
 </style>
 </head>
 <body>
