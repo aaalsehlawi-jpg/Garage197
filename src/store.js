@@ -104,6 +104,8 @@
     notes: [], blocks: [], seenAt: '', extras: false,
     // AI logbook (Edge Function logbook-ai)
     aiDraft: async function (car, files) { return parse(await call('/functions/v1/logbook-ai', { method: 'POST', headers: JSONH, body: JSON.stringify({ car: { name: car.name || '', year: car.year || '' }, files: files.map(function (f) { return { path: f.path, name: f.name, type: f.type }; }) }) })); },
+    // AI helper (Edge Function garage-ai): ask, car_photo, summary, market, project_plan, project_update
+    aiHelp: async function (body) { return parse(await call('/functions/v1/garage-ai', { method: 'POST', headers: JSONH, body: JSON.stringify(body) })); },
     aiProbe: async function () { try { return await parse(await call('/functions/v1/logbook-ai', { method: 'POST', headers: JSONH, body: JSON.stringify({ probe: true }) })); } catch (e) { return null; } },
     // Car projects
     projects: [], projectsOn: false, activity: [], activityOn: false,

@@ -360,6 +360,24 @@
   .regdoc { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; min-width: 0; overflow-wrap: anywhere; }
   .regdoc .linkbtn { display: inline-flex; align-items: center; gap: 6px; align-self: center; max-width: 100%; }
   .regdoc .linkbtn svg { width: 16px; height: 16px; flex: none; }
+  /* AI helpers */
+  .ai-note { display: flex; align-items: flex-start; gap: 6px; margin: 0; font-size: .78rem; color: var(--muted); }
+  .ai-note svg { width: 14px; height: 14px; flex: none; margin-top: 2px; color: var(--accent); }
+  .ai-box { border: 1px solid var(--line); border-inline-start: 4px solid var(--accent); border-radius: 10px; padding: 14px; background: var(--soft); gap: 12px; min-width: 0; overflow-wrap: anywhere; }
+  .ai-box h3, #plan-panel h3 { margin: 0; font-size: .92rem; color: var(--strong); }
+  .ai-box .sum-head { font-size: 1.1rem; }
+  .ai-box p, #plan-panel p { line-height: 1.55; }
+  .ai-fill { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; padding: 14px; border: 1px dashed var(--accent); border-radius: 12px; background: var(--soft); }
+  form.askbar { display: flex; flex-direction: row; flex-wrap: nowrap; gap: 8px; align-items: stretch; } form.askbar input { flex: 1 1 auto; width: auto; min-width: 0; } form.askbar .btn { width: auto; }
+  .askbar { gap: 8px; align-items: stretch; } .askbar input { min-height: 2.6rem; } .askbar .btn { flex: none; }
+  .bubble.thinking { opacity: .7; font-style: italic; }
+  ul.ticks, ul.movers, ul.plain { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+  ul.ticks li, ul.plain li { position: relative; padding-inline-start: 1.3rem; line-height: 1.45; }
+  ul.ticks li::before, ul.plain li::before { position: absolute; inset-inline-start: 0; top: 0; font-weight: 700; }
+  ul.ticks.ok li::before { content: '✓'; color: var(--ok); } ul.ticks.gap li::before { content: '?'; color: var(--warn); } ul.plain li::before { content: '•'; color: var(--accent); }
+  ul.movers li { display: flex; gap: 8px; align-items: baseline; line-height: 1.45; } ul.movers .mv { flex: none; font-size: .8rem; color: var(--muted); } ul.movers .mv.up { color: var(--ok); } ul.movers .mv.down { color: var(--bad); }
+  ol.plansteps { margin: 0; padding-inline-start: 1.4rem; display: flex; flex-direction: column; gap: 8px; } ol.plansteps li { line-height: 1.45; } ol.plansteps b { display: block; }
+  .btn > svg { flex: none; }
 </style>
 </head>
 <body>
@@ -473,6 +491,8 @@
     notes: [], blocks: [], seenAt: '', extras: false,
     // AI logbook (Edge Function logbook-ai)
     aiDraft: async function (car, files) { return parse(await call('/functions/v1/logbook-ai', { method: 'POST', headers: JSONH, body: JSON.stringify({ car: { name: car.name || '', year: car.year || '' }, files: files.map(function (f) { return { path: f.path, name: f.name, type: f.type }; }) }) })); },
+    // AI helper (Edge Function garage-ai): ask, car_photo, summary, market, project_plan, project_update
+    aiHelp: async function (body) { return parse(await call('/functions/v1/garage-ai', { method: 'POST', headers: JSONH, body: JSON.stringify(body) })); },
     aiProbe: async function () { try { return await parse(await call('/functions/v1/logbook-ai', { method: 'POST', headers: JSONH, body: JSON.stringify({ probe: true }) })); } catch (e) { return null; } },
     // Car projects
     projects: [], projectsOn: false, activity: [], activityOn: false,
@@ -1682,6 +1702,63 @@ const AR = {
   'Registration removed': 'تم حذف الاستمارة',
   'Press again to remove': 'اضغط مرة أخرى للحذف',
   'Added {d}': 'أضيفت في {d}',
+  'Write a history summary': 'اكتب ملخص التاريخ',
+  'The AI helper is not switched on yet.': 'لم يتم تفعيل مساعد الذكاء الاصطناعي بعد.',
+  'You have used this month’s AI allowance. It resets on the first of the month.': 'استنفدت حصة الذكاء الاصطناعي لهذا الشهر. تتجدد في أول الشهر.',
+  'That photo could not be read. Try a clearer photo.': 'تعذرت قراءة الصورة. جرّب صورة أوضح.',
+  'The AI could not answer just now. Try again.': 'تعذر على الذكاء الاصطناعي الإجابة الآن. حاول مرة أخرى.',
+  'Written by AI from your own data. It is guidance, not professional advice: check anything important.': 'كتبه الذكاء الاصطناعي من بياناتك. هو للاسترشاد وليس نصيحة مهنية: تحقق من كل ما هو مهم.',
+  'The AI declined to answer that. Try asking about your cars.': 'لم يُجب الذكاء الاصطناعي عن ذلك. جرّب سؤالًا عن سياراتك.',
+  'Ask your garage': 'اسأل كراجك',
+  'Loading…': 'جارٍ التحميل…',
+  'Add a car first. Then you can ask about its history, costs and what is due.': 'أضف سيارة أولًا، ثم اسأل عن تاريخها وتكاليفها وما يستحق قريبًا.',
+  'Ask anything about your cars, their logbooks and reminders. Answers come only from what you have saved here.': 'اسأل عن سياراتك وسجلاتها وتذكيراتها. الإجابات تأتي فقط مما حفظته هنا.',
+  'Looking through your garage…': 'جارٍ البحث في كراجك…',
+  'e.g. When was the last oil service?': 'مثال: متى كان آخر تغيير زيت؟',
+  'Your question': 'سؤالك',
+  'Ask': 'اسأل',
+  'Start again': 'ابدأ من جديد',
+  'Ask your garage, e.g. what is due soon?': 'اسأل كراجك، مثال: ما المستحق قريبًا؟',
+  'Fill in from a photo': 'املأ البيانات من صورة',
+  'Reading the photo…': 'جارٍ قراءة الصورة…',
+  'Filled in: {f}. Check each one before you save.': 'تمت تعبئة: {f}. راجع كل حقل قبل الحفظ.',
+  'No car details could be read from that photo. Try the registration card or the chassis plate.': 'لم نتمكن من قراءة بيانات السيارة من الصورة. جرّب صورة الاستمارة أو لوحة رقم الشاصي.',
+  'Skip the typing': 'وفّر الكتابة',
+  'Photograph the registration card, the chassis plate or an advert and the app fills in the details.': 'صوّر الاستمارة أو لوحة رقم الشاصي أو إعلان السيارة وسيملأ التطبيق البيانات.',
+  'Documented': 'موثّق',
+  'Gaps a buyer may ask about': 'ثغرات قد يسأل عنها المشتري',
+  'History summary from {g}, written {d}': 'ملخص التاريخ من {g}، كُتب في {d}',
+  'Written by AI from the owner’s logbook. Not a formal valuation or inspection report.': 'كتبه الذكاء الاصطناعي من سجل المالك. ليس تقييمًا رسميًا ولا تقرير فحص.',
+  'Writing the summary from your logbook. This can take a minute…': 'جارٍ كتابة الملخص من سجلك. قد يستغرق ذلك دقيقة…',
+  'Try again': 'حاول مرة أخرى',
+  'Copied': 'تم النسخ',
+  'Couldn’t copy. Use Print or save as PDF instead.': 'تعذر النسخ. استخدم الطباعة أو الحفظ كملف PDF.',
+  'Copy the text': 'انسخ النص',
+  'Print or save as PDF': 'اطبع أو احفظ كملف PDF',
+  'Explain this in plain words': 'اشرح هذا بكلمات بسيطة',
+  'Reading the sales for this model…': 'جارٍ قراءة مبيعات هذا الطراز…',
+  'In plain words': 'بكلمات بسيطة',
+  'What would move the value': 'ما الذي يغيّر القيمة',
+  'Plan helper': 'مساعد الخطة',
+  'Get suggested steps, parts, tools and common pitfalls for this job on your car.': 'احصل على خطوات وقطع وأدوات مقترحة وأخطاء شائعة لهذا العمل على سيارتك.',
+  'Suggest a plan': 'اقترح خطة',
+  'Working out a plan for this job…': 'جارٍ إعداد خطة لهذا العمل…',
+  'Steps': 'الخطوات',
+  'Parts': 'القطع',
+  'Tools': 'الأدوات',
+  'Common pitfalls': 'أخطاء شائعة',
+  'Leave to a specialist': 'اتركه لمختص',
+  'Hide the plan': 'إخفاء الخطة',
+  'Show the full plan': 'عرض الخطة كاملة',
+  'Suggest again': 'اقترح من جديد',
+  'Tidy up with AI': 'رتّب النص بالذكاء الاصطناعي',
+  'Write a few rough notes or add a photo first.': 'اكتب ملاحظات سريعة أو أضف صورة أولًا.',
+  'Drafting…': 'جارٍ كتابة المسودة…',
+  'Draft ready. Edit it, then post.': 'المسودة جاهزة. عدّلها ثم انشرها.',
+  'What is due in the next three months?': 'ما المستحق خلال الأشهر الثلاثة القادمة؟',
+  'What have I spent on my cars this year?': 'كم صرفت على سياراتي هذا العام؟',
+  'When was each car last serviced?': 'متى كانت آخر صيانة لكل سيارة؟',
+  'If you use the AI helper (asking your garage a question, filling in a car from a photo, a history summary, a market explanation or project help), the details of your own cars that the answer needs, such as logbook records and reminders, or the photo you chose, are sent to Anthropic in the same way. This happens only when you press the button. Other members’ information is never sent.': 'إذا استخدمت مساعد الذكاء الاصطناعي (سؤال كراجك، تعبئة بيانات سيارة من صورة، ملخص التاريخ، شرح السوق أو المساعدة في المشاريع)، تُرسل إلى Anthropic بالطريقة نفسها بيانات سياراتك التي تحتاجها الإجابة، مثل سجلات الصيانة والتذكيرات، أو الصورة التي اخترتها. يحدث ذلك فقط عند ضغطك على الزر. لا تُرسل معلومات الأعضاء الآخرين أبدًا.',
 };
 /* ===== Screens. Every visible string goes through t() so it can be shown in Arabic (see i18n.js). ===== */
 const CLOUD = window.g197cloud;
@@ -1758,6 +1835,7 @@ const ICONS = {
   home: '<path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9.5h13V10"/><path d="M10 19.5v-5h4v5"/>',
   garage: '<path d="M3 10.5 12 5l9 5.5V20H3z"/><path d="M7 20v-6h10v6"/><path d="M7 17h10"/>',
   market: '<path d="M4 19.5h16"/><path d="M5 15.5l4.5-5 3.5 3 6-7.5"/><path d="M15.5 6H19v3.5"/>',
+  spark: '<path d="M12 3.5l1.9 5.1 5.1 1.9-5.1 1.9L12 17.5l-1.9-5.1L5 10.5l5.1-1.9z"/><path d="M18.5 15.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/>',
   lock: '<rect x="5" y="10.5" width="14" height="9.5" rx="2"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/>',
   settings: '<circle cx="12" cy="12" r="3"/><path d="M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21M5.6 5.6l1.8 1.8M16.6 16.6l1.8 1.8M5.6 18.4l1.8-1.8M16.6 7.4l1.8-1.8"/>',
   friends: '<circle cx="9" cy="8.5" r="3.2"/><path d="M3 19.5c.6-3.4 3-5 6-5s5.4 1.6 6 5"/><circle cx="17" cy="9.5" r="2.5"/><path d="M17 14.5c2.2.2 3.6 1.6 4 4"/>',
@@ -1966,6 +2044,7 @@ function viewHome() {
     out.append(el('section', { class: 'hero-value', id: 'home-value' }, el('span', { class: 'label', text: t('Your garage is worth about') }), el('div', { class: 'big', style: 'font-size:clamp(2.4rem,9vw,3.6rem)', text: g.valued ? money(g.total) : '—' }),
       bits.length ? el('div', { class: 'row small', style: 'gap:6px 16px;font-weight:600' }, bits) : null,
       el('p', { class: 'muted small' }, el('span', { text: t('{a} of {b} cars valued from recent sales.', { a: g.valued, b: S.cars.length }) + ' ' }), el('a', { href: '#/values', text: t('How we value cars') }))), carRow());
+    const ab = askBox(); if (ab) out.append(ab);
     const due = S.cars.flatMap(dueOf);
     if (due.length) out.append(panel(t('Coming up'), null, el('ul', { class: 'due-list' }, due.map((x) => el('li', {}, el('span', {}, el('a', { href: '#/car/' + x.car.id + '/logbook', text: x.r.title }), el('span', { class: 'muted', text: ' · ' + (x.car.name || '') })), el('span', { class: 'tag s-' + x.st, text: remText(x.car, x.r, x.st) }))))));
   }
@@ -2119,7 +2198,7 @@ function carForm(car) {
       el('div', { class: 'row2' }, field(t('Purchase price'), f.paid), field(t('Currency'), f.paidCur)),
       el('div', { class: 'row2' }, field(t('Condition'), f.condition), field(t('Model to compare against'), f.model)))),
     el('div', { class: 'row' }, save, el('a', { class: 'btn', href: isNew ? '#/garage' : '#/car/' + car.id + '/overview', text: t('Cancel') })), status);
-  const out = el('div', { class: 'col', style: 'max-width:40rem' }, el('h1', { text: t(isNew ? 'Add a car' : 'Edit {name}', { name: c.name || '' }) }), isNew ? el('p', { class: 'muted', text: t('Four things are enough to start: the make, the model, the year and the mileage. Everything else can wait.') }) : null, panel(null, null, form));
+  const out = el('div', { class: 'col', style: 'max-width:40rem' }, el('h1', { text: t(isNew ? 'Add a car' : 'Edit {name}', { name: c.name || '' }) }), isNew ? el('p', { class: 'muted', text: t('Four things are enough to start: the make, the model, the year and the mileage. Everything else can wait.') }) : null, isNew ? photoFill(f, () => { const dt = form.querySelector('details.more'); if (dt) dt.open = true; hintModel(); }) : null, panel(null, null, form));
   if (!isNew) {
     let sure = false; const del = el('button', { type: 'button', class: 'btn danger', id: 'b-del', text: t('Remove this car') });
     del.addEventListener('click', async () => {
@@ -2191,7 +2270,7 @@ function viewCar(car, sub) {
   const out = el('div', { class: 'col' },
     el('a', { class: 'small', href: '#/garage', text: '‹ ' + (CLOUD.garageName || t('My garage')) }), banner(car, e),
     el('nav', { class: 'subtabs', 'aria-label': t('Car sections') }, tabs.map((x) => el('a', { class: 'tab', href: base + x[0], 'aria-current': sub === x[0] ? 'page' : 'false', text: x[1] }))), sub === 'overview' ? tip('car') : null);
-  if (sub === 'market') { HELP.mark('market'); out.append(panel(null, null, marketView(modelOf(car), car))); }
+  if (sub === 'market') { HELP.mark('market'); out.append(panel(null, null, mxPanel(car, modelOf(car)), marketView(modelOf(car), car))); }
   else if (sub === 'projects') { const mine = CLOUD.projects.filter((x) => x.mine && x.car_id === car.id); out.append(el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn primary', id: 'b-proj-new', onclick: () => { S.projCar = car.id; nav('#/project/new'); } }, ico('plus', t('Start a project')))), mine.length ? projectCards(mine) : starter(t('A project tracks a service, an upgrade or a restoration from start to finish. Post updates with photos and let friends suggest tools and know-how.'), el('button', { type: 'button', class: 'btn primary', onclick: () => { S.projCar = car.id; nav('#/project/new'); } }, ico('plus', t('Start a project'))))); }
   else if (sub === 'logbook') { const tp = tip('logbook'); if (tp) out.append(tp); out.append(logbookView(car)); }
   else {
@@ -2234,8 +2313,9 @@ function logbookView(car) {
   out.append(remPanel);
   // records
   if (CLOUD.user) out.append(regPanel(car));
-  const head = el('div', { class: 'row between' }, el('h2', { text: t('History') }), el('div', { class: 'row' }, recs.length ? el('button', { type: 'button', class: 'btn', id: 'b-pdf', onclick: () => printLogbook(car) }, ico('pdf', t('Download as PDF'))) : null, S.rec || S.ai || !CLOUD.user ? null : el('button', { type: 'button', class: 'btn', id: 'b-ai-new', onclick: () => { S.ai = { car: car.id, stage: 'pick' }; render(); } }, ico('camera', t('Build from my documents'))), S.rec || S.ai ? null : el('button', { type: 'button', class: 'btn primary', id: 'b-rec-new', onclick: () => { S.rec = { files: [], removed: [] }; render(); } }, ico('plus', t('Add a record')))));
+  const head = el('div', { class: 'row between' }, el('h2', { text: t('History') }), el('div', { class: 'row' }, recs.length ? el('button', { type: 'button', class: 'btn', id: 'b-pdf', onclick: () => printLogbook(car) }, ico('pdf', t('Download as PDF'))) : null, S.rec || S.ai || !CLOUD.user ? null : el('button', { type: 'button', class: 'btn', id: 'b-ai-new', onclick: () => { S.ai = { car: car.id, stage: 'pick' }; render(); } }, ico('camera', t('Build from my documents'))), S.rec || S.ai || !aiOn() || !recs.length || (S.sum && S.sum.car === car.id) ? null : el('button', { type: 'button', class: 'btn', id: 'b-sum', onclick: () => sumRun(car) }, [svgIcon(ICONS.spark), el('span', { text: t('Write a history summary') })]), S.rec || S.ai ? null : el('button', { type: 'button', class: 'btn primary', id: 'b-rec-new', onclick: () => { S.rec = { files: [], removed: [] }; render(); } }, ico('plus', t('Add a record')))));
   const hist = el('section', { class: 'panel' }, head);
+  if (S.sum && S.sum.car === car.id) hist.append(sumPanel(car)); else if (S.sum && !S.sum.busy) S.sum = null;
   if (S.rec) hist.append(recordForm(car));
   if (S.ai && S.ai.car === car.id) hist.append(aiPanel(car)); else if (S.ai && S.ai.stage !== 'working') S.ai = null;
   if (!recs.length) { if (!S.rec && !S.ai) hist.append(starter(t('The logbook is this car’s history: services, inspections, documents and costs. The quickest start is to upload your paperwork and let the app draft the records.'), CLOUD.user ? el('button', { type: 'button', class: 'btn primary', id: 'b-ai-start', onclick: () => { S.ai = { car: car.id, stage: 'pick' }; render(); } }, ico('camera', t('Build from my documents'))) : null, el('button', { type: 'button', class: 'btn', onclick: () => { S.rec = { files: [], removed: [] }; render(); } }, ico('plus', t('Add a record'))))); out.append(hist); return out; }
@@ -2865,7 +2945,7 @@ function viewPage(name) {
     h('What we keep'), ul('Your email address and a protected form of your password, to sign you in.', 'Your profile: name, city, photo and social links, if you add them.', 'Your garage: cars, photos, logbook records, documents and reminders.', 'What you do in the community: friends, communities, posts, events and reports.'),
     h('Who can see it'), ul('Your cars, logbooks, documents, prices paid and chassis numbers are private to you.', 'If you switch on sharing, friends see each car’s name, year, model, colour, mileage and photos, and nothing else.', 'Your name, username and photo are shown to other members, for example beside your posts and in search. Your email is not shown to other members.', 'Private messages can be read by you and the friend you are writing to.', 'The Garage 197 team can access stored data to run the service and to review reports.'),
     h('Where it is stored'), p('Data is stored with our hosting provider, Supabase, on servers in Australia. We do not sell your data and we do not show adverts.'),
-    h('AI reading of documents'), p('If you choose “Build from my documents”, the files you pick are sent to Anthropic, the maker of the Claude AI service, so they can be read and turned into draft logbook records. This happens only when you start it. Anthropic processes the files to provide that reading and does not use them to train its AI models.'),
+    h('AI reading of documents'), p('If you choose “Build from my documents”, the files you pick are sent to Anthropic, the maker of the Claude AI service, so they can be read and turned into draft logbook records. This happens only when you start it. Anthropic processes the files to provide that reading and does not use them to train its AI models.'), p('If you use the AI helper (asking your garage a question, filling in a car from a photo, a history summary, a market explanation or project help), the details of your own cars that the answer needs, such as logbook records and reminders, or the photo you chose, are sent to Anthropic in the same way. This happens only when you press the button. Other members’ information is never sent.'),
     h('Your choices'), p('You can change or remove your cars, records, photos and profile at any time. To delete your account and everything in it, use Delete my account on your profile page.'),
     h('Changes'), p('If this page changes in a way that matters, we will say so in the app.'));
   else if (name === 'terms') out.append(el('h1', { text: t('Terms of use') }), draft(),
@@ -3042,6 +3122,7 @@ function viewProject(id) {
     CLOUD.extras ? el('button', { type: 'button', class: 'linkbtn small', text: t('Report'), onclick: () => reportAsk('user', x.owner, 'project ' + id + ': ' + x.title + ' / ' + (x.about || '')) }) : null);
   out.append(head, tools);
   const d = (S.proj || {})[id]; if (!d) loadProject(id);
+  const pp = planPanel(x, d); if (pp) out.append(pp);
   const loading = !d || d.loading;
   // updates
   const upPanel = el('section', { class: 'panel' }, el('h2', { text: t('Progress') }));
@@ -3050,7 +3131,7 @@ function viewProject(id) {
     file.addEventListener('change', () => { fname.textContent = file.files[0] ? file.files[0].name : ''; });
     upPanel.append(el('form', { class: 'col', style: 'gap:8px', onsubmit: async (ev) => { ev.preventDefault(); const v = body.value.trim(), f = file.files[0]; if (!v && !f) { st.textContent = t('Write something or add a photo.'); return; } st.textContent = t('Sending…');
       try { let ph = null; if (f) ph = (await CLOUD.upload('project-' + id, await shrink(f))).path; await CLOUD.addUpdate(id, v, ph); body.value = ''; body.blur(); CLOUD.loadSocial(); await loadProject(id); } catch (e) { st.textContent = t('Couldn’t save. Try again.'); } } },
-      body, el('div', { class: 'row' }, el('button', { type: 'submit', class: 'btn primary', id: 'b-u-post', text: t('Post update') }), el('button', { type: 'button', class: 'btn', onclick: () => file.click() }, ico('camera', t('Add a photo'))), file, fname, st)));
+      body, el('div', { class: 'row' }, el('button', { type: 'submit', class: 'btn primary', id: 'b-u-post', text: t('Post update') }), el('button', { type: 'button', class: 'btn', onclick: () => file.click() }, ico('camera', t('Add a photo'))), draftBtn(x, body, file, st), file, fname, st)));
   }
   upPanel.append(loading ? skel('5rem') : d.updates.length ? el('ul', { class: 'posts timeline' }, d.updates.map((u) => el('li', {}, el('div', { class: 'row between' }, el('span', { class: 'muted small', text: fmtWhen(u.created_at) }), x.mine ? el('button', { type: 'button', class: 'linkbtn small', text: t('Remove'), onclick: async () => { try { await CLOUD.deleteUpdate(u.id); if (u.photo) CLOUD.removeFiles([u.photo]); CLOUD.loadSocial(); await loadProject(id); } catch (e) { toast(t('Couldn’t save. Try again.')); } } }) : null), u.body ? el('p', { text: u.body }) : null, u.photo ? postPhoto(u.photo) : null)))
     : el('p', { class: 'empty', text: t(x.mine ? 'No updates yet. Post the first one to show where the project stands.' : 'No updates yet.') }));
@@ -3079,6 +3160,164 @@ function viewProject(id) {
   })) : el('p', { class: 'empty', text: t(sugg.length ? 'No suggestions of this type.' : x.mine ? (x.shared ? 'No suggestions yet. Friends who open the project can add them.' : 'Share the project with friends to get suggestions.') : 'No suggestions yet. Be the first.') }));
   out.append(sgPanel);
   return out;
+}
+
+/* ----- AI helpers (Edge Function garage-ai) ----- */
+const aiOn = () => S.aiOn === true;
+function aiCheck() { const u = CLOUD.user && CLOUD.user.id; if (!u) { S.aiFor = null; S.aiOn = null; return; } if (S.aiFor === u) return; S.aiFor = u; S.aiOn = null; S.ask = null; CLOUD.aiHelp({ probe: true }).then((r) => { S.aiOn = !!(r && r.ok); if (S.aiOn) render(); }).catch(() => { S.aiOn = false; }); }
+const aiFail = (e) => { const m = (e && e.message) || ''; return (e && e.status === 404) || m === 'not_configured' ? t('The AI helper is not switched on yet.') : m === 'limit' ? t('You have used this month’s AI allowance. It resets on the first of the month.') : m === 'busy' ? t('The AI service is busy. Wait a minute and try again.') : m === 'signin' ? t('Sign in again, then retry.') : m === 'bad_image' ? t('That photo could not be read. Try a clearer photo.') : t('The AI could not answer just now. Try again.'); };
+const aiNote = () => el('p', { class: 'ai-note' }, svgIcon(ICONS.spark), el('span', { text: t('Written by AI from your own data. It is guidance, not professional advice: check anything important.') }));
+const aiCall = async (task, extra) => { const r = await CLOUD.aiHelp({ task, lang: S.lang, ...extra }); if (r && r.refused) throw new Error('refused'); return r; };
+const fileB64 = (file) => new Promise((res, rej) => { const fr = new FileReader(); fr.onload = () => res(String(fr.result).split(',')[1] || ''); fr.onerror = rej; fr.readAsDataURL(file); });
+async function aiImage(file) { const f = await shrink(file); if (!/^image\/(jpeg|png|gif|webp)$/.test(f.type)) throw new Error('bad_image'); return { type: f.type, data: await fileB64(f) }; }
+function aiCarData(car, notesMax) {
+  const e = estimate(car), u = unitName(car.unit || 'mi');
+  return { name: car.name || '', model: modelOf(car) || '', year: car.year || '', colour: car.colour || '', interior: car.interior || '', chassis_number: car.vin || '', odometer: car.miles ? +car.miles + ' ' + u : '', acquired: car.acquired || '', paid: +car.paid ? +car.paid + ' ' + (car.paidCur || 'USD') : '',
+    app_estimate: e ? money(e.gbp) + ' (' + e.n + ' sales)' : '',
+    records: [...(car.records || [])].sort((a, b) => (b.date || '').localeCompare(a.date || '')).map((r) => ({ date: r.date || '', type: r.type || 'note', title: r.title || '', by: r.by || '', cost: +r.cost || 0, currency: +r.cost ? r.cur || 'USD' : '', odometer: r.odometer ? +r.odometer + ' ' + u : '', status: r.status || '', notes: (r.notes || '').slice(0, notesMax), files: (r.files || []).length })),
+    reminders: (car.reminders || []).map((r) => ({ title: r.title || '', due_date: r.date || '', due_at_odometer: r.odo ? +r.odo + ' ' + u : '' })) };
+}
+function aiGarageData() { let d; for (const n of [400, 160, 0]) { d = { display_currency: S.cur, garage: CLOUD.garageName || '', cars: S.cars.map((c) => aiCarData(c, n)) }; if (JSON.stringify(d).length < 80000) return d; } for (const c of d.cars) c.records = c.records.slice(0, 40); return d; }
+
+// 1. Ask your garage
+const ASK_IDEAS = ['What is due in the next three months?', 'What have I spent on my cars this year?', 'When was each car last serviced?'];
+async function askSend(q) {
+  q = String(q || '').trim().slice(0, 1000); const a = S.ask = S.ask || { turns: [], draft: '' }; if (!q || a.busy) return;
+  const history = a.turns.map((x) => ({ role: x.role, text: x.text })); a.turns.push({ role: 'user', text: q }); a.busy = true; a.err = ''; a.draft = ''; render();
+  try { const r = await aiCall('ask', { question: q, history, data: aiGarageData() }); a.turns.push({ role: 'assistant', text: r.text || '' }); }
+  catch (e) { a.err = e && e.message === 'refused' ? t('The AI declined to answer that. Try asking about your cars.') : aiFail(e); }
+  a.busy = false; render();
+}
+function viewAsk() {
+  const a = S.ask = S.ask || { turns: [], draft: '' }, out = el('div', { class: 'col', style: 'max-width:44rem' }, el('h1', { text: t('Ask your garage') }));
+  if (!aiOn()) { out.append(el('p', { class: 'empty', text: S.aiOn === null ? t('Loading…') : t('The AI helper is not switched on yet.') })); return out; }
+  if (!S.cars.length) { out.append(starter(t('Add a car first. Then you can ask about its history, costs and what is due.'), el('a', { class: 'btn primary', href: '#/car/new' }, ico('plus', t('Add a car'))))); return out; }
+  out.append(el('p', { class: 'muted', text: t('Ask anything about your cars, their logbooks and reminders. Answers come only from what you have saved here.') }));
+  if (!a.turns.length) out.append(el('div', { class: 'chips', id: 'ask-ideas' }, ASK_IDEAS.map((q) => el('button', { type: 'button', class: 'chip', text: t(q), onclick: () => askSend(t(q)) }))));
+  else { const box = el('div', { class: 'bubbles', id: 'ask-log', 'aria-live': 'polite' }, a.turns.map((x) => el('div', { class: 'bubble' + (x.role === 'user' ? ' mine' : '') }, el('p', { dir: 'auto', text: x.text }))), a.busy ? el('div', { class: 'bubble thinking' }, el('p', { text: t('Looking through your garage…') })) : null); out.append(box); setTimeout(() => { box.scrollTop = box.scrollHeight; }, 0); }
+  if (a.err) out.append(el('p', { class: 'status', style: 'color:var(--bad)', text: a.err }));
+  const q = el('input', { type: 'text', id: 'ask-q', maxlength: 1000, value: a.draft || '', placeholder: t('e.g. When was the last oil service?'), autocomplete: 'off', 'aria-label': t('Your question'), style: 'flex:1;min-width:0' }); q.addEventListener('input', () => { a.draft = q.value; });
+  out.append(el('form', { class: 'row askbar', style: 'flex-wrap:nowrap', onsubmit: (ev) => { ev.preventDefault(); askSend(q.value); } }, q, el('button', { type: 'submit', class: 'btn primary', id: 'b-ask', disabled: a.busy ? true : null, text: t('Ask') })));
+  if (a.turns.length) out.append(el('div', { class: 'row between' }, aiNote(), el('button', { type: 'button', class: 'linkbtn small', id: 'b-ask-new', text: t('Start again'), onclick: () => { S.ask = null; render(); } })));
+  if (a.turns.length && !a.busy && S.askFocus) { S.askFocus = false; setTimeout(() => { const n = $('ask-q'); if (n) n.focus(); }, 0); }
+  return out;
+}
+function askBox() {
+  if (!aiOn() || !S.cars.length) return null;
+  const q = el('input', { type: 'text', id: 'home-ask-q', maxlength: 1000, placeholder: t('Ask your garage, e.g. what is due soon?'), autocomplete: 'off', 'aria-label': t('Ask your garage'), style: 'flex:1;min-width:0' });
+  return el('form', { class: 'row askbar', id: 'home-ask', style: 'flex-wrap:nowrap', onsubmit: (ev) => { ev.preventDefault(); const v = q.value.trim(); nav('#/ask', v ? () => { askSend(v); } : null); } }, q, el('button', { type: 'submit', class: 'btn', id: 'b-home-ask' }, [svgIcon(ICONS.spark), el('span', { text: t('Ask') })]));
+}
+
+// 2. Add a car from a photo: fills the form fields, nothing is saved until the owner presses save
+function photoFill(f, done) {
+  if (!aiOn()) return null;
+  const input = el('input', { type: 'file', accept: 'image/*', id: 'ai-photo', style: 'display:none' }), st = el('p', { class: 'status', role: 'status', id: 'ai-photo-status', style: 'margin:0' }), btn = el('button', { type: 'button', class: 'btn', id: 'b-ai-photo', onclick: () => input.click() }, [svgIcon(ICONS.spark), el('span', { text: t('Fill in from a photo') })]);
+  input.addEventListener('change', async () => {
+    const file = input.files[0]; if (!file) return; btn.disabled = true; st.style.color = ''; st.textContent = t('Reading the photo…');
+    try {
+      const r = (await aiCall('car_photo', { image: await aiImage(file) })).result || {}, got = [];
+      const put = (inp, v, label) => { v = String(v || '').trim(); if (!v) return; inp.value = v.slice(0, inp.maxLength > 0 ? inp.maxLength : 60); inp.dispatchEvent(new Event('input', { bubbles: true })); got.push(label); };
+      const mk = String(r.make || '').trim(), mkl = mk.toLowerCase(), known = mk && (MAKES.find((m) => m.toLowerCase() === mkl) || MAKES.find((m) => m.toLowerCase().startsWith(mkl) || mkl.startsWith(m.toLowerCase())));
+      if (mk) { f.make.value = known || mk.slice(0, 40); f.make.dispatchEvent(new Event('change')); got.push(t('Make')); }
+      if (r.model) { const hit = suggestHit([known || mk, r.model].join(' ')); f.mtext.value = String(r.model).slice(0, 60); if (hit && known && hit.name.startsWith(known + ' ')) { f.mtext.value = hit.name.slice(known.length + 1); f.model.value = hit.name; } got.push(t('Model')); }
+      if (/^(19|20)\d\d$/.test(String(r.year || ''))) put(f.year, r.year, t('Model year'));
+      put(f.vin, String(r.vin || '').toUpperCase().replace(/[^A-Z0-9]/g, ''), t('Chassis number (VIN)')); put(f.colour, r.colour, t('Colour')); put(f.interior, r.interior, t('Interior')); put(f.reg, r.reg, t('Registration'));
+      if (/^\d+$/.test(String(r.odometer || ''))) { put(f.miles, r.odometer, t('Odometer')); if (r.odometer_unit) f.unit.value = r.odometer_unit; }
+      if (done) done();
+      st.textContent = got.length ? t('Filled in: {f}. Check each one before you save.', { f: got.join(', ') }) + (r.unsure ? ' ' + r.unsure : '') : t('No car details could be read from that photo. Try the registration card or the chassis plate.');
+    } catch (e) { st.style.color = 'var(--bad)'; st.textContent = e && e.message === 'refused' ? t('That photo could not be read. Try a clearer photo.') : aiFail(e); }
+    btn.disabled = false; input.value = '';
+  });
+  return el('div', { class: 'ai-fill', id: 'ai-fill' }, el('div', { class: 'col', style: 'gap:2px' }, el('b', { text: t('Skip the typing') }), el('span', { class: 'muted small', text: t('Photograph the registration card, the chassis plate or an advert and the app fills in the details.') })), btn, input, st);
+}
+
+// 3. Car summary for selling or insuring
+async function sumRun(car) { const s = S.sum = { car: car.id, busy: true }; render(); try { s.r = (await aiCall('summary', { data: { car: aiCarData(car, 600) } })).result; } catch (e) { s.err = e && e.message === 'refused' ? t('The AI could not answer just now. Try again.') : aiFail(e); } s.busy = false; render(); }
+const sumText = (car, r) => [r.headline, ...(r.sections || []).flatMap((x) => ['', x.heading, x.text]), ...((r.documented || []).length ? ['', t('Documented'), ...r.documented.map((x) => '- ' + x)] : []), ...((r.missing || []).length ? ['', t('Gaps a buyer may ask about'), ...r.missing.map((x) => '- ' + x)] : [])].join('\n');
+function sumPrint(car, r) {
+  const p = $('print'), lg = el('div', { style: 'width:34pt;height:34pt;float:inline-end' }); lg.innerHTML = LOGO;
+  p.replaceChildren(lg, el('h1', { text: r.headline || car.name || '' }), el('p', { text: t('History summary from {g}, written {d}', { g: CLOUD.garageName || 'Garage 197', d: fmtDate(today()) }) }),
+    ...(r.sections || []).flatMap((x) => [el('h2', { text: x.heading }), el('p', { text: x.text })]),
+    ...((r.documented || []).length ? [el('h2', { text: t('Documented') }), el('ul', {}, r.documented.map((x) => el('li', { text: x })))] : []),
+    ...((r.missing || []).length ? [el('h2', { text: t('Gaps a buyer may ask about') }), el('ul', {}, r.missing.map((x) => el('li', { text: x })))] : []),
+    el('p', { style: 'margin-top:14pt;font-size:8pt', text: t('Written by AI from the owner’s logbook. Not a formal valuation or inspection report.') }));
+  window.print();
+}
+function sumPanel(car) {
+  const s = S.sum, box = el('div', { id: 'sum-panel', class: 'ai-box col' });
+  if (s.busy) { box.append(el('p', { class: 'status', role: 'status', text: t('Writing the summary from your logbook. This can take a minute…') })); return box; }
+  if (s.err || !s.r) { box.append(el('p', { class: 'status', style: 'color:var(--bad)', text: s.err || aiFail() }), el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn', text: t('Try again'), onclick: () => sumRun(car) }), el('button', { type: 'button', class: 'btn', text: t('Close'), onclick: () => { S.sum = null; render(); } }))); return box; }
+  const r = s.r, list = (title, items, cls) => items && items.length ? el('div', { class: 'col', style: 'gap:4px' }, el('h3', { text: title }), el('ul', { class: 'ticks ' + cls }, items.map((x) => el('li', { dir: 'auto', text: x })))) : null;
+  box.append(el('h3', { class: 'sum-head', dir: 'auto', text: r.headline || car.name || '' }), ...(r.sections || []).map((x) => el('div', { class: 'col', style: 'gap:2px' }, el('h3', { dir: 'auto', text: x.heading }), el('p', { dir: 'auto', style: 'margin:0', text: x.text }))),
+    list(t('Documented'), r.documented, 'ok'), list(t('Gaps a buyer may ask about'), r.missing, 'gap'), aiNote(),
+    el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn primary', id: 'b-sum-copy', onclick: async () => { try { await navigator.clipboard.writeText(sumText(car, r)); toast(t('Copied')); } catch (e) { toast(t('Couldn’t copy. Use Print or save as PDF instead.')); } } , text: t('Copy the text') }),
+      el('button', { type: 'button', class: 'btn', id: 'b-sum-print', onclick: () => sumPrint(car, r) }, ico('pdf', t('Print or save as PDF'))), el('button', { type: 'button', class: 'btn', id: 'b-sum-close', text: t('Close'), onclick: () => { S.sum = null; render(); } })));
+  return box;
+}
+
+// 5. Market explained in plain words
+async function mxRun(car, model) {
+  S.mx = S.mx || {}; const x = S.mx[car.id] = { busy: true }; render();
+  try {
+    const m = marketFor(S.sales, model, carMiles(car), today()), cat = catOf(model), u = unitName(), sale = (r) => ({ sold: r.date, price: money(r.gbp), odometer: r.miles == null ? '' : num(dist(r.miles)) + ' ' + u, year: r.year || '', where: [r.platform !== 'Unknown' ? r.platform : '', r.location].filter(Boolean).join(', ') });
+    const data = { display_currency: S.cur, car: { name: car.name || '', model: shortModel(model), year: car.year || '', odometer: carOdo(car), colour: car.colour || '', condition_grade: car.condition || '', paid: +car.paid ? +car.paid + ' ' + (car.paidCur || 'USD') : '', logbook_records: (car.records || []).length, service_records: (car.records || []).filter((r) => r.type === 'service').length },
+      figures: { sales_on_file: m.total, similar_mileage: m.enoughComps ? { sales: m.comps.length, range: money(m.compLow) + ' to ' + money(m.compHigh), typical: money(m.compMedian), odometer_band: num(dist(m.band[0])) + ' to ' + num(dist(m.band[1])) + ' ' + u } : null,
+        last_12_months: m.n12 ? { sales: m.n12, typical: money(m.median12), low: money(m.low12), high: money(m.high12) } : null, this_year: m.nYtd ? { sales: m.nYtd, typical: money(m.medianYtd) } : null, last_year: m.nPrev ? { sales: m.nPrev, typical: money(m.medianPrev) } : null,
+        change_against_last_year: m.change == null ? null : pct(m.change), typical_all_sales: money(m.medianAll), typical_2020: cat && cat.median2020 ? money(cat.median2020) : null },
+      sales: (m.nearest || []).slice(0, 12).map(sale), sales_are: m.byMiles ? 'closest by mileage' : 'most recent' };
+    x.r = (await aiCall('market', { data })).result;
+  } catch (e) { x.err = e && e.message === 'refused' ? t('The AI could not answer just now. Try again.') : aiFail(e); }
+  x.busy = false; render();
+}
+function mxPanel(car, model) {
+  if (!aiOn() || !model || !S.sales || !S.counts[model]) return null;
+  const x = (S.mx || {})[car.id], box = el('div', { id: 'mx-panel', class: 'ai-box col' });
+  if (!x) return el('div', { class: 'row', id: 'mx-panel' }, el('button', { type: 'button', class: 'btn', id: 'b-mx', onclick: () => mxRun(car, model) }, [svgIcon(ICONS.spark), el('span', { text: t('Explain this in plain words') })]));
+  if (x.busy) { box.append(el('p', { class: 'status', role: 'status', text: t('Reading the sales for this model…') })); return box; }
+  if (x.err || !x.r) { box.append(el('p', { class: 'status', style: 'color:var(--bad)', text: x.err || aiFail() }), el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn', text: t('Try again'), onclick: () => mxRun(car, model) }))); return box; }
+  const sym = { up: '▲', down: '▼', either: '◆' };
+  box.append(el('h3', { text: t('In plain words') }), el('p', { dir: 'auto', style: 'margin:0', text: x.r.summary || '' }),
+    (x.r.movers || []).length ? el('div', { class: 'col', style: 'gap:4px' }, el('h3', { text: t('What would move the value') }), el('ul', { class: 'movers' }, x.r.movers.slice(0, 5).map((v) => el('li', {}, el('span', { class: 'mv ' + (v.effect === 'up' ? 'up' : v.effect === 'down' ? 'down' : ''), 'aria-hidden': 'true', text: sym[v.effect] || '◆' }), el('span', { dir: 'auto' }, el('b', { text: v.factor + ': ' }), el('span', { text: v.why })))))) : null,
+    aiNote(), el('div', { class: 'row' }, el('button', { type: 'button', class: 'linkbtn small', text: t('Hide'), onclick: () => { delete S.mx[car.id]; render(); } })));
+  return box;
+}
+
+// 6. Project helper
+const planKey = (id) => 'g197-plan-' + id;
+const planGet = (id) => { S.plan = S.plan || {}; if (!(id in S.plan)) { let r = null; try { r = JSON.parse(ls.get(planKey(id), 'null')); } catch (e) {} S.plan[id] = r ? { r } : null; } return S.plan[id]; };
+async function planRun(x, d) {
+  const car = S.cars.find((c) => c.id === x.car_id), p = S.plan[x.id] = { busy: true }; render();
+  try {
+    const data = { car: car ? { name: car.name || '', model: modelOf(car) || '', year: car.year || '', odometer: carOdo(car) } : { name: x.car_name || '' }, project: { kind: x.kind, title: x.title, description: x.about || '', status: x.status }, recent_updates: ((d && d.updates) || []).slice(0, 5).map((u) => (u.body || '').slice(0, 400)).filter(Boolean) };
+    p.r = (await aiCall('project_plan', { data })).result; ls.set(planKey(x.id), JSON.stringify(p.r));
+  } catch (e) { p.err = e && e.message === 'refused' ? t('The AI could not answer just now. Try again.') : aiFail(e); }
+  p.busy = false; render();
+}
+function planPanel(x, d) {
+  if (!aiOn() || !x.mine) return null;
+  const p = planGet(x.id), sec = el('section', { class: 'panel', id: 'plan-panel' }, el('h2', { text: t('Plan helper') }));
+  if (!p) { sec.append(el('p', { class: 'muted small', text: t('Get suggested steps, parts, tools and common pitfalls for this job on your car.') }), el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn', id: 'b-plan', onclick: () => planRun(x, d) }, [svgIcon(ICONS.spark), el('span', { text: t('Suggest a plan') })]))); return sec; }
+  if (p.busy) { sec.append(el('p', { class: 'status', role: 'status', text: t('Working out a plan for this job…') })); return sec; }
+  if (p.err || !p.r) { sec.append(el('p', { class: 'status', style: 'color:var(--bad)', text: p.err || aiFail() }), el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn', text: t('Try again'), onclick: () => planRun(x, d) }))); return sec; }
+  const r = p.r, open = S.planOpen === x.id, list = (title, items) => items && items.length ? el('div', { class: 'col', style: 'gap:4px' }, el('h3', { text: title }), el('ul', { class: 'plain' }, items.map((v) => el('li', { dir: 'auto', text: v })))) : null;
+  sec.append(el('p', { dir: 'auto', style: 'margin:0', text: r.overview || '' }));
+  if (open) sec.append((r.steps || []).length ? el('div', { class: 'col', style: 'gap:4px' }, el('h3', { text: t('Steps') }), el('ol', { class: 'plansteps' }, r.steps.map((v) => el('li', { dir: 'auto' }, el('b', { text: v.title }), el('span', { text: v.detail }))))) : null,
+    list(t('Parts'), r.parts), list(t('Tools'), r.tools), list(t('Common pitfalls'), r.pitfalls), r.specialist ? el('div', { class: 'col', style: 'gap:4px' }, el('h3', { text: t('Leave to a specialist') }), el('p', { dir: 'auto', style: 'margin:0', text: r.specialist })) : null, aiNote());
+  sec.append(el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn', id: 'b-plan-open', 'aria-expanded': String(open), text: open ? t('Hide the plan') : t('Show the full plan'), onclick: () => { S.planOpen = open ? null : x.id; render(); } }),
+    el('button', { type: 'button', class: 'linkbtn small', id: 'b-plan-again', text: t('Suggest again'), onclick: () => planRun(x, d) }), el('button', { type: 'button', class: 'linkbtn small', text: t('Remove'), onclick: () => { ls.set(planKey(x.id), 'null'); S.plan[x.id] = null; render(); } })));
+  return sec;
+}
+function draftBtn(x, body, file, st) {
+  if (!aiOn()) return null;
+  const b = el('button', { type: 'button', class: 'btn', id: 'b-u-draft' }, [svgIcon(ICONS.spark), el('span', { text: t('Tidy up with AI') })]);
+  b.addEventListener('click', async () => {
+    const notes = body.value.trim(), f = file.files[0]; if (!notes && !f) { st.textContent = t('Write a few rough notes or add a photo first.'); return; }
+    b.disabled = true; st.textContent = t('Drafting…');
+    try { const r = await aiCall('project_update', { data: { project: { kind: x.kind, title: x.title, car: x.car_name || '' }, rough_notes: notes.slice(0, 2000) }, ...(f ? { image: await aiImage(f) } : {}) }); body.value = (r.text || '').slice(0, 2000); st.textContent = t('Draft ready. Edit it, then post.'); body.focus(); }
+    catch (e) { st.textContent = e && e.message === 'refused' ? t('The AI could not answer just now. Try again.') : aiFail(e); }
+    b.disabled = false;
+  });
+  return b;
 }
 
 /* ----- frame ----- */
@@ -3132,7 +3371,7 @@ function addSheet() {
 function render() {
   const app = $('app'); document.documentElement.lang = S.lang; document.documentElement.dir = S.lang === 'ar' ? 'rtl' : 'ltr'; document.documentElement.dataset.theme = S.theme; S.redraw = null;
   const dark = S.theme === 'dark' || (S.theme === 'auto' && window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches), tc = document.querySelector('meta[name=theme-color]'); if (tc) tc.content = dark ? '#120d1c' : '#ffffff';
-  const r = route();
+  const r = route(); aiCheck();
   if (!CLOUD.user && PAGES[r.name]) { app.replaceChildren(el('header', { class: 'head' }, brand('#/home'), el('a', { class: 'btn sm', href: '#/home', text: t('Sign in') })), el('main', {}, viewPage(r.name)), footer()); return; }
   if (!CLOUD.user || S.mode === 'newpass') { app.replaceChildren(viewLogin()); return; }
   const top = r.name === 'home' ? 'home' : ['friends', 'friend', 'member', 'communities', 'community', 'events'].includes(r.name) ? 'friends' : r.name === 'market' || r.name === 'model' ? 'market' : ['settings', 'profile', 'notifications', 'messages', 'chat', 'search', 'projects', 'project'].includes(r.name) || PAGES[r.name] ? '' : 'garage';
@@ -3160,6 +3399,7 @@ function render() {
   else if (r.name === 'member') main = viewMember(r.a);
   else if (r.name === 'messages') main = viewMessages();
   else if (r.name === 'search') main = viewSearch();
+  else if (r.name === 'ask') main = viewAsk();
   else if (r.name === 'chat') main = viewChat(r.a);
   else if (r.name === 'model') { HELP.mark('market'); const m = catOf(r.a); main = el('div', { class: 'col' }, el('div', { class: 'col', style: 'gap:6px' }, el('a', { class: 'small', href: '#/market', text: '‹ ' + t('Market') }), m ? banner({ name: shortModel(m.name) }, null) : el('h1', { text: t('Model not found') }), m ? el('p', { class: 'muted', text: t('Built {a} to {b}', { a: m.from, b: m.to }) }) : null), m ? panel(null, null, marketView(m.name, null)) : null, m ? el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn primary', id: 'b-own-one', text: t('I own one: add it to my garage'), onclick: () => { S.prefill = m.name; nav('#/car/new'); } })) : null); }
   else if (r.name === 'projects') main = viewProjects();
@@ -3167,7 +3407,7 @@ function render() {
   else if (r.name === 'car' && r.a === 'new') main = carForm(null);
   else if (r.name === 'car') { const car = S.cars.find((c) => c.id === r.a); main = !car ? el('p', { class: 'empty', text: t(CLOUD.loaded ? 'That car is no longer in your garage.' : 'Loading your garage…') }) : r.b === 'edit' ? carForm(car) : viewCar(car, r.b || 'overview'); }
   else main = viewHome();
-  const hideAdd = ['chat', 'search'].includes(r.name) || (r.name === 'car' && (r.a === 'new' || r.b === 'edit')) || (r.name === 'project' && r.a === 'new'); if (hideAdd) plus.hidden = true;
+  const hideAdd = ['chat', 'search', 'ask'].includes(r.name) || (r.name === 'car' && (r.a === 'new' || r.b === 'edit')) || (r.name === 'project' && r.a === 'new'); if (hideAdd) plus.hidden = true;
   app.replaceChildren(...[head, el('main', {}, main), CLOUD.user && !(r.name === 'profile' || r.name === 'settings' || PAGES[r.name]) ? el('div', { class: 'footpad' }) : footer(), addSheet()].filter(Boolean));
 }
 let rz; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { if (S.redraw) S.redraw(); }, 150); });

@@ -360,6 +360,24 @@
   .regdoc { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; min-width: 0; overflow-wrap: anywhere; }
   .regdoc .linkbtn { display: inline-flex; align-items: center; gap: 6px; align-self: center; max-width: 100%; }
   .regdoc .linkbtn svg { width: 16px; height: 16px; flex: none; }
+  /* AI helpers */
+  .ai-note { display: flex; align-items: flex-start; gap: 6px; margin: 0; font-size: .78rem; color: var(--muted); }
+  .ai-note svg { width: 14px; height: 14px; flex: none; margin-top: 2px; color: var(--accent); }
+  .ai-box { border: 1px solid var(--line); border-inline-start: 4px solid var(--accent); border-radius: 10px; padding: 14px; background: var(--soft); gap: 12px; min-width: 0; overflow-wrap: anywhere; }
+  .ai-box h3, #plan-panel h3 { margin: 0; font-size: .92rem; color: var(--strong); }
+  .ai-box .sum-head { font-size: 1.1rem; }
+  .ai-box p, #plan-panel p { line-height: 1.55; }
+  .ai-fill { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; padding: 14px; border: 1px dashed var(--accent); border-radius: 12px; background: var(--soft); }
+  form.askbar { display: flex; flex-direction: row; flex-wrap: nowrap; gap: 8px; align-items: stretch; } form.askbar input { flex: 1 1 auto; width: auto; min-width: 0; } form.askbar .btn { width: auto; }
+  .askbar { gap: 8px; align-items: stretch; } .askbar input { min-height: 2.6rem; } .askbar .btn { flex: none; }
+  .bubble.thinking { opacity: .7; font-style: italic; }
+  ul.ticks, ul.movers, ul.plain { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+  ul.ticks li, ul.plain li { position: relative; padding-inline-start: 1.3rem; line-height: 1.45; }
+  ul.ticks li::before, ul.plain li::before { position: absolute; inset-inline-start: 0; top: 0; font-weight: 700; }
+  ul.ticks.ok li::before { content: '✓'; color: var(--ok); } ul.ticks.gap li::before { content: '?'; color: var(--warn); } ul.plain li::before { content: '•'; color: var(--accent); }
+  ul.movers li { display: flex; gap: 8px; align-items: baseline; line-height: 1.45; } ul.movers .mv { flex: none; font-size: .8rem; color: var(--muted); } ul.movers .mv.up { color: var(--ok); } ul.movers .mv.down { color: var(--bad); }
+  ol.plansteps { margin: 0; padding-inline-start: 1.4rem; display: flex; flex-direction: column; gap: 8px; } ol.plansteps li { line-height: 1.45; } ol.plansteps b { display: block; }
+  .btn > svg { flex: none; }
 </style>
 </head>
 <body>
