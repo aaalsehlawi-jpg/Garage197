@@ -919,4 +919,5 @@ const AR = {
   'No date': 'بلا تاريخ',
   '1 record': 'سجل واحد',
   '{n} records': '{n} سجلات',
+  'G-Class': 'الفئة G',
 };

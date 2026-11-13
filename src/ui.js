@@ -365,14 +365,16 @@ function combo(input, options, onPick) {
   const pick = (o) => { input.value = o.label; close(); if (onPick) onPick(o); };
   const show = () => {
     const q = input.value.trim().toLowerCase().split(/\s+/).filter(Boolean), all = options();
-    const hits = all.filter((o) => q.every((w) => o.label.toLowerCase().includes(w))).slice(0, 150);
+    const starts = (o) => (q.length && o.label.toLowerCase().split(/[\s(]+/).some((w) => w.startsWith(q[0])) ? 0 : 1);
+    const hits = all.filter((o) => q.every((w) => o.label.toLowerCase().includes(w))).sort((x, y) => starts(x) - starts(y)).slice(0, 150);
     if (!hits.length || (hits.length === 1 && hits[0].label.toLowerCase() === input.value.trim().toLowerCase())) { close(); return; }
-    list.replaceChildren(...hits.map((o) => { const li = el('li', { role: 'option' }, el('span', { text: o.label }), o.sub ? el('span', { class: 'muted small', text: o.sub }) : null); li.addEventListener('pointerdown', (ev) => { ev.preventDefault(); pick(o); }); return li; }));
+    list.replaceChildren(...hits.map((o) => { const li = el('li', { role: 'option' }, el('span', { text: o.label }), o.sub ? el('span', { class: 'muted small', text: o.sub }) : null); li.addEventListener('click', () => pick(o)); return li; }));
     list.hidden = false; input.setAttribute('aria-expanded', 'true');
   };
   input.addEventListener('focus', show); input.addEventListener('input', () => { if (onPick) onPick(null); show(); });
-  input.addEventListener('blur', () => setTimeout(close, 150));
-  input.addEventListener('keydown', (ev) => { if (ev.key === 'Escape') close(); if (ev.key === 'Enter' && !list.hidden && list.children.length === 1) { ev.preventDefault(); list.firstChild.dispatchEvent(new Event('pointerdown')); } });
+  let held = false; list.addEventListener('mousedown', (ev) => ev.preventDefault()); list.addEventListener('pointerdown', () => { held = true; }); for (const n of ['pointerup', 'pointercancel', 'pointerleave']) list.addEventListener(n, () => setTimeout(() => { held = false; if (document.activeElement !== input) close(); }, 300));
+  input.addEventListener('blur', () => setTimeout(() => { if (!held) close(); }, 200));
+  input.addEventListener('keydown', (ev) => { if (ev.key === 'Escape') close(); if (ev.key === 'Enter' && !list.hidden && list.children.length === 1) { ev.preventDefault(); list.firstChild.click(); } });
   return box;
 }
 function carForm(car) {

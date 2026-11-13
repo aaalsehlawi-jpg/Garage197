@@ -350,6 +350,10 @@
   .rec-foot .rec-file svg { width: 14px; height: 14px; flex: none; }
   .rec-foot .rec-edit { margin-inline-start: auto; }
   html[lang="ar"] .rec-type { letter-spacing: 0; font-size: .78rem; }
+  /* photos fill their frame from the centre; model list scrolls by touch */
+  .photo { position: relative; }
+  .photo > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; }
+  .combo-list { max-height: min(15rem, 40vh); overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; touch-action: pan-y; }
 </style>
 </head>
 <body>
