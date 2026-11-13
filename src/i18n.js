@@ -1029,4 +1029,7 @@ const AR = {
   'Toyota Land Cruiser 40 Series': 'تويوتا لاند كروزر الفئة 40',
   'Toyota Land Cruiser 70 Series': 'تويوتا لاند كروزر الفئة 70',
   'Toyota Land Cruiser station wagons': 'تويوتا لاند كروزر ستيشن واغن',
+  'Photo of a {model}': 'صورة {model}',
+  'Representative photo': 'صورة توضيحية',
+  'via Wikimedia Commons': 'عبر ويكيميديا كومنز',
 };

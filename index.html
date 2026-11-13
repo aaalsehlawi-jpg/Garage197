@@ -394,6 +394,7 @@
   .mebtn { place-items: center; }
   main > .col > a.small:first-child, .col > a.small:first-child { display: inline-flex; align-items: center; min-height: 40px; align-self: flex-start; }
   input:not([type=checkbox]):not([type=radio]):not([type=file]):not([type=range]), select { min-height: 44px; }
+  .photo-credit { margin: 0; } .photo-credit:empty { display: none; } .photo-credit a { color: inherit; }
 </style>
 </head>
 <body>
@@ -1818,6 +1819,9 @@ const AR = {
   'Toyota Land Cruiser 40 Series': 'تويوتا لاند كروزر الفئة 40',
   'Toyota Land Cruiser 70 Series': 'تويوتا لاند كروزر الفئة 70',
   'Toyota Land Cruiser station wagons': 'تويوتا لاند كروزر ستيشن واغن',
+  'Photo of a {model}': 'صورة {model}',
+  'Representative photo': 'صورة توضيحية',
+  'via Wikimedia Commons': 'عبر ويكيميديا كومنز',
 };
 /* ===== Screens. Every visible string goes through t() so it can be shown in Arabic (see i18n.js). ===== */
 const CLOUD = window.g197cloud;
@@ -3403,6 +3407,59 @@ function draftBtn(x, body, file, st) {
   return b;
 }
 
+/* ----- model photos: freely licensed pictures from Wikimedia Commons, shown with credit ----- */
+const MB_CLASS = [[/^CLK/, 'CLK-Class'], [/^CLS/, 'CLS-Class'], [/^CL\d/, 'CL-Class'], [/^SLK/, 'SLK-Class'], [/^(SL|\d+ SL)/, 'SL-Class'], [/^ML/, 'M-Class'], [/^C\d/, 'C-Class'], [/^E\d/, 'E-Class'], [/^S\d/, 'S-Class']];
+const WIKI_RULES = [
+  [/^Porsche 356/, 'Porsche 356'], [/^Porsche 550/, 'Porsche 550'], [/^Porsche 904/, 'Porsche 904'], [/\(930\)/, 'Porsche 930'], [/\(964\)/, 'Porsche 964'], [/\(993\)/, 'Porsche 993'], [/\(996\)/, 'Porsche 996'],
+  [/^Porsche 911/, 'Porsche 911 (classic)'], [/^Porsche 912/, 'Porsche 912'], [/^Porsche 914/, 'Porsche 914'], [/^Porsche 924/, 'Porsche 924'], [/^Porsche 944/, 'Porsche 944'], [/^Porsche 968/, 'Porsche 968'], [/^Porsche 928/, 'Porsche 928'], [/^Porsche 959/, 'Porsche 959'], [/^Porsche Boxster/, 'Porsche 986'],
+  [/6x6/, 'Mercedes-Benz G63 AMG 6x6'], [/^Mercedes.* G(-Class|\d\d)/, 'Mercedes-Benz G-Class'], [/SLS AMG/, 'Mercedes-Benz SLS AMG'], [/^Mercedes-AMG GT/, 'Mercedes-AMG GT'], [/CLK (DTM|63 AMG Black)|CLK63 AMG Black/, 'Mercedes-Benz CLK-Class (C209)'], [/A45 AMG/, 'Mercedes-Benz A-Class (W176)'], [/CLA45 AMG/, 'Mercedes-Benz CLA'], [/GLE 63/, 'Mercedes-Benz M-Class (W166)'],
+  [/^Alfa Romeo (Giulia Sprint GT|GT 1[36]00 Junior|1750 GTV|2000 GTV|Giulia GTC|GTA)/, 'Alfa Romeo 105/115 Series Coupés'], [/^Alfa Romeo Spider Series/, 'Alfa Romeo Spider'], [/^Alfa Romeo Giulia (TI|Super|Nuova|1600)/, 'Alfa Romeo Giulia (Type 105)'], [/^Alfa Romeo Giulietta (Sprint|Spider|SZ)/, 'Alfa Romeo Giulietta (750/101)'], [/^Alfa Romeo 1900/, 'Alfa Romeo 1900'], [/^Alfa Romeo 2600/, 'Alfa Romeo 2600'], [/^Alfa Romeo 164/, 'Alfa Romeo 164'], [/^Alfa Romeo 156/, 'Alfa Romeo 156'], [/^Alfa Romeo 147/, 'Alfa Romeo 147'], [/^Alfa Romeo 75/, 'Alfa Romeo 75'], [/^Alfa Romeo (GTV|Spider) \(916\)/, 'Alfa Romeo GTV and Spider'], [/^Alfa Romeo Brera/, 'Alfa Romeo Brera and Spider'], [/^Alfa Romeo 4C/, 'Alfa Romeo 4C'], [/^Alfa Romeo 8C (Competizione|Spider)/, 'Alfa Romeo 8C Competizione'], [/^Alfa Romeo Giulia (\(952\)|Quadrifoglio)/, 'Alfa Romeo Giulia (2015)'], [/^Alfa Romeo Stelvio/, 'Alfa Romeo Stelvio'], [/^Alfa Romeo 6C/, 'Alfa Romeo 6C'], [/^Alfa Romeo 8C/, 'Alfa Romeo 8C'], [/^Alfa Romeo Alfetta/, 'Alfa Romeo Alfetta'],
+  [/^BMW M1/, 'BMW M1'], [/^BMW 2002/, 'BMW 02 Series'], [/^BMW 3\.0 CSL/, 'BMW E9'], [/^BMW M3.*\(E30\)/, 'BMW 3 Series (E30)'], [/^BMW M3.*\(E36\)/, 'BMW 3 Series (E36)'], [/^BMW M3.*\(E46\)/, 'BMW 3 Series (E46)'], [/^BMW M3.*\(E9[02]\)/, 'BMW 3 Series (E90)'], [/^BMW M5 \((E\d\d)\)/, 'BMW 5 Series ($1)'], [/^BMW M6.*\(E24\)/, 'BMW 6 Series (E24)'], [/^BMW M6 \(E63\)/, 'BMW 6 Series (E63)'], [/^BMW Z3/, 'BMW Z3'], [/^BMW Z4/, 'BMW Z4 (E85)'], [/^BMW Z8/, 'BMW Z8'], [/^BMW 1M/, 'BMW 1 Series (E87)'],
+  [/^Ferrari (Testarossa|512 TR|F512 M)/, 'Ferrari Testarossa'], [/^Ferrari 308/, 'Ferrari 308 GTB/GTS'], [/^Ferrari 328/, 'Ferrari 328'], [/^Ferrari 348/, 'Ferrari 348'], [/^Ferrari F355/, 'Ferrari F355'], [/^Ferrari 360/, 'Ferrari 360'], [/^Ferrari (F430|430)/, 'Ferrari F430'], [/^Ferrari 458/, 'Ferrari 458'], [/^Ferrari 488/, 'Ferrari 488'], [/^Ferrari F8/, 'Ferrari F8'], [/^Ferrari 812/, 'Ferrari 812 Superfast'], [/^Ferrari F12/, 'Ferrari F12'], [/^Ferrari 599/, 'Ferrari 599'], [/^Ferrari 550/, 'Ferrari 550'], [/^Ferrari 575M/, 'Ferrari 575M Maranello'], [/^Ferrari 456/, 'Ferrari 456'], [/^Ferrari 612/, 'Ferrari 612 Scaglietti'], [/^Ferrari California/, 'Ferrari California'], [/^Ferrari FF/, 'Ferrari FF'], [/^Ferrari GTC4/, 'Ferrari GTC4Lusso'], [/^Ferrari Dino/, 'Dino 206 GT and 246 GT'], [/^Ferrari 512 BB/, 'Ferrari Berlinetta Boxer'], [/^Ferrari Mondial/, 'Ferrari Mondial'], [/^Ferrari Enzo/, 'Ferrari Enzo'], [/^Ferrari 365 GTB/, 'Ferrari Daytona'], [/^Ferrari 330/, 'Ferrari 330'], [/^Ferrari 4(00i|12)$/, 'Ferrari 365 GT4 2+2, 400 and 412'], [/^Ferrari SF90/, 'Ferrari SF90 Stradale'], [/^Ferrari 296/, 'Ferrari 296'],
+  [/^Lamborghini (Miura|Countach|Diablo|LM002|Gallardo|Aventador|Urus|Espada|Jalpa|Urraco)/, 'Lamborghini $1'], [/^Lamborghini Murcielago/, 'Lamborghini Murciélago'], [/^Lamborghini Huracan/, 'Lamborghini Huracán'], [/^Lamborghini 400 GT/, 'Lamborghini 400 GT'],
+  [/Land Cruiser (FJ4|BJ4)/, 'Toyota Land Cruiser (J40)'], [/Land Cruiser FJ55/, 'Toyota Land Cruiser (J50)'], [/Land Cruiser (FJ6|HJ6)/, 'Toyota Land Cruiser (J60)'], [/Land Cruiser (FJ80|FZJ80|HDJ80)/, 'Toyota Land Cruiser (J80)'], [/Land Cruiser 100/, 'Toyota Land Cruiser (J100)'], [/Land Cruiser 200/, 'Toyota Land Cruiser (J200)'], [/Land Cruiser (BJ7|FJ7|HZJ7)/, 'Toyota Land Cruiser (J70)']
+];
+function wikiTitles(name) {
+  const out = [];
+  for (const [re, ti] of WIKI_RULES) { const m = name.match(re); if (m) { out.push(ti.replace('$1', m[1] || '')); break; } }
+  const code = (name.match(/\(([A-Z]\d{3})\)/) || [])[1];
+  if (!out.length && code && /^Mercedes/.test(name)) { const rest = name.replace(/^Mercedes-(Benz|AMG) /, ''), c = MB_CLASS.find((x) => x[0].test(rest)); if (c) out.push('Mercedes-Benz ' + c[1] + ' (' + code + ')'); }
+  const plain = name.replace(/\s*\([^)]*\)/g, '').trim(); if (!out.includes(plain)) out.push(plain);
+  return out;
+}
+const wikiGet = async (host, q) => { const r = await fetch('https://' + host + '/w/api.php?action=query&format=json&origin=*&' + q, { referrerPolicy: 'no-referrer' }); if (!r.ok) throw new Error('wiki ' + r.status); return r.json(); };
+const wikiPick = (j, must) => { const ps = Object.values((j && j.query && j.query.pages) || {}); return ps.find((p) => p.thumbnail && p.pageimage && (!must || p.title.toLowerCase().includes(must))) || null; };
+const plainText = (html) => { const d = new DOMParser().parseFromString(String(html || ''), 'text/html'); return (d.body.textContent || '').replace(/\s+/g, ' ').trim(); };
+async function modelPhoto(name) {
+  const key = 'g197-mp1-' + name, now = Date.now();
+  try { const c = JSON.parse(localStorage.getItem(key) || 'null'); if (c && now - c.at < (c.src ? 30 : 3) * 864e5) return c.src ? c : null; } catch (e) { /* no cache */ }
+  const img = 'prop=pageimages&piprop=thumbnail%7Cname&pithumbsize=960&pilicense=free&redirects=1';
+  let page = null;
+  for (const ti of wikiTitles(name)) { page = wikiPick(await wikiGet('en.wikipedia.org', img + '&titles=' + encodeURIComponent(ti))); if (page) break; }
+  if (!page) { const make = name.split(/[\s-]/)[0].toLowerCase(); page = wikiPick(await wikiGet('en.wikipedia.org', img + '&generator=search&gsrnamespace=0&gsrlimit=3&gsrsearch=' + encodeURIComponent(name.replace(/[()]/g, ' '))), make); }
+  let out = { at: now };
+  if (page) {
+    const j = await wikiGet('commons.wikimedia.org', 'prop=imageinfo&iiprop=extmetadata&iiextmetadatafilter=Artist%7CLicenseShortName&titles=' + encodeURIComponent('File:' + page.pageimage));
+    const ii = Object.values((j.query && j.query.pages) || {}).map((p) => p.imageinfo && p.imageinfo[0]).find(Boolean), md = (ii && ii.extmetadata) || {};
+    const lic = plainText(md.LicenseShortName && md.LicenseShortName.value), by = plainText(md.Artist && md.Artist.value).slice(0, 80);
+    if (lic) out = { at: now, src: page.thumbnail.source, lic, by, of: page.title, file: 'https://commons.wikimedia.org/wiki/File:' + encodeURIComponent(page.pageimage) };
+  }
+  try { localStorage.setItem(key, JSON.stringify(out)); } catch (e) { /* storage full */ }
+  return out.src ? out : null;
+}
+function modelPhotoInto(b, credit, name) {
+  modelPhoto(name).then((ph) => {
+    if (!ph || !b.isConnected) return;
+    const im = el('img', { src: ph.src, alt: t('Photo of a {model}', { model: ph.of }), referrerpolicy: 'no-referrer' });
+    im.addEventListener('load', () => {
+      b.classList.add('has-photo');
+      credit.append(el('span', { text: t('Representative photo') + ': ' + ph.of + '. ' }), el('a', { href: ph.file, target: '_blank', rel: 'noopener', text: [ph.by, ph.lic].filter(Boolean).join(', ') + ', ' + t('via Wikimedia Commons') }));
+    });
+    im.addEventListener('error', () => im.remove());
+    b.prepend(im);
+  }).catch(() => {});
+}
+
 /* ----- frame ----- */
 function viewSearch() {
   const out = el('div', { class: 'col', style: 'max-width:46rem' }, el('h1', { text: t('Search') }));
@@ -3484,7 +3541,7 @@ function render() {
   else if (r.name === 'search') main = viewSearch();
   else if (r.name === 'ask') main = viewAsk();
   else if (r.name === 'chat') main = viewChat(r.a);
-  else if (r.name === 'model') { HELP.mark('market'); const m = catOf(r.a); main = el('div', { class: 'col' }, el('div', { class: 'col', style: 'gap:6px' }, el('a', { class: 'small', href: '#/market', text: '‹ ' + t('Market') }), m ? banner({ name: shortModel(m.name) }, null) : el('h1', { text: t('Model not found') }), m ? el('p', { class: 'muted', text: t('Built {a} to {b}', { a: m.from, b: m.to }) }) : null), m ? panel(null, null, marketView(m.name, null)) : null, m ? el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn primary', id: 'b-own-one', text: t('I own one: add it to my garage'), onclick: () => { S.prefill = m.name; nav('#/car/new'); } })) : null); }
+  else if (r.name === 'model') { HELP.mark('market'); const m = catOf(r.a); let mb = null, mc = null; main = el('div', { class: 'col' }, el('div', { class: 'col', style: 'gap:6px' }, el('a', { class: 'small', href: '#/market', text: '‹ ' + t('Market') }), m ? (mb = banner({ name: shortModel(m.name) }, null)) : el('h1', { text: t('Model not found') }), m ? (mc = el('p', { class: 'muted small photo-credit', id: 'model-credit' })) : null, m ? el('p', { class: 'muted', text: t('Built {a} to {b}', { a: m.from, b: m.to }) }) : null), m ? panel(null, null, marketView(m.name, null)) : null, m ? el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn primary', id: 'b-own-one', text: t('I own one: add it to my garage'), onclick: () => { S.prefill = m.name; nav('#/car/new'); } })) : null); if (m) modelPhotoInto(mb, mc, m.name); }
   else if (r.name === 'projects') main = viewProjects();
   else if (r.name === 'project') main = r.a === 'new' ? projectForm() : viewProject(r.a);
   else if (r.name === 'car' && r.a === 'new') main = carForm(null);
