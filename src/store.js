@@ -16,7 +16,7 @@
   }
   async function parse(r) {
     var t = await r.text(), j = null; try { j = t ? JSON.parse(t) : null; } catch (e) {}
-    if (!r.ok) { var e = new Error((j && (j.msg || j.message || j.error_description || j.error)) || ('Error ' + r.status)); e.status = r.status; e.code = j && (j.error_code || j.code); throw e; }
+    if (!r.ok) { var e = new Error((j && (j.msg || j.message || j.error_description || j.error)) || ('Error ' + r.status)); e.status = r.status; e.code = j && (j.error_code || j.code); e.detail = j && j.detail; throw e; }
     return j;
   }
   var refreshing = null;
@@ -106,6 +106,7 @@
     aiDraft: async function (car, files) { return parse(await call('/functions/v1/logbook-ai', { method: 'POST', headers: JSONH, body: JSON.stringify({ car: { name: car.name || '', year: car.year || '' }, files: files.map(function (f) { return { path: f.path, name: f.name, type: f.type }; }) }) })); },
     // AI helper (Edge Function garage-ai): ask, car_photo, summary, market, project_plan, project_update
     aiHelp: async function (body) { return parse(await call('/functions/v1/garage-ai', { method: 'POST', headers: JSONH, body: JSON.stringify(body) })); },
+    aiProbeRaw: async function (name) { return parse(await call('/functions/v1/' + name, { method: 'POST', headers: JSONH, body: JSON.stringify({ probe: true }) })); },
     aiProbe: async function () { try { return await parse(await call('/functions/v1/logbook-ai', { method: 'POST', headers: JSONH, body: JSON.stringify({ probe: true }) })); } catch (e) { return null; } },
     // Car projects
     projects: [], projectsOn: false, activity: [], activityOn: false,

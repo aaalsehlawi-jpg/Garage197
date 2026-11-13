@@ -378,6 +378,7 @@
   ul.movers li { display: flex; gap: 8px; align-items: baseline; line-height: 1.45; } ul.movers .mv { flex: none; font-size: .8rem; color: var(--muted); } ul.movers .mv.up { color: var(--ok); } ul.movers .mv.down { color: var(--bad); }
   ol.plansteps { margin: 0; padding-inline-start: 1.4rem; display: flex; flex-direction: column; gap: 8px; } ol.plansteps li { line-height: 1.45; } ol.plansteps b { display: block; }
   .btn > svg { flex: none; }
+  ul.checks { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; } ul.checks li { display: flex; flex-direction: column; gap: 1px; font-size: .9rem; overflow-wrap: anywhere; } ul.checks li.ok b { color: var(--ok); } ul.checks li.bad b { color: var(--bad); }
 </style>
 </head>
 <body>
@@ -403,7 +404,7 @@
   }
   async function parse(r) {
     var t = await r.text(), j = null; try { j = t ? JSON.parse(t) : null; } catch (e) {}
-    if (!r.ok) { var e = new Error((j && (j.msg || j.message || j.error_description || j.error)) || ('Error ' + r.status)); e.status = r.status; e.code = j && (j.error_code || j.code); throw e; }
+    if (!r.ok) { var e = new Error((j && (j.msg || j.message || j.error_description || j.error)) || ('Error ' + r.status)); e.status = r.status; e.code = j && (j.error_code || j.code); e.detail = j && j.detail; throw e; }
     return j;
   }
   var refreshing = null;
@@ -493,6 +494,7 @@
     aiDraft: async function (car, files) { return parse(await call('/functions/v1/logbook-ai', { method: 'POST', headers: JSONH, body: JSON.stringify({ car: { name: car.name || '', year: car.year || '' }, files: files.map(function (f) { return { path: f.path, name: f.name, type: f.type }; }) }) })); },
     // AI helper (Edge Function garage-ai): ask, car_photo, summary, market, project_plan, project_update
     aiHelp: async function (body) { return parse(await call('/functions/v1/garage-ai', { method: 'POST', headers: JSONH, body: JSON.stringify(body) })); },
+    aiProbeRaw: async function (name) { return parse(await call('/functions/v1/' + name, { method: 'POST', headers: JSONH, body: JSON.stringify({ probe: true }) })); },
     aiProbe: async function () { try { return await parse(await call('/functions/v1/logbook-ai', { method: 'POST', headers: JSONH, body: JSON.stringify({ probe: true }) })); } catch (e) { return null; } },
     // Car projects
     projects: [], projectsOn: false, activity: [], activityOn: false,
@@ -1759,6 +1761,22 @@ const AR = {
   'What have I spent on my cars this year?': 'كم صرفت على سياراتي هذا العام؟',
   'When was each car last serviced?': 'متى كانت آخر صيانة لكل سيارة؟',
   'If you use the AI helper (asking your garage a question, filling in a car from a photo, a history summary, a market explanation or project help), the details of your own cars that the answer needs, such as logbook records and reminders, or the photo you chose, are sent to Anthropic in the same way. This happens only when you press the button. Other members’ information is never sent.': 'إذا استخدمت مساعد الذكاء الاصطناعي (سؤال كراجك، تعبئة بيانات سيارة من صورة، ملخص التاريخ، شرح السوق أو المساعدة في المشاريع)، تُرسل إلى Anthropic بالطريقة نفسها بيانات سياراتك التي تحتاجها الإجابة، مثل سجلات الصيانة والتذكيرات، أو الصورة التي اخترتها. يحدث ذلك فقط عند ضغطك على الزر. لا تُرسل معلومات الأعضاء الآخرين أبدًا.',
+  'Not found. The function is not deployed, or its name is spelled differently.': 'غير موجودة. لم تُنشر الدالة أو أن اسمها مكتوب بشكل مختلف.',
+  'The usage table is missing. Run community-update-7.sql.': 'جدول الاستخدام غير موجود. شغّل community-update-7.sql.',
+  'The Anthropic API key was rejected. Check the ANTHROPIC_API_KEY secret.': 'تم رفض مفتاح Anthropic. راجع القيمة السرية ANTHROPIC_API_KEY.',
+  'The ANTHROPIC_API_KEY secret is missing.': 'القيمة السرية ANTHROPIC_API_KEY غير موجودة.',
+  'Working, but this account has used its monthly allowance.': 'تعمل، لكن هذا الحساب استنفد حصته الشهرية.',
+  'Working, but the AI service is busy right now. Try again in a minute.': 'تعمل، لكن خدمة الذكاء الاصطناعي مشغولة الآن. حاول بعد دقيقة.',
+  'The function did not accept your sign-in. Sign out, sign in and try again.': 'لم تقبل الدالة تسجيل دخولك. سجّل الخروج ثم الدخول وحاول مرة أخرى.',
+  'Unexpected answer: {m}': 'رد غير متوقع: {m}',
+  'Deployed and reachable. Used {a} of {b} this month.': 'منشورة وتعمل. استُخدم {a} من {b} هذا الشهر.',
+  'Test question': 'سؤال تجريبي',
+  'The AI answered: “{a}”': 'أجاب الذكاء الاصطناعي: «{a}»',
+  'No answer came back.': 'لم يصل أي رد.',
+  'AI features': 'ميزات الذكاء الاصطناعي',
+  'Checks that the AI functions on the server are switched on. The test question counts as one use.': 'يتحقق من أن دوال الذكاء الاصطناعي على الخادم مفعّلة. السؤال التجريبي يُحسب استخدامًا واحدًا.',
+  'Checking…': 'جارٍ التحقق…',
+  'Check AI setup': 'تحقق من إعداد الذكاء الاصطناعي',
 };
 /* ===== Screens. Every visible string goes through t() so it can be shown in Arabic (see i18n.js). ===== */
 const CLOUD = window.g197cloud;
@@ -2506,6 +2524,29 @@ function printLogbook(car) {
 }
 
 /* ----- settings ----- */
+// Settings: a self-check of the AI setup, run from the signed-in app
+const aiWhy = (e) => { const m = (e && e.message) || '', d = (e && e.detail) || ''; return e && e.status === 404 ? t('Not found. The function is not deployed, or its name is spelled differently.') : m === 'not_configured' && d === 'ai_usage' ? t('The usage table is missing. Run community-update-7.sql.') : m === 'not_configured' && d === 'key' ? t('The Anthropic API key was rejected. Check the ANTHROPIC_API_KEY secret.') : m === 'not_configured' ? t('The ANTHROPIC_API_KEY secret is missing.') : m === 'limit' ? t('Working, but this account has used its monthly allowance.') : m === 'busy' ? t('Working, but the AI service is busy right now. Try again in a minute.') : m === 'signin' || (e && e.status === 401) ? t('The function did not accept your sign-in. Sign out, sign in and try again.') : t('Unexpected answer: {m}', { m: [e && e.status, m, d].filter(Boolean).join(' ') || '?' }); };
+async function aiSelfCheck() {
+  const c = S.aiTest = { busy: true, rows: [] }; render();
+  const row = (name, ok, text) => c.rows.push({ name, ok, text });
+  let helperOk = false;
+  for (const name of ['logbook-ai', 'garage-ai']) {
+    try { const r = await CLOUD.aiProbeRaw(name); if (r && r.ok) { row(name, true, t('Deployed and reachable. Used {a} of {b} this month.', { a: r.used, b: r.limit })); if (name === 'garage-ai') helperOk = true; } else row(name, false, t('Unexpected answer: {m}', { m: JSON.stringify(r).slice(0, 80) })); }
+    catch (e) { row(name, false, aiWhy(e)); }
+  }
+  if (helperOk) {
+    try { const r = await CLOUD.aiHelp({ task: 'ask', lang: 'en', question: 'Reply with one short sentence saying the connection works.', history: [], data: { cars: [] } }); row(t('Test question'), !!(r && r.text), r && r.text ? t('The AI answered: “{a}”', { a: String(r.text).slice(0, 140) }) : t('No answer came back.')); }
+    catch (e) { row(t('Test question'), false, aiWhy(e)); }
+    S.aiFor = null; S.aiOn = null;
+  }
+  c.busy = false; render();
+}
+function aiSetupPanel() {
+  const c = S.aiTest, sec = panel(t('AI features'), t('Checks that the AI functions on the server are switched on. The test question counts as one use.')); sec.id = 'ai-setup';
+  if (c && c.rows.length) sec.append(el('ul', { class: 'checks' }, c.rows.map((r) => el('li', { class: r.ok ? 'ok' : 'bad' }, el('b', { text: (r.ok ? '✓ ' : '✗ ') + r.name }), el('span', { dir: 'auto', text: r.text })))));
+  sec.append(el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn', id: 'b-ai-check', disabled: c && c.busy ? true : null, text: c && c.busy ? t('Checking…') : t('Check AI setup'), onclick: aiSelfCheck })));
+  return sec;
+}
 function viewSettings() {
   const pick = (key, lskey, opts) => select(opts, S[key], { onchange: (ev) => { S[key] = ev.target.value; ls.set(lskey, S[key]); toast(t('Saved')); render(); } });
   const out = el('div', { class: 'col', style: 'max-width:40rem' }, el('h1', { text: t('Settings') }),
@@ -2518,6 +2559,7 @@ function viewSettings() {
   const accountPanel = () => panel(t('Account'), null, el('p', { class: 'small', text: t('Signed in as {email}. Your garage is saved to your account and follows you to any device.', { email: CLOUD.user.email || '' }) }),
       el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn', id: 'b-signout', text: t('Sign out'), onclick: async () => { await CLOUD.signOut(); location.hash = '#/home'; } })));
   S.accountPanel = accountPanel;
+  if (CLOUD.user) out.append(aiSetupPanel());
   const n = CLOUD.localCount();
   if (n) out.append(panel(t('Cars saved on this device'), null, el('p', { class: 'small', text: t('Cars saved on this device before accounts existed: {n}.', { n }) }), el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn primary', id: 'b-import', text: t('Add them to my account'), onclick: async () => { try { await CLOUD.importLocal(); toast(t('Cars added to your account')); } catch (e) { toast(t('Couldn’t save. Try again.')); } render(); } }))));
   return out;

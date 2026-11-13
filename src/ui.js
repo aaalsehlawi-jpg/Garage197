@@ -744,6 +744,29 @@ function printLogbook(car) {
 }
 
 /* ----- settings ----- */
+// Settings: a self-check of the AI setup, run from the signed-in app
+const aiWhy = (e) => { const m = (e && e.message) || '', d = (e && e.detail) || ''; return e && e.status === 404 ? t('Not found. The function is not deployed, or its name is spelled differently.') : m === 'not_configured' && d === 'ai_usage' ? t('The usage table is missing. Run community-update-7.sql.') : m === 'not_configured' && d === 'key' ? t('The Anthropic API key was rejected. Check the ANTHROPIC_API_KEY secret.') : m === 'not_configured' ? t('The ANTHROPIC_API_KEY secret is missing.') : m === 'limit' ? t('Working, but this account has used its monthly allowance.') : m === 'busy' ? t('Working, but the AI service is busy right now. Try again in a minute.') : m === 'signin' || (e && e.status === 401) ? t('The function did not accept your sign-in. Sign out, sign in and try again.') : t('Unexpected answer: {m}', { m: [e && e.status, m, d].filter(Boolean).join(' ') || '?' }); };
+async function aiSelfCheck() {
+  const c = S.aiTest = { busy: true, rows: [] }; render();
+  const row = (name, ok, text) => c.rows.push({ name, ok, text });
+  let helperOk = false;
+  for (const name of ['logbook-ai', 'garage-ai']) {
+    try { const r = await CLOUD.aiProbeRaw(name); if (r && r.ok) { row(name, true, t('Deployed and reachable. Used {a} of {b} this month.', { a: r.used, b: r.limit })); if (name === 'garage-ai') helperOk = true; } else row(name, false, t('Unexpected answer: {m}', { m: JSON.stringify(r).slice(0, 80) })); }
+    catch (e) { row(name, false, aiWhy(e)); }
+  }
+  if (helperOk) {
+    try { const r = await CLOUD.aiHelp({ task: 'ask', lang: 'en', question: 'Reply with one short sentence saying the connection works.', history: [], data: { cars: [] } }); row(t('Test question'), !!(r && r.text), r && r.text ? t('The AI answered: “{a}”', { a: String(r.text).slice(0, 140) }) : t('No answer came back.')); }
+    catch (e) { row(t('Test question'), false, aiWhy(e)); }
+    S.aiFor = null; S.aiOn = null;
+  }
+  c.busy = false; render();
+}
+function aiSetupPanel() {
+  const c = S.aiTest, sec = panel(t('AI features'), t('Checks that the AI functions on the server are switched on. The test question counts as one use.')); sec.id = 'ai-setup';
+  if (c && c.rows.length) sec.append(el('ul', { class: 'checks' }, c.rows.map((r) => el('li', { class: r.ok ? 'ok' : 'bad' }, el('b', { text: (r.ok ? '✓ ' : '✗ ') + r.name }), el('span', { dir: 'auto', text: r.text })))));
+  sec.append(el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn', id: 'b-ai-check', disabled: c && c.busy ? true : null, text: c && c.busy ? t('Checking…') : t('Check AI setup'), onclick: aiSelfCheck })));
+  return sec;
+}
 function viewSettings() {
   const pick = (key, lskey, opts) => select(opts, S[key], { onchange: (ev) => { S[key] = ev.target.value; ls.set(lskey, S[key]); toast(t('Saved')); render(); } });
   const out = el('div', { class: 'col', style: 'max-width:40rem' }, el('h1', { text: t('Settings') }),
@@ -756,6 +779,7 @@ function viewSettings() {
   const accountPanel = () => panel(t('Account'), null, el('p', { class: 'small', text: t('Signed in as {email}. Your garage is saved to your account and follows you to any device.', { email: CLOUD.user.email || '' }) }),
       el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn', id: 'b-signout', text: t('Sign out'), onclick: async () => { await CLOUD.signOut(); location.hash = '#/home'; } })));
   S.accountPanel = accountPanel;
+  if (CLOUD.user) out.append(aiSetupPanel());
   const n = CLOUD.localCount();
   if (n) out.append(panel(t('Cars saved on this device'), null, el('p', { class: 'small', text: t('Cars saved on this device before accounts existed: {n}.', { n }) }), el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn primary', id: 'b-import', text: t('Add them to my account'), onclick: async () => { try { await CLOUD.importLocal(); toast(t('Cars added to your account')); } catch (e) { toast(t('Couldn’t save. Try again.')); } render(); } }))));
   return out;
