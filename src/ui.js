@@ -59,8 +59,8 @@ const dueOf = (car) => (car.reminders || []).map((r) => ({ r, car, st: remStatus
 
 /* ----- routing ----- */
 function route() { const p = (location.hash || '#/home').replace(/^#\/?/, '').split('/').map(decodeURIComponent); return { name: p[0] || 'home', a: p[1], b: p[2] }; }
-function nav(h) { if (location.hash === h) render(); else location.hash = h; window.scrollTo(0, 0); }
-window.addEventListener('hashchange', () => { S.rec = null; S.remOpen = false; render(); });
+function nav(h, after) { if (location.hash === h) { if (after) after(); render(); } else { S.afterNav = after || null; location.hash = h; } window.scrollTo(0, 0); }
+window.addEventListener('hashchange', () => { S.rec = null; S.remOpen = false; S.addOpen = null; if (S.afterNav) { const f = S.afterNav; S.afterNav = null; f(); } render(); });
 
 /* ----- small builders ----- */
 const panel = (title, note, ...kids) => el('section', { class: 'panel' }, title ? el('h2', { text: title }) : null, note ? el('p', { class: 'muted small', text: note }) : null, ...kids);
@@ -77,6 +77,7 @@ const ICONS = {
   friends: '<circle cx="9" cy="8.5" r="3.2"/><path d="M3 19.5c.6-3.4 3-5 6-5s5.4 1.6 6 5"/><circle cx="17" cy="9.5" r="2.5"/><path d="M17 14.5c2.2.2 3.6 1.6 4 4"/>',
   about: '<circle cx="12" cy="12" r="8.5"/><path d="M12 11v5.5"/><path d="M12 7.6v.1"/>',
   bell: '<path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/>',
+  search: '<circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l5 5"/>', chat: '<path d="M4 5.5h16v11H10l-4.5 3.5v-3.5H4z"/>', chevron: '<path d="M9 5l7 7-7 7"/>',
   plus: '<path d="M12 5v14M5 12h14"/>', pdf: '<path d="M7 3.5h7l4 4V20.5H7z"/><path d="M14 3.5v4h4"/><path d="M12 11v6m0 0-2.5-2.5M12 17l2.5-2.5"/>',
   edit: '<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/>', camera: '<path d="M4 8h3l1.5-2h7L17 8h3v11H4z"/><circle cx="12" cy="13.5" r="3.2"/>'
 };
@@ -263,28 +264,28 @@ function valueHistory(total) {
   ls.set(k, JSON.stringify(h.slice(-400)));
   return h.length > 1 && h[0].d < d ? h[0] : null;
 }
+function carRow() {
+  return el('div', { class: 'hscroll', id: 'car-row' }, S.cars.map((c) => { const e = estimate(c); return el('a', { class: 'card mini', href: '#/car/' + c.id }, photoBox(c), el('div', { class: 'body' }, el('b', { text: c.name || t('Unnamed car') }), el('span', { class: 'muted small', text: e ? money(e.gbp) : t('No market data yet') }))); }),
+    el('a', { class: 'card mini addcard', href: '#/car/new', 'aria-label': t('Add a car') }, el('span', { class: 'plus' }, svgIcon(ICONS.plus)), el('span', { class: 'small', text: t('Add a car') })));
+}
 function viewHome() {
-  const out = el('div', { class: 'col' });
+  const out = el('div', { class: 'col home' });
   if (!CLOUD.loaded) { out.append(skel('11rem'), skel('6rem')); return out; }
   if (CLOUD.setupError) out.append(panel(null, null, el('p', { style: 'color:var(--bad)', text: t('Your garage could not be loaded from the cloud. Check your connection and reload the page.') })));
-  const np = newsPanel(); if (np) out.append(np);
   if (!S.cars.length) out.append(welcome());
   else {
-    const g = garageValue(), first = valueHistory(g.total), stats = [];
-    if (g.paidN) { const d = g.nowPaid - g.paid; stats.push(stat(t('Against what you paid'), (d >= 0 ? '+' : '−') + money(Math.abs(d)), t('Cars with a purchase price: {n}', { n: g.paidN }), d >= 0 ? 'up' : 'down')); }
-    if (first && first.v) { const d = g.total - first.v; stats.push(stat(t('Since {d}', { d: fmtDate(first.d) }), (d >= 0 ? '+' : '−') + money(Math.abs(d)), t('Change in the estimate since you first opened the app'), d >= 0 ? 'up' : 'down')); }
-    stats.push(stat(t('Cars'), String(S.cars.length), t('{a} of {b} cars valued from recent sales.', { a: g.valued, b: S.cars.length })));
-    out.append(panel(null, null, el('span', { class: 'label', text: t('Your garage is worth about') }), el('div', { class: 'big', style: 'font-size:clamp(2.2rem,8vw,3.4rem)', text: g.valued ? money(g.total) : '—' }), el('div', { class: 'stats' }, stats), el('p', { class: 'muted small' }, el('span', { text: t('An estimate from public sales, not a formal valuation.') + ' ' }), el('a', { href: '#/values', text: t('How we value cars') })), el('div', { class: 'row' }, el('a', { class: 'btn primary', href: '#/garage' }, ico('garage', t('Open my garage'))))));
+    const g = garageValue(), first = valueHistory(g.total), bits = [];
+    if (g.paidN) { const d = g.nowPaid - g.paid; bits.push(el('span', { class: d >= 0 ? 'up' : 'down', text: t('{d} against what you paid', { d: (d >= 0 ? '+' : '−') + money(Math.abs(d)) }) })); }
+    if (first && first.v) { const d = g.total - first.v; bits.push(el('span', { class: d >= 0 ? 'up' : 'down', text: t('{d} since {when}', { d: (d >= 0 ? '+' : '−') + money(Math.abs(d)), when: fmtDate(first.d) }) })); }
+    out.append(el('section', { class: 'hero-value', id: 'home-value' }, el('span', { class: 'label', text: t('Your garage is worth about') }), el('div', { class: 'big', style: 'font-size:clamp(2.4rem,9vw,3.6rem)', text: g.valued ? money(g.total) : '—' }),
+      bits.length ? el('div', { class: 'row small', style: 'gap:6px 16px;font-weight:600' }, bits) : null,
+      el('p', { class: 'muted small' }, el('span', { text: t('{a} of {b} cars valued from recent sales.', { a: g.valued, b: S.cars.length }) + ' ' }), el('a', { href: '#/values', text: t('How we value cars') }))), carRow());
     const due = S.cars.flatMap(dueOf);
     if (due.length) out.append(panel(t('Coming up'), null, el('ul', { class: 'due-list' }, due.map((x) => el('li', {}, el('span', {}, el('a', { href: '#/car/' + x.car.id + '/logbook', text: x.r.title }), el('span', { class: 'muted', text: ' · ' + (x.car.name || '') })), el('span', { class: 'tag s-' + x.st, text: remText(x.car, x.r, x.st) }))))));
   }
+  const np = newsPanel(); if (np) out.append(np);
   const sp = startPanel(); if (sp) out.append(sp);
   const fp = feedPanel(); if (fp) out.append(fp);
-  out.append(searchPanel());
-  if (S.sales) {
-    const latest = [...S.sales].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 4);
-    out.append(panel(t('Latest sales'), t('Market data updated {d}.', { d: fmtDate(latest[0].date) }), table([[t('Sold')], [t('Model')], [t('Price'), 'num']], latest.map((r) => el('tr', {}, el('td', { text: fmtDate(r.date) }), el('td', {}, mlink(r.model)), el('td', { class: 'num', text: money(r.gbp) })))), el('div', { class: 'row' }, el('a', { class: 'btn', href: '#/market' }, ico('market', t('See the whole market'))))));
-  }
   return out;
 }
 function searchPanel() {
@@ -498,10 +499,12 @@ function viewCar(car, sub) {
     if (e && +car.paid && FX[car.paidCur || 'USD']) { const d = e.gbp - +car.paid * FX[car.paidCur || 'USD']; value.append(el('p', { class: 'small ' + (d >= 0 ? 'up' : 'down'), style: 'font-weight:600', text: t('{d} against the {p} you paid', { d: (d >= 0 ? '+' : '−') + money(Math.abs(d)), p: cash(+car.paid, car.paidCur) }) })); }
     const tr = e ? trendOf(e.model) : null; if (tr != null) value.append(el('p', { class: 'trend ' + (tr >= 0 ? 'up' : 'down'), text: (tr >= 0 ? '▲ ' : '▼ ') + t('{p} against its long-run price', { p: pct(tr) }) }));
     const due = dueOf(car);
-    out.append(el('div', { class: 'grid2' }, panel(null, null, value, el('div', { class: 'row' }, el('a', { class: 'btn', href: base + 'market' }, ico('market', t('See the market'))), el('a', { class: 'btn', href: base + 'logbook', text: t('Open the logbook') }))),
+    out.append(el('div', { class: 'grid2' }, panel(null, null, value, el('div', { class: 'row' }, el('a', { class: 'btn', href: base + 'market' }, ico('market', t('See the market'))))),
       panel(t('Coming up'), null, due.length ? el('ul', { class: 'due-list' }, due.map((x) => el('li', {}, el('span', { text: x.r.title }), el('span', { class: 'tag s-' + x.st, text: remText(car, x.r, x.st) })))) : el('p', { class: 'empty' }, el('span', { text: t('Nothing is due. Reminders you add in the logbook show here.') + ' ' }), el('a', { href: base + 'logbook', text: t('Set a reminder') })))));
     out.append(galleryPanel(car));
-    out.append(panel(t('Details'), null, facts.length ? el('dl', { class: 'facts' }, facts.map((x) => el('div', {}, el('dt', { text: x[0] }), el('dd', { text: x[1] })))) : el('p', { class: 'empty', text: t('No details yet.') }), vinPlate(car), el('div', { class: 'row' }, el('a', { class: 'btn', id: 'b-edit', href: base + 'edit' }, ico('edit', t('Edit details'))))));
+    const det = el('details', { class: 'fold', id: 'car-details' }, el('summary', {}, el('h2', { text: t('Details') }), el('span', { class: 'muted small', text: [car.year, carOdo(car), car.colour].filter(Boolean).join(' · ') })), facts.length ? el('dl', { class: 'facts' }, facts.map((x) => el('div', {}, el('dt', { text: x[0] }), el('dd', { text: x[1] })))) : el('p', { class: 'empty', text: t('No details yet.') }), vinPlate(car));
+    if (S.detOpen === car.id) det.open = true; det.addEventListener('toggle', () => { S.detOpen = det.open ? car.id : null; });
+    out.append(el('section', { class: 'panel' }, det, el('div', { class: 'row' }, el('a', { class: 'btn', id: 'b-edit', href: base + 'edit' }, ico('edit', t('Edit details'))))));
   }
   return out;
 }
@@ -756,19 +759,17 @@ function feedPanel() {
   else CLOUD.projects.filter((x) => !x.mine).forEach((x) => items.push({ at: x.created_at, href: '#/project/' + x.id, lead: avatarEl(x.owner_avatar, memberName(x.owner_name), ''), who: memberName(x.owner_name), line: t('started a {k} project', { k: t(PKIND[x.kind]).toLowerCase() }), title: x.title }));
   items.sort((p, q) => String(q.at).localeCompare(String(p.at)));
   const more = items.length > 8 && !S.feedAll, shown = S.feedAll ? items : items.slice(0, 8);
-  return el('section', { class: 'panel', id: 'home-community' }, el('h2', { text: t('Community') }),
+  return el('section', { class: 'panel', id: 'home-community' }, el('h2', { text: t('What’s new') }),
     req.length ? el('p', {}, el('a', { href: '#/friends', id: 'a-requests', text: req.length === 1 ? t('You have a friend request') : t('You have {n} friend requests', { n: req.length }) })) : null,
-    el('span', { class: 'label', text: t('Latest from your friends') }),
     shown.length ? el('div', { class: 'feed' }, shown.map((x) => el('a', { class: 'feeditem', href: x.href }, x.lead, el('span', { class: 'col', style: 'gap:2px;min-width:0;flex:1' },
       el('span', { class: 'small' }, el('b', { text: x.who }), el('span', { text: ' ' + x.line })), el('b', { style: 'overflow-wrap:anywhere', text: x.title }),
       x.body ? el('span', { class: 'small clamp', text: x.body }) : null,
       el('span', { class: 'muted small', text: fmtWhen(x.at) + (x.hasPhoto ? ' · ' + t('with a photo') : '') })))))
-      : el('p', { class: 'empty', text: t(CLOUD.friends.some((f) => f.status === 'accepted') ? 'Nothing new yet. New cars, projects, project updates and communities your friends join will show here.' : 'Add friends to see their new cars, projects and the communities they join.') }),
+      : starter(t(CLOUD.friends.some((f) => f.status === 'accepted') ? 'Nothing new yet. New cars, projects, project updates and communities your friends join will show here.' : 'Add friends to see their new cars, projects and the communities they join.'), CLOUD.friends.some((f) => f.status === 'accepted') ? null : el('a', { class: 'btn primary', href: '#/friends' }, ico('plus', t('Find a friend')))),
     more ? el('button', { type: 'button', class: 'linkbtn small', id: 'b-feed-more', text: t('Show all {n}', { n: items.length }), onclick: () => { S.feedAll = true; render(); } }) : null,
     el('span', { class: 'label', text: t('Upcoming events') }),
     evs.length ? el('ul', { class: 'due-list' }, evs.map((e) => el('li', {}, el('span', {}, el('a', { href: '#/events', text: e.title }), el('span', { class: 'muted', text: ' · ' + (e.community || t('Friends')) + (e.place ? ' · ' + e.place : '') })), el('span', { class: 'tag', text: fmtWhen(e.starts_at) }))))
-      : el('p', { class: 'muted small', text: t('No upcoming events. Create one for your friends or a community.') }),
-    el('div', { class: 'row' }, el('a', { class: 'btn', href: '#/friends' }, ico('friends', t('Open community'))), el('a', { class: 'btn', href: '#/events', text: t('Events') }), CLOUD.projectsOn ? el('a', { class: 'btn', href: '#/projects', text: t('Projects') }) : null));
+      : el('p', { class: 'muted small', text: t('No upcoming events. Create one for your friends or a community.') }));
 }
 function viewFriends() {
   const out = el('div', { class: 'col', style: 'max-width:46rem' }, socialTabs('friends'), tip('friends'));
@@ -807,6 +808,7 @@ function viewFriends() {
       el('button', { type: 'button', class: 'btn sm', text: t('Remove'), onclick: () => { if (confirm(t('Remove {n} from your friends?', { n: friendName(f) }))) act(() => CLOUD.removeFriend(f.id), t('Friend removed'))(); } }), CLOUD.extras ? el('button', { type: 'button', class: 'linkbtn small', text: t('Block'), onclick: () => blockAsk(f.other, friendName(f)) }) : null))))
     : starter(t('Friends can see the garage you choose to share, follow your projects, join your events and message you. Find one by name or username.'), el('button', { type: 'button', class: 'btn primary', onclick: () => { const x = document.getElementById('fr-q') || email; x.focus(); x.scrollIntoView({ block: 'center' }); } }, ico('plus', t('Add a friend'))))));
   if (sent.length) out.append(panel(t('Requests you sent'), null, el('ul', { class: 'due-list' }, sent.map((f) => el('li', {}, el('span', { style: 'overflow-wrap:anywhere', text: f.email || friendName(f) }), el('span', { class: 'row' }, el('span', { class: 'muted small', text: t('Waiting for a reply') }), el('button', { type: 'button', class: 'btn sm', text: t('Cancel'), onclick: act(() => CLOUD.removeFriend(f.id)) })))))));
+  if (CLOUD.projectsOn && CLOUD.projects.some((x) => !x.mine)) out.append(panel(t('Friends’ projects'), null, projectCards(CLOUD.projects.filter((x) => !x.mine))));
   out.append(el('p', { class: 'muted small' }, el('span', { text: t('Garage sharing and blocked people are on') + ' ' }), el('a', { href: '#/profile', text: t('your profile') }), el('span', { text: '.' })));
   return out;
 }
@@ -839,7 +841,7 @@ function viewFriend(uid, carId) {
 const fmtWhen = (iso) => { try { return new Date(iso).toLocaleString(S.lang === 'ar' ? 'ar-u-nu-latn' : 'en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }); } catch (e) { return iso; } };
 const unreadChats = () => (CLOUD.chats || []).reduce((n, c) => n + Number(c.unread || 0), 0);
 function viewMessages() {
-  const out = el('div', { class: 'col', style: 'max-width:46rem' }, socialTabs('messages'));
+  const out = el('div', { class: 'col', style: 'max-width:46rem' }, el('h1', { text: t('Messages') }));
   if (!CLOUD.socialLoaded) { out.append(skel('8rem')); return out; }
   if (!CLOUD.chatsOn) { out.append(el('p', { class: 'empty', text: t('Messages are not switched on yet.') })); return out; }
   if (S.chatsAt !== location.hash) { S.chatsAt = location.hash; CLOUD.loadChats().then(render); }
@@ -876,7 +878,7 @@ function viewChat(uid) {
   return out;
 }
 function socialTabs(cur) {
-  const tabs = [['friends', t('Friends')]].concat(CLOUD.chatsOn ? [['messages', t('Messages') + (unreadChats() ? ' (' + unreadChats() + ')' : '')]] : [], [['communities', t('Communities')], ['events', t('Events')]], CLOUD.projectsOn ? [['projects', t('Projects')]] : []);
+  const nReq = incoming().length, tabs = [['communities', t('Communities')], ['events', t('Events')], ['friends', t('Friends') + (nReq ? ' (' + nReq + ')' : '')]];
   return el('div', { class: 'col', style: 'gap:10px' }, el('h1', { text: t('Community') }), el('nav', { class: 'subtabs', 'aria-label': t('Community sections') }, tabs.map((x) => el('a', { class: 'tab', href: '#/' + x[0], 'aria-current': cur === x[0] ? 'page' : 'false', text: x[1] }))));
 }
 const noGroups = () => panel(null, null, el('p', { class: 'muted', text: t('Communities and events are not switched on for this app yet. Check back soon.') }));
@@ -891,11 +893,13 @@ function viewCommunities() {
       el('form', { class: 'col', style: 'gap:12px', onsubmit: async (ev) => { ev.preventDefault(); status.textContent = t('Saving…'); try { const id = await CLOUD.createCommunity(name.value.trim(), about.value.trim()); S.newCom = false; document.activeElement && document.activeElement.blur(); toast(t('Community created')); nav('#/community/' + id); } catch (e) { status.textContent = t('Couldn’t save. Try again.'); } } },
         field(t('Name'), name), field(t('About'), about), el('div', { class: 'row' }, el('button', { type: 'submit', class: 'btn primary', id: 'b-cm-save', text: t('Create community') }), el('button', { type: 'button', class: 'btn', text: t('Cancel'), onclick: () => { S.newCom = false; render(); } }), status))));
   } else out.append(el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn primary', id: 'b-cm-new', onclick: () => { S.newCom = true; render(); } }, ico('plus', t('Start a community')))));
-  const list = CLOUD.communities;
-  out.append(panel(t('All communities'), null, list.length ? el('ul', { class: 'due-list' }, list.map((c) => el('li', {},
+  const list = CLOUD.communities, joined = list.filter((c) => c.joined), evs = CLOUD.events.slice(0, 3);
+  if (joined.length) out.append(panel(t('Your communities'), null, el('div', { class: 'tiles', id: 'my-communities' }, joined.map((c) => el('a', { class: 'tile', href: '#/community/' + c.id }, el('span', { class: 'avatar', 'aria-hidden': 'true', text: (c.name.trim()[0] || '?').toUpperCase() }), el('span', { class: 'col', style: 'gap:2px;min-width:0' }, el('b', { text: c.name, style: 'overflow-wrap:anywhere' }), el('span', { class: 'muted small', text: t('Members: {n}', { n: c.members }) })))))));
+  if (evs.length) out.append(panel(t('Upcoming events'), null, eventList(evs), CLOUD.events.length > evs.length ? el('a', { class: 'small', href: '#/events', text: t('See all events') }) : null));
+  out.append(panel(t(joined.length ? 'Find more communities' : 'All communities'), null, list.filter((c) => !c.joined || !joined.length).length ? el('ul', { class: 'due-list' }, list.filter((c) => !c.joined || !joined.length).map((c) => el('li', {},
     el('span', { class: 'col', style: 'gap:2px;min-width:0;flex:1 1 14rem' }, el('a', { href: '#/community/' + c.id, style: 'font-weight:600;overflow-wrap:anywhere', text: c.name }), c.about ? el('span', { class: 'small', style: 'overflow-wrap:anywhere', text: c.about }) : null, el('span', { class: 'muted small', text: t('Members: {n}', { n: c.members }) + ' · ' + t('Started by {h}', { h: memberName(c.host) }) })),
     c.joined ? el('a', { class: 'btn sm', href: '#/community/' + c.id, text: t('Open') }) : el('button', { type: 'button', class: 'btn sm primary', text: t('Join'), onclick: doing(() => CLOUD.joinCommunity(c.id), t('You joined {n}', { n: c.name })) }))))
-    : starter(t('A community is a group for people who love the same cars, with its own posts and events. There are none yet, so yours would be the first.'), S.newCom ? null : el('button', { type: 'button', class: 'btn primary', onclick: () => { S.newCom = true; render(); } }, ico('plus', t('Start a community'))))));
+    : list.length ? el('p', { class: 'muted small', text: t('You have joined every community. Start a new one any time.') }) : starter(t('A community is a group for people who love the same cars, with its own posts and events. There are none yet, so yours would be the first.'), S.newCom ? null : el('button', { type: 'button', class: 'btn primary', onclick: () => { S.newCom = true; render(); } }, ico('plus', t('Start a community'))))));
   return out;
 }
 const memberName = (n) => n === 'A member' ? t('A member') : n;
@@ -962,6 +966,7 @@ function viewCommunity(id) {
   pfile.addEventListener('change', () => { if (pfile.files[0]) dr.file = pfile.files[0]; showPick(); }); showPick();
   const body = el('textarea', { id: 'p-body', rows: 3, maxlength: 2000, placeholder: t('Share news, a question or a photo with the community') }), status = el('span', { class: 'status', role: 'status' }); body.value = dr.text; body.addEventListener('input', () => { dr.text = body.value; });
   const got = (S.posts || {})[id]; if (!got) loadPosts(id);
+  if (S.focusPost && Date.now() < S.focusPost) setTimeout(() => { const b = document.getElementById('p-body'); if (b && document.activeElement !== b) { b.focus(); b.scrollIntoView({ block: 'center' }); } }, 0); else S.focusPost = 0;
   out.append(panel(t('Posts'), null,
     el('form', { class: 'col', style: 'gap:8px', onsubmit: async (ev) => { ev.preventDefault(); const v = body.value.trim(), f = CLOUD.extras && dr.file; if (!v && !f) { status.textContent = t('Write something or add a photo.'); return; } if (!ls.get('g197-rules-' + CLOUD.user.id, '')) { if (!confirm(t('Before your first post: be respectful, stay on cars, no abuse, spam or other people’s private details. Posts that break the community guidelines are removed and accounts can be closed. Do you agree?'))) return; ls.set('g197-rules-' + CLOUD.user.id, '1'); } const btn = document.getElementById('b-post'); if (btn) btn.disabled = true; status.textContent = f ? t('Uploading the photo…') : t('Sending…'); let step = 'photo'; try { let ph = null; if (f) ph = (await CLOUD.upload('community-' + id, await shrink(f))).path; step = 'post'; status.textContent = t('Sending…'); await CLOUD.post(id, v, ph); dr.text = ''; dr.file = null; body.value = ''; pfile.value = ''; showPick(); status.textContent = ''; body.blur(); await loadPosts(id); } catch (e) { const why = String((e && e.message) || '').slice(0, 140); status.textContent = (step === 'photo' ? t('The photo could not be uploaded. Try again.') : t('Couldn’t save. Try again.')) + (why ? ' (' + why + ')' : ''); } if (btn) btn.disabled = false; } }, body, pname, el('div', { class: 'row' }, el('button', { type: 'submit', class: 'btn primary', id: 'b-post', text: t('Post') }), CLOUD.extras ? el('button', { type: 'button', class: 'btn', onclick: () => pfile.click() }, ico('camera', t('Add a photo'))) : null, pfile), status),
     el('p', { class: 'muted small' }, el('span', { text: t('Posts follow the') + ' ' }), el('a', { href: '#/guidelines', text: t('community guidelines') }), el('span', { text: '.' })),
@@ -1079,7 +1084,9 @@ function welcome() {
   return b;
 }
 function viewProfile() {
-  const out = el('div', { class: 'col', style: 'max-width:40rem' }, el('div', { class: 'row between' }, el('h1', { text: t('Your profile') }), el('div', { class: 'row' }, el('a', { class: 'btn sm', id: 'a-help', href: '#/help' }, ico('about', t('How it works'))), el('a', { class: 'btn sm', id: 'a-settings', href: '#/settings' }, ico('settings', t('Settings'))))));
+  const out = el('div', { class: 'col', style: 'max-width:40rem' }, el('h1', { text: t('Your profile') }));
+  const mrow = (id, href, icon, label, note) => el('a', { class: 'menurow', id, href }, svgIcon(ICONS[icon]), el('span', { class: 'col', style: 'gap:1px;min-width:0;flex:1' }, el('b', { text: label }), note ? el('span', { class: 'muted small', text: note }) : null), el('span', { class: 'chev', 'aria-hidden': 'true' }, svgIcon(ICONS.chevron)));
+  out.append(el('nav', { class: 'menu', id: 'me-menu', 'aria-label': t('Account') }, mrow('a-settings', '#/settings', 'settings', t('Settings'), t('Language, currency, units and appearance')), mrow('a-help', '#/help', 'about', t('How it works'), t('A short guide to everything the app does')), mrow('a-about', '#/about', 'home', t('About Garage 197'), null), CLOUD.projectsOn ? mrow('a-projects', '#/projects', 'edit', t('Projects'), t('Yours and your friends’')) : null));
   if (!CLOUD.loaded) { out.append(skel('10rem')); return out; }
   if (CLOUD.profiles) {
     const name = el('input', { type: 'text', id: 'pr-name', maxlength: 40, autocomplete: 'name', value: CLOUD.profile.name }), city = el('input', { type: 'text', id: 'pr-city', maxlength: 60, value: CLOUD.profile.city, placeholder: t('e.g. Doha') }), status = el('span', { class: 'status' });
@@ -1178,8 +1185,8 @@ const HELP = {
   set(patch) { const h = { ...this.get(), ...patch }; ls.set(this.key(), JSON.stringify(h)); this.push(); return h; },
   mark(what) { const h = this.get(), did = h.did || {}; if (!did[what]) { did[what] = 1; this.set({ did }); } }
 };
-const NEWS_V = 2;
-const NEWS = ['Build a logbook from your documents: upload photos or PDFs of your paperwork and the app drafts the records for you.', 'Car projects: track a service, an upgrade or a restoration and get advice from friends.', 'Community on Home: see friends’ new cars, projects and upcoming events.', 'Mercedes-AMG models from 1995 to 2020 are now in the market data.', 'Alfa Romeo models from the last five years of sales are now in the market data.'];
+const NEWS_V = 3;
+const NEWS = ['A simpler layout: four tabs, with Settings and About behind your photo at the top.', 'One Add button for cars, logbook records, reminders, projects, posts and events.', 'Search everything from the top: your cars, market models, people and communities.', 'Private messages with friends, and usernames so friends can find you without your email.', 'Communities now show their members and who is going to each event.'];
 function startSteps() {
   const c = S.cars[0], did = HELP.get().did || {}, base = c ? '#/car/' + c.id + '/' : '#/car/new';
   const steps = [
@@ -1266,7 +1273,7 @@ function projectCards(list) {
     el('span', { class: 'muted small', text: t('{u} updates · {s} suggestions · {c} cheers', { u: x.updates, s: x.suggestions, c: x.cheers }) })))));
 }
 function viewProjects() {
-  const out = el('div', { class: 'col', style: 'max-width:56rem' }, socialTabs('projects'), tip('projects'));
+  const out = el('div', { class: 'col', style: 'max-width:56rem' }, el('h1', { text: t('Projects') }), tip('projects'));
   if (!CLOUD.socialLoaded) { out.append(skel('8rem'), skel('8rem')); return out; }
   out.append(el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn primary', id: 'b-proj-start', onclick: () => { S.projCar = null; nav('#/project/new'); } }, ico('plus', t('Start a project')))));
   const mine = CLOUD.projects.filter((x) => x.mine), theirs = CLOUD.projects.filter((x) => !x.mine);
@@ -1354,17 +1361,68 @@ function viewProject(id) {
 }
 
 /* ----- frame ----- */
+function viewSearch() {
+  const out = el('div', { class: 'col', style: 'max-width:46rem' }, el('h1', { text: t('Search') }));
+  const q = el('input', { type: 'search', id: 'q-all', placeholder: t('Cars, models, people, communities'), autocomplete: 'off', value: S.q || '', 'aria-label': t('Search') }), res = el('div', { class: 'col', id: 'q-results' });
+  const sec = (title, kids) => el('section', { class: 'panel' }, el('h2', { text: title }), el('ul', { class: 'due-list' }, kids));
+  const show = () => {
+    res.replaceChildren(); const v = (S.q || '').trim().toLowerCase(); if (v.length < 2) { res.append(el('p', { class: 'muted', text: t('Type at least two letters. Search covers your cars, every model in the market, people and communities.') })); return; }
+    const words = v.replace(/^@/, '').split(/\s+/), hit = (txt) => words.every((w) => (txt || '').toLowerCase().includes(w));
+    const cars = S.cars.filter((c) => hit([c.name, c.make, c.modelText, c.year, c.colour].join(' '))).slice(0, 6);
+    const best = suggestHit(v), models = CATALOG.filter((m) => hit(m.name)).slice(0, 8); if (best && !models.includes(best)) models.unshift(best);
+    const coms = (CLOUD.communities || []).filter((c) => hit(c.name + ' ' + (c.about || ''))).slice(0, 6), ppl = S.qPeople && S.qPeople.q === v ? S.qPeople.rows : null;
+    if (cars.length) res.append(sec(t('Your cars'), cars.map((c) => el('li', {}, el('a', { href: '#/car/' + c.id, text: c.name || t('Unnamed car') }), el('span', { class: 'muted small', text: [c.year, carOdo(c)].filter(Boolean).join(' · ') })))));
+    if (models.length) res.append(sec(t('Models in the market'), models.slice(0, 8).map((m) => el('li', {}, mlink(m.name), el('span', { class: 'muted small', text: t('Built {a} to {b}', { a: m.from, b: m.to }) })))));
+    if (ppl && ppl.length) res.append(sec(t('People'), ppl.map((x) => el('li', {}, el('a', { class: 'row', style: 'gap:10px;flex-wrap:nowrap;min-width:0;text-decoration:none;color:inherit', href: '#/member/' + x.user_id }, avatarEl(x.avatar, memberName(x.name), 'sm'), el('span', { class: 'col', style: 'gap:2px;min-width:0' }, el('b', { text: memberName(x.name), style: 'overflow-wrap:anywhere' }), x.username ? el('span', { class: 'muted small', dir: 'ltr', text: '@' + x.username }) : null)), x.relation === 'friends' ? el('span', { class: 'tag', text: t('Friends') }) : null))));
+    if (coms.length) res.append(sec(t('Communities'), coms.map((c) => el('li', {}, el('a', { href: '#/community/' + c.id, text: c.name }), el('span', { class: 'muted small', text: t('Members: {n}', { n: c.members }) })))));
+    if (!cars.length && !models.length && !coms.length && !(ppl && ppl.length)) res.append(el('p', { class: 'empty', text: t(ppl || !CLOUD.usernames ? 'Nothing matches that. Try a shorter word.' : 'Searching…') }));
+  };
+  let h; const run = () => { S.q = q.value; show(); const v = q.value.trim().toLowerCase(); clearTimeout(h); if (CLOUD.usernames && v.replace(/^@/, '').length >= 2) h = setTimeout(async () => { try { const rows = await CLOUD.findPeople(v); S.qPeople = { q: v, rows: rows || [] }; } catch (e) { S.qPeople = { q: v, rows: [] }; } if ((S.q || '').trim().toLowerCase() === v) show(); }, 350); };
+  q.addEventListener('input', run);
+  out.append(el('form', { onsubmit: (ev) => { ev.preventDefault(); run(); q.blur(); } }, q), res); show();
+  if (S.qFocus) { S.qFocus = false; setTimeout(() => q.focus(), 0); }
+  return out;
+}
+function addSheet() {
+  const a = S.addOpen; if (!a) return null;
+  const close = () => { S.addOpen = null; render(); }, go = (h, after) => { S.addOpen = null; nav(h, after); };
+  const row = (id, icon, label, note, fn) => el('button', { type: 'button', class: 'menurow', id }, svgIcon(ICONS[icon]), el('span', { class: 'col', style: 'gap:1px;min-width:0;flex:1;text-align:start' }, el('b', { text: label }), note ? el('span', { class: 'muted small', text: note }) : null), el('span', { class: 'chev', 'aria-hidden': 'true' }, svgIcon(ICONS.chevron)));
+  const forCar = (kind) => { if (!S.cars.length) { toast(t('Add a car first.')); go('#/car/new'); return; } if (S.cars.length === 1) carDo(kind, S.cars[0]); else { S.addOpen = { pick: kind }; render(); } };
+  const carDo = (kind, c) => { const base = '#/car/' + c.id + '/'; if (kind === 'record') go(base + 'logbook', () => { S.rec = { files: [], removed: [] }; }); else if (kind === 'reminder') go(base + 'logbook', () => { S.remOpen = true; }); else if (kind === 'docs') go(base + 'logbook', () => { S.ai = { car: c.id, stage: 'pick' }; }); else { S.projCar = c.id; go('#/project/new'); } };
+  let body;
+  if (a.pick) body = [el('h2', { text: t('Which car?') }), el('nav', { class: 'menu' }, S.cars.map((c) => { const b = row('add-car-' + c.id, 'garage', c.name || t('Unnamed car'), [c.year, carOdo(c)].filter(Boolean).join(' · ')); b.addEventListener('click', () => carDo(a.pick, c)); return b; }))];
+  else {
+    const items = [['add-car', 'garage', t('A car'), t('Add a car to your garage'), () => go('#/car/new')],
+      ['add-record', 'edit', t('A logbook record'), t('A service, inspection, document or cost'), () => forCar('record')],
+      CLOUD.user ? ['add-docs', 'camera', t('Records from my documents'), t('Upload paperwork and have the history drafted'), () => forCar('docs')] : null,
+      ['add-reminder', 'bell', t('A reminder'), t('Next service, inspection or renewal'), () => forCar('reminder')],
+      CLOUD.projectsOn ? ['add-project', 'settings', t('A project'), t('Maintenance, an upgrade or a restoration'), () => forCar('project')] : null,
+      CLOUD.groups ? ['add-post', 'chat', t('A post'), t('Share something with one of your communities'), () => { const mine = CLOUD.communities.filter((c) => c.joined); if (!mine.length) { toast(t('Join a community first.')); go('#/communities'); } else if (mine.length === 1) go('#/community/' + mine[0].id, () => { S.focusPost = Date.now() + 2500; }); else { S.addOpen = { post: true }; render(); } }] : null,
+      CLOUD.groups ? ['add-event', 'friends', t('An event'), t('A drive, meet or show'), () => { S.evFor = null; go('#/events', () => { S.newEv = true; }); }] : null].filter(Boolean);
+    body = a.post ? [el('h2', { text: t('Which community?') }), el('nav', { class: 'menu' }, CLOUD.communities.filter((c) => c.joined).map((c) => { const b = row('add-post-' + c.id, 'friends', c.name, t('Members: {n}', { n: c.members })); b.addEventListener('click', () => go('#/community/' + c.id, () => { S.focusPost = Date.now() + 2500; })); return b; }))]
+      : [el('h2', { text: t('What do you want to add?') }), el('nav', { class: 'menu' }, items.map((x) => { const b = row(x[0], x[1], x[2], x[3]); b.addEventListener('click', x[4]); return b; }))];
+  }
+  const sheet = el('div', { class: 'sheet', role: 'dialog', 'aria-modal': 'true', 'aria-label': t('Add'), id: 'add-sheet' }, ...body, el('button', { type: 'button', class: 'btn', id: 'b-add-close', text: t('Cancel'), onclick: close }));
+  const back = el('div', { class: 'sheetback', onclick: (ev) => { if (ev.target === back) close(); } }, sheet);
+  back.addEventListener('keydown', (ev) => { if (ev.key === 'Escape') close(); });
+  setTimeout(() => { const f = sheet.querySelector('button'); if (f) f.focus(); }, 0);
+  return back;
+}
 function render() {
   const app = $('app'); document.documentElement.lang = S.lang; document.documentElement.dir = S.lang === 'ar' ? 'rtl' : 'ltr'; document.documentElement.dataset.theme = S.theme; S.redraw = null;
   const dark = S.theme === 'dark' || (S.theme === 'auto' && window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches), tc = document.querySelector('meta[name=theme-color]'); if (tc) tc.content = dark ? '#120d1c' : '#ffffff';
   const r = route();
   if (!CLOUD.user && PAGES[r.name]) { app.replaceChildren(el('header', { class: 'head' }, brand('#/home'), el('a', { class: 'btn sm', href: '#/home', text: t('Sign in') })), el('main', {}, viewPage(r.name)), footer()); return; }
   if (!CLOUD.user || S.mode === 'newpass') { app.replaceChildren(viewLogin()); return; }
-  const top = r.name === 'home' ? 'home' : r.name === 'about' ? 'about' : ['friends', 'friend', 'member', 'messages', 'chat', 'communities', 'community', 'events', 'projects', 'project'].includes(r.name) ? 'friends' : r.name === 'market' || r.name === 'model' ? 'market' : r.name === 'settings' ? 'settings' : r.name === 'profile' || r.name === 'notifications' || PAGES[r.name] ? '' : 'garage';
+  const top = r.name === 'home' ? 'home' : ['friends', 'friend', 'member', 'communities', 'community', 'events'].includes(r.name) ? 'friends' : r.name === 'market' || r.name === 'model' ? 'market' : ['settings', 'profile', 'notifications', 'messages', 'chat', 'search', 'projects', 'project'].includes(r.name) || PAGES[r.name] ? '' : 'garage';
   const tab = (id, href, label) => el('a', { class: 'tab', id: 't-' + id, href, 'aria-current': top === id ? 'page' : 'false' }, ico(id, label));
   const nUnread = CLOUD.extras ? CLOUD.unread() : 0, bell = CLOUD.extras ? el('a', { class: 'bell', id: 'a-bell', href: '#/notifications', 'aria-label': nUnread ? t('Notifications, {n} new', { n: nUnread }) : t('Notifications'), 'aria-current': r.name === 'notifications' ? 'page' : 'false' }, svgIcon(ICONS.bell), nUnread ? el('span', { class: 'count', text: nUnread > 9 ? '9+' : String(nUnread) }) : null) : null;
-  const me = CLOUD.profiles ? el('a', { class: 'mebtn', id: 'a-me', href: '#/profile', 'aria-label': t('Your profile') }, avatarEl(CLOUD.profile.avatar, CLOUD.profile.name || CLOUD.user.email || '', 'sm')) : null;
-  const head = el('header', { class: 'head' }, brand('#/home'), el('span', { class: 'headtools' }, bell, me), el('nav', { class: 'tabs', 'aria-label': t('Sections') }, tab('home', '#/home', t('Home')), tab('about', '#/about', t('About')), tab('garage', '#/garage', CLOUD.garageName || t('My garage')), tab('market', '#/market', t('Market')), tab('friends', '#/friends', t('Community') + (incoming().length + unreadChats() ? ' (' + (incoming().length + unreadChats()) + ')' : '')), tab('settings', '#/settings', t('Settings'))));
+  const me = el('a', { class: 'mebtn', id: 'a-me', href: '#/profile', 'aria-label': t('Your profile and settings'), 'aria-current': ['profile', 'settings'].includes(r.name) ? 'page' : 'false' }, avatarEl(CLOUD.profile.avatar, CLOUD.profile.name || CLOUD.user.email || '', 'sm'));
+  const nMsg = unreadChats(), tool = (id, href, icon, label, n, cur) => el('a', { class: 'bell', id, href, 'aria-label': label, title: label, 'aria-current': cur ? 'page' : 'false' }, svgIcon(ICONS[icon]), n ? el('span', { class: 'count', text: n > 9 ? '9+' : String(n) }) : null);
+  const find = el('a', { class: 'bell', id: 'a-search', href: '#/search', 'aria-label': t('Search'), title: t('Search'), 'aria-current': r.name === 'search' ? 'page' : 'false', onclick: () => { S.qFocus = true; } }, svgIcon(ICONS.search));
+  const msgs = CLOUD.chatsOn ? tool('a-msgs', '#/messages', 'chat', nMsg ? t('Messages, {n} new', { n: nMsg }) : t('Messages'), nMsg, r.name === 'messages' || r.name === 'chat') : null;
+  const plus = el('button', { type: 'button', class: 'fab', id: 'b-add', 'aria-label': t('Add'), title: t('Add'), onclick: () => { S.addOpen = {}; render(); } }, svgIcon(ICONS.plus), el('span', { text: t('Add') }));
+  const head = el('header', { class: 'head' }, brand('#/home'), el('span', { class: 'headtools' }, find, msgs, bell, me), el('nav', { class: 'tabs', 'aria-label': t('Sections') }, tab('home', '#/home', t('Home')), tab('garage', '#/garage', t('Garage')), tab('market', '#/market', t('Market')), tab('friends', '#/communities', t('Community') + (incoming().length ? ' (' + incoming().length + ')' : ''))), plus);
   let main;
   if (r.name !== 'notifications') S.noteSeen = null;
   if (r.name === 'garage') main = viewGarage();
@@ -1380,6 +1438,7 @@ function render() {
   else if (r.name === 'friend') main = viewFriend(r.a, r.b);
   else if (r.name === 'member') main = viewMember(r.a);
   else if (r.name === 'messages') main = viewMessages();
+  else if (r.name === 'search') main = viewSearch();
   else if (r.name === 'chat') main = viewChat(r.a);
   else if (r.name === 'model') { HELP.mark('market'); const m = catOf(r.a); main = el('div', { class: 'col' }, el('div', { class: 'col', style: 'gap:6px' }, el('a', { class: 'small', href: '#/market', text: '‹ ' + t('Market') }), m ? banner({ name: shortModel(m.name) }, null) : el('h1', { text: t('Model not found') }), m ? el('p', { class: 'muted', text: t('Built {a} to {b}', { a: m.from, b: m.to }) }) : null), m ? panel(null, null, marketView(m.name, null)) : null, m ? el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn primary', id: 'b-own-one', text: t('I own one: add it to my garage'), onclick: () => { S.prefill = m.name; nav('#/car/new'); } })) : null); }
   else if (r.name === 'projects') main = viewProjects();
@@ -1387,7 +1446,8 @@ function render() {
   else if (r.name === 'car' && r.a === 'new') main = carForm(null);
   else if (r.name === 'car') { const car = S.cars.find((c) => c.id === r.a); main = !car ? el('p', { class: 'empty', text: t(CLOUD.loaded ? 'That car is no longer in your garage.' : 'Loading your garage…') }) : r.b === 'edit' ? carForm(car) : viewCar(car, r.b || 'overview'); }
   else main = viewHome();
-  app.replaceChildren(head, el('main', {}, main), footer());
+  const hideAdd = ['chat', 'search'].includes(r.name) || (r.name === 'car' && (r.a === 'new' || r.b === 'edit')) || (r.name === 'project' && r.a === 'new'); if (hideAdd) plus.hidden = true;
+  app.replaceChildren(...[head, el('main', {}, main), CLOUD.user && !(r.name === 'profile' || r.name === 'settings' || PAGES[r.name]) ? el('div', { class: 'footpad' }) : footer(), addSheet()].filter(Boolean));
 }
 let rz; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { if (S.redraw) S.redraw(); }, 150); });
 
