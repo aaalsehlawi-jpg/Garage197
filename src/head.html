@@ -327,6 +327,29 @@
   .linkbtn { align-self: flex-start; text-align: start; }
   .row > .linkbtn { align-self: center; }
   @media (max-width: 640px) { .fab span { display: none; } }
+  /* logbook records as separate cards */
+  .log.recs { gap: 10px; }
+  .log li.yr { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; border: 0; padding: 12px 2px 0; font-weight: 700; font-size: 1.05rem; color: var(--strong); }
+  .log li.yr:first-child { padding-top: 0; }
+  .log li.rec { display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; border: 1px solid var(--line); border-inline-start: 4px solid var(--accent); border-radius: 10px; background: var(--panel); min-width: 0; overflow-wrap: anywhere; }
+  .log li.rec.st-attention { border-inline-start-color: var(--bad); }
+  .log li.rec.st-fair { border-inline-start-color: var(--warn); }
+  .rec-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .rec-type { font-size: .7rem; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--accent); background: var(--accent-soft); border-radius: 999px; padding: 2px 9px; }
+  .rec-status { font-size: .75rem; font-weight: 600; }
+  .rec-status.s-good { color: var(--ok); } .rec-status.s-fair { color: var(--warn); } .rec-status.s-attention { color: var(--bad); }
+  .rec-date { margin-inline-start: auto; font-size: .82rem; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .rec-title { font-size: 1rem; line-height: 1.3; color: var(--strong); }
+  .rec-meta { display: flex; flex-wrap: wrap; gap: 2px 0; font-size: .84rem; color: var(--muted); }
+  .rec-meta span + span::before { content: '·'; margin: 0 7px; }
+  .rec-notes { margin: 0; font-size: .88rem; line-height: 1.5; white-space: pre-wrap; }
+  .rec-notes.clamp { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; white-space: normal; }
+  .rec-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; padding-top: 2px; }
+  .rec-foot .linkbtn { align-self: center; }
+  .rec-foot .rec-file { display: inline-flex; align-items: center; gap: 5px; max-width: 100%; }
+  .rec-foot .rec-file svg { width: 14px; height: 14px; flex: none; }
+  .rec-foot .rec-edit { margin-inline-start: auto; }
+  html[lang="ar"] .rec-type { letter-spacing: 0; font-size: .78rem; }
 </style>
 </head>
 <body>

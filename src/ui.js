@@ -541,15 +541,29 @@ function logbookView(car) {
     stat(t('Highest odometer logged'), odo ? num(odo) + ' ' + unitName(car.unit || 'mi') : '—', flagged ? t('{n} need attention', { n: flagged }) : t('Nothing flagged'))));
   const used = ['all', ...Object.keys(REC_TYPES).filter((x) => recs.some((r) => r.type === x))]; if (!used.includes(S.filter)) S.filter = 'all';
   if (used.length > 2) hist.append(el('div', { class: 'chips', role: 'group', 'aria-label': t('Filter records') }, used.map((x) => el('button', { type: 'button', class: 'chip', 'aria-pressed': String(S.filter === x), text: x === 'all' ? t('All') : t(REC_TYPES[x]), onclick: () => { S.filter = x; render(); } }))));
-  hist.append(el('ul', { class: 'log' }, recs.filter((x) => S.filter === 'all' || x.type === S.filter).map((r) => el('li', {},
-    el('div', { class: 'when' }, el('span', { text: r.date ? fmtDate(r.date) : '' }), r.odometer ? el('span', { text: num(+r.odometer) + ' ' + unitName(car.unit || 'mi') }) : null),
-    el('div', { class: 'what' },
-      el('span', {}, el('span', { class: 'tag', text: t(REC_TYPES[r.type] || 'Note') }), r.status ? el('span', { class: 'tag s-' + r.status, text: ' · ' + t(STATUS[r.status]) }) : null),
-      el('b', { text: r.title || '' }),
-      (r.by || +r.cost) ? el('span', { class: 'muted small', text: [r.by, +r.cost ? cash(+r.cost, r.cur) : ''].filter(Boolean).join(' · ') }) : null,
-      r.notes ? el('span', { class: 'small', style: 'white-space:pre-wrap', text: r.notes }) : null,
-      r.files && r.files.length ? el('span', { class: 'row small' }, r.files.map((f) => { const b = el('button', { type: 'button', class: 'linkbtn', text: f.name }); b.addEventListener('click', async () => { const w = window.open('', '_blank'); try { const url = await CLOUD.fileUrl(f.path); if (w) w.location = url; else location.href = url; } catch (e) { if (w) w.close(); toast(t('Couldn’t open the file.')); } }); return b; })) : null,
-      el('span', {}, el('button', { type: 'button', class: 'linkbtn small', text: t('Edit'), onclick: () => { S.rec = { editing: r.id, files: (r.files || []).slice(), removed: [] }; render(); window.scrollTo(0, 0); } })))))));
+  S.recOpen = S.recOpen || {};
+  const shown = recs.filter((x) => S.filter === 'all' || x.type === S.filter), list = el('ul', { class: 'log recs' });
+  const yearOf = (x) => (x.date ? String(x.date).slice(0, 4) : t('No date'));
+  let yr = null;
+  for (const r of shown) {
+    const y = yearOf(r);
+    if (y !== yr) { yr = y; const n = shown.filter((x) => yearOf(x) === y).length; list.append(el('li', { class: 'yr' }, el('span', { text: y }), el('span', { class: 'muted small', text: n === 1 ? t('1 record') : t('{n} records', { n }) }))); }
+    const notes = (r.notes || '').trim(), long = notes.length > 150 || notes.split('\n').length > 2, open = !!S.recOpen[r.id];
+    const meta = [r.odometer ? num(+r.odometer) + ' ' + unitName(car.unit || 'mi') : '', r.by, +r.cost ? cash(+r.cost, r.cur) : ''].filter(Boolean);
+    list.append(el('li', { class: 'rec' + (r.status ? ' st-' + r.status : '') },
+      el('div', { class: 'rec-top' },
+        el('span', { class: 'rec-type', text: t(REC_TYPES[r.type] || 'Note') }),
+        r.status ? el('span', { class: 'rec-status s-' + r.status, text: t(STATUS[r.status]) }) : null,
+        el('span', { class: 'rec-date', text: r.date ? fmtDate(r.date) : '' })),
+      el('b', { class: 'rec-title', dir: 'auto', text: r.title || t(REC_TYPES[r.type] || 'Note') }),
+      meta.length ? el('div', { class: 'rec-meta' }, meta.map((m) => el('span', { text: m }))) : null,
+      notes ? el('p', { class: 'rec-notes' + (long && !open ? ' clamp' : ''), dir: 'auto', text: notes }) : null,
+      el('div', { class: 'rec-foot' },
+        long ? el('button', { type: 'button', class: 'linkbtn small rec-more', 'aria-expanded': String(open), text: open ? t('Hide details') : t('Show details'), onclick: () => { S.recOpen[r.id] = !open; render(); } }) : null,
+        (r.files || []).map((f) => { const b = el('button', { type: 'button', class: 'linkbtn small rec-file' }, ico('pdf', f.name)); b.addEventListener('click', async () => { const w = window.open('', '_blank'); try { const url = await CLOUD.fileUrl(f.path); if (w) w.location = url; else location.href = url; } catch (e) { if (w) w.close(); toast(t('Couldn’t open the file.')); } }); return b; }),
+        el('button', { type: 'button', class: 'linkbtn small rec-edit', text: t('Edit'), onclick: () => { S.rec = { editing: r.id, files: (r.files || []).slice(), removed: [] }; render(); window.scrollTo(0, 0); } }))));
+  }
+  hist.append(list);
   out.append(hist);
   return out;
 }

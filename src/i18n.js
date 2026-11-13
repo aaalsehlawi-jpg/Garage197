@@ -914,4 +914,9 @@ const AR = {
   'Search everything from the top: your cars, market models, people and communities.': 'ابحث عن كل شيء من الأعلى: سياراتك وطرازات السوق والأشخاص والمجتمعات.',
   'Private messages with friends, and usernames so friends can find you without your email.': 'رسائل خاصة مع الأصدقاء، وأسماء مستخدمين ليجدك الأصدقاء دون بريدك الإلكتروني.',
   'Communities now show their members and who is going to each event.': 'تعرض المجتمعات الآن أعضاءها ومن سيحضر كل فعالية.',
+  'Show details': 'عرض التفاصيل',
+  'Hide details': 'إخفاء التفاصيل',
+  'No date': 'بلا تاريخ',
+  '1 record': 'سجل واحد',
+  '{n} records': '{n} سجلات',
 };
