@@ -1,7 +1,12 @@
 {
   "name": "Garage 197",
   "short_name": "Garage 197",
-  "description": "Track classic Porsche prices, value your garage and keep each car's logbook.",
+  "description": "Your cars in one place: what they are worth, their logbooks and documents, projects, and a community of car owners and collectors.",
+  "id": "./",
+  "lang": "en",
+  "dir": "auto",
+  "orientation": "portrait-primary",
+  "categories": ["lifestyle", "productivity", "social"],
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

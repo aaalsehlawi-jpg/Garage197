@@ -152,7 +152,7 @@ function viewLogin() {
       el('div', { class: 'row' }, el('button', { type: 'submit', class: 'btn primary', id: 'b-signin', text: t('Sign in') }), el('button', { type: 'button', class: 'btn', id: 'b-signup', text: t('Create account'), onclick: () => go(true) })),
       el('button', { type: 'button', class: 'linkbtn small', id: 'b-forgot', text: t('Forgot your password?'), onclick: () => { S.mode = 'forgot'; render(); } }));
   }
-  const art = el('div', { class: 'art' }, brand(), el('div', {}), el('p', { text: t('Track what classic cars sell for, keep your cars and their history in one place, and see how your garage sits against the market.') }));
+  const art = el('div', { class: 'art' }, brand(), el('div', {}), el('p', { text: t('Track what cars sell for, keep your cars and their history in one place, and see how your garage sits against the market.') }));
   art.children[1].innerHTML = CAR_SVG.replace('<svg ', '<svg class="car" ');
   return el('div', { class: 'signin' }, art,
     el('div', { class: 'form' }, el('div', { class: 'row between' }, el('h2', { text: t(S.mode === 'newpass' ? 'Choose a new password' : S.mode === 'forgot' ? 'Reset your password' : 'Sign in'), style: 'font-size:1.4rem' }), langToggle()), body, status,
@@ -271,7 +271,7 @@ function carRow() {
     el('a', { class: 'card mini addcard', href: '#/car/new', 'aria-label': t('Add a car') }, el('span', { class: 'plus' }, svgIcon(ICONS.plus)), el('span', { class: 'small', text: t('Add a car') })));
 }
 function viewHome() {
-  const out = el('div', { class: 'col home' });
+  const out = el('div', { class: 'col home' }, el('h1', { class: 'sr-only', text: t('Home') }));
   if (!CLOUD.loaded) { out.append(skel('11rem'), skel('6rem')); return out; }
   if (CLOUD.setupError) out.append(panel(null, null, el('p', { style: 'color:var(--bad)', text: t('Your garage could not be loaded from the cloud. Check your connection and reload the page.') })));
   if (!S.cars.length) out.append(welcome());
@@ -1635,7 +1635,7 @@ function render() {
   const dark = S.theme === 'dark' || (S.theme === 'auto' && window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches), tc = document.querySelector('meta[name=theme-color]'); if (tc) tc.content = dark ? '#120d1c' : '#ffffff';
   const r = route(); aiCheck();
   if (!CLOUD.user && PAGES[r.name]) { app.replaceChildren(el('header', { class: 'head' }, brand('#/home'), el('a', { class: 'btn sm', href: '#/home', text: t('Sign in') })), el('main', {}, viewPage(r.name)), footer()); return; }
-  if (!CLOUD.user || S.mode === 'newpass') { app.replaceChildren(viewLogin()); return; }
+  if (!CLOUD.user || S.mode === 'newpass') { app.replaceChildren(el('main', {}, viewLogin())); return; }
   const top = r.name === 'home' ? 'home' : ['friends', 'friend', 'member', 'communities', 'community', 'events'].includes(r.name) ? 'friends' : r.name === 'market' || r.name === 'model' ? 'market' : ['settings', 'profile', 'notifications', 'messages', 'chat', 'search', 'projects', 'project'].includes(r.name) || PAGES[r.name] ? '' : 'garage';
   const tab = (id, href, label) => el('a', { class: 'tab', id: 't-' + id, href, 'aria-current': top === id ? 'page' : 'false' }, ico(id, label));
   const nUnread = CLOUD.extras ? CLOUD.unread() : 0, bell = CLOUD.extras ? el('a', { class: 'bell', id: 'a-bell', href: '#/notifications', 'aria-label': nUnread ? t('Notifications, {n} new', { n: nUnread }) : t('Notifications'), 'aria-current': r.name === 'notifications' ? 'page' : 'false' }, svgIcon(ICONS.bell), nUnread ? el('span', { class: 'count', text: nUnread > 9 ? '9+' : String(nUnread) }) : null) : null;

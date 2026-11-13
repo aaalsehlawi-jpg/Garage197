@@ -520,7 +520,7 @@ const AR = {
   'There is no tolerance for abusive, hateful, illegal or misleading content. Follow the community guidelines. We may remove content and close accounts that break them.': 'لا تسامح مع المحتوى المسيء أو المحرّض على الكراهية أو غير القانوني أو المضلل. التزم بإرشادات المجتمع. قد نحذف المحتوى ونغلق الحسابات المخالفة.',
   'Thin evidence': 'أدلة ضعيفة',
   'Thin evidence: few sales on file. Treat the value as a rough guide.': 'أدلة ضعيفة: مبيعات قليلة مسجلة. اعتبر القيمة مؤشرًا تقريبيًا.',
-  'Track what classic cars sell for, keep your cars and their history in one place, and see how your garage sits against the market.': 'تابع أسعار بيع السيارات الكلاسيكية، واحفظ سياراتك وتاريخها في مكان واحد، واعرف موقع كراجك من السوق.',
+  'Track what cars sell for, keep your cars and their history in one place, and see how your garage sits against the market.': 'تابع أسعار بيع السيارات، واحفظ سياراتك وتاريخها في مكان واحد، واعرف موقع كراجك من السوق.',
   'Uploading…': 'جارٍ الرفع…',
   'Use Report on the post, event or community. Reports go to the Garage 197 team and the other person is not told. You can also block anyone, which hides you from each other.': 'استخدم «إبلاغ» على المنشور أو الفعالية أو المجتمع. تصل البلاغات إلى فريق Garage 197 ولا يُبلَّغ الطرف الآخر. يمكنك أيضًا حظر أي شخص فيختفي كل منكما عن الآخر.',
   'Using Garage 197': 'استخدام Garage 197',
