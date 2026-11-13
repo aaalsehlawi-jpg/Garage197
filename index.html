@@ -354,6 +354,12 @@
   .photo { position: relative; }
   .photo > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; }
   .combo-list { max-height: min(15rem, 40vh); overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; touch-action: pan-y; }
+  /* private registration document */
+  .private-note { display: flex; align-items: flex-start; gap: 8px; margin: 0; padding: 9px 11px; border-radius: 8px; background: var(--soft); font-size: .86rem; color: var(--ink); }
+  .private-note svg { width: 16px; height: 16px; flex: none; margin-top: 2px; color: var(--accent); }
+  .regdoc { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; min-width: 0; overflow-wrap: anywhere; }
+  .regdoc .linkbtn { display: inline-flex; align-items: center; gap: 6px; align-self: center; max-width: 100%; }
+  .regdoc .linkbtn svg { width: 16px; height: 16px; flex: none; }
 </style>
 </head>
 <body>
@@ -1666,6 +1672,16 @@ const AR = {
   '1 record': 'سجل واحد',
   '{n} records': '{n} سجلات',
   'G-Class': 'الفئة G',
+  'Registration document': 'استمارة السيارة',
+  'Replace': 'استبدال',
+  'Upload registration': 'ارفع الاستمارة',
+  'Only you can see this. It is never shown to friends, communities or anyone else, even when you share your garage.': 'لا يراها أحد غيرك. لا تظهر للأصدقاء ولا للمجتمعات ولا لأي شخص آخر، حتى عند مشاركة كراجك.',
+  'Keep a photo or PDF of the registration card with the car, ready when you need it.': 'احتفظ بصورة أو ملف PDF لاستمارة السيارة مع السيارة لتجدها عند الحاجة.',
+  'That file is over 10 MB. Choose a smaller one.': 'حجم الملف أكبر من 10 ميغابايت. اختر ملفًا أصغر.',
+  'Registration saved': 'تم حفظ الاستمارة',
+  'Registration removed': 'تم حذف الاستمارة',
+  'Press again to remove': 'اضغط مرة أخرى للحذف',
+  'Added {d}': 'أضيفت في {d}',
 };
 /* ===== Screens. Every visible string goes through t() so it can be shown in Arabic (see i18n.js). ===== */
 const CLOUD = window.g197cloud;
@@ -1742,6 +1758,7 @@ const ICONS = {
   home: '<path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9.5h13V10"/><path d="M10 19.5v-5h4v5"/>',
   garage: '<path d="M3 10.5 12 5l9 5.5V20H3z"/><path d="M7 20v-6h10v6"/><path d="M7 17h10"/>',
   market: '<path d="M4 19.5h16"/><path d="M5 15.5l4.5-5 3.5 3 6-7.5"/><path d="M15.5 6H19v3.5"/>',
+  lock: '<rect x="5" y="10.5" width="14" height="9.5" rx="2"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/>',
   settings: '<circle cx="12" cy="12" r="3"/><path d="M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21M5.6 5.6l1.8 1.8M16.6 16.6l1.8 1.8M5.6 18.4l1.8-1.8M16.6 7.4l1.8-1.8"/>',
   friends: '<circle cx="9" cy="8.5" r="3.2"/><path d="M3 19.5c.6-3.4 3-5 6-5s5.4 1.6 6 5"/><circle cx="17" cy="9.5" r="2.5"/><path d="M17 14.5c2.2.2 3.6 1.6 4 4"/>',
   about: '<circle cx="12" cy="12" r="8.5"/><path d="M12 11v5.5"/><path d="M12 7.6v.1"/>',
@@ -2107,7 +2124,7 @@ function carForm(car) {
     let sure = false; const del = el('button', { type: 'button', class: 'btn danger', id: 'b-del', text: t('Remove this car') });
     del.addEventListener('click', async () => {
       if (!sure) { sure = true; del.textContent = t('Yes, remove it and its logbook'); return; }
-      const paths = (car.records || []).flatMap((r) => (r.files || []).map((x) => x.path)).concat(car.photo ? [car.photo.path] : [], (car.gallery || []).map((x) => x.path));
+      const paths = (car.records || []).flatMap((r) => (r.files || []).map((x) => x.path)).concat(car.photo ? [car.photo.path] : [], (car.gallery || []).map((x) => x.path), car.regdoc && car.regdoc.path ? [car.regdoc.path] : []);
       try { await S.db.collection('cars').doc(car.id).delete(); CLOUD.removeFiles(paths); toast(t('Car removed')); nav('#/garage'); } catch (e) { toast(t('Couldn’t remove it. Try again.')); }
     });
     out.append(el('div', { class: 'row' }, del));
@@ -2151,6 +2168,24 @@ function galleryPanel(car) {
   }));
   return panel(t('Photos'), null, list.length ? grid : el('p', { class: 'empty', text: t('Add photos of the car, its details and its paperwork.') }), el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn', id: 'b-photos', onclick: () => input.click() }, ico('camera', t('Add photos'))), input, status));
 }
+// Registration document: kept in the owner's own storage folder and never part of what friends are sent.
+function regPanel(car) {
+  const d = car.regdoc, input = el('input', { type: 'file', accept: 'image/*,application/pdf', id: 'reg-file', style: 'display:none' }), status = el('span', { class: 'status', role: 'status' });
+  input.addEventListener('change', async () => {
+    const f = input.files[0]; if (!f) return;
+    if (f.size > 10 * 1024 * 1024) { status.textContent = t('That file is over 10 MB. Choose a smaller one.'); return; }
+    try { status.textContent = t('Uploading…'); const up = await CLOUD.upload(car.id, /^image\//.test(f.type) ? await shrink(f) : f); await saveCar(car, { regdoc: { ...up, name: f.name || up.name, added: new Date().toISOString().slice(0, 10) } }); if (d && d.path) CLOUD.removeFiles([d.path]); toast(t('Registration saved')); render(); }
+    catch (e) { status.textContent = t('Couldn’t save: {m}', { m: (e && e.message) || '' }); }
+  });
+  const open = async () => { const w = window.open('', '_blank'); try { const url = await CLOUD.fileUrl(d.path); if (w) w.location = url; else location.href = url; } catch (e) { if (w) w.close(); toast(t('Couldn’t open the file.')); } };
+  const note = el('p', { class: 'private-note' }, svgIcon(ICONS.lock), el('span', { text: t('Only you can see this. It is never shown to friends, communities or anyone else, even when you share your garage.') }));
+  const body = d && d.path
+    ? el('div', { class: 'regdoc' }, el('button', { type: 'button', class: 'linkbtn', id: 'b-reg-open', onclick: open }, ico('pdf', d.name || t('Registration document'))), d.added ? el('span', { class: 'muted small', text: t('Added {d}', { d: fmtDate(d.added) }) }) : null)
+    : el('p', { class: 'empty', text: t('Keep a photo or PDF of the registration card with the car, ready when you need it.') });
+  const btns = el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn', id: 'b-reg-add', onclick: () => input.click() }, ico(d && d.path ? 'edit' : 'plus', d && d.path ? t('Replace') : t('Upload registration'))),
+    d && d.path ? el('button', { type: 'button', class: 'btn', id: 'b-reg-del', onclick: async () => { if (S.regDel !== car.id) { S.regDel = car.id; render(); return; } S.regDel = null; try { await saveCar(car, { regdoc: null }); CLOUD.removeFiles([d.path]); toast(t('Registration removed')); render(); } catch (e) { toast(t('Couldn’t save. Try again.')); } } }, el('span', { text: S.regDel === car.id ? t('Press again to remove') : t('Remove') })) : null, input, status);
+  const sec = panel(t('Registration document'), null, note, body, btns); sec.id = 'reg-panel'; return sec;
+}
 function viewCar(car, sub) {
   const base = '#/car/' + car.id + '/', tabs = [['overview', t('Overview')], ['market', t('Market')], ['logbook', t('Logbook')]].concat(CLOUD.projectsOn ? [['projects', t('Projects')]] : []), e = estimate(car);
   const out = el('div', { class: 'col' },
@@ -2173,6 +2208,7 @@ function viewCar(car, sub) {
     out.append(el('div', { class: 'grid2' }, panel(null, null, value, el('div', { class: 'row' }, el('a', { class: 'btn', href: base + 'market' }, ico('market', t('See the market'))))),
       panel(t('Coming up'), null, due.length ? el('ul', { class: 'due-list' }, due.map((x) => el('li', {}, el('span', { text: x.r.title }), el('span', { class: 'tag s-' + x.st, text: remText(car, x.r, x.st) })))) : el('p', { class: 'empty' }, el('span', { text: t('Nothing is due. Reminders you add in the logbook show here.') + ' ' }), el('a', { href: base + 'logbook', text: t('Set a reminder') })))));
     out.append(galleryPanel(car));
+    if (CLOUD.user) out.append(regPanel(car));
     const det = el('details', { class: 'fold', id: 'car-details' }, el('summary', {}, el('h2', { text: t('Details') }), el('span', { class: 'muted small', text: [car.year, carOdo(car), car.colour].filter(Boolean).join(' · ') })), facts.length ? el('dl', { class: 'facts' }, facts.map((x) => el('div', {}, el('dt', { text: x[0] }), el('dd', { text: x[1] })))) : el('p', { class: 'empty', text: t('No details yet.') }), vinPlate(car));
     if (S.detOpen === car.id) det.open = true; det.addEventListener('toggle', () => { S.detOpen = det.open ? car.id : null; });
     out.append(el('section', { class: 'panel' }, det, el('div', { class: 'row' }, el('a', { class: 'btn', id: 'b-edit', href: base + 'edit' }, ico('edit', t('Edit details'))))));
