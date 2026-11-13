@@ -373,6 +373,58 @@
   .ai-fill { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; padding: 14px; border: 1px dashed var(--accent); border-radius: 12px; background: var(--soft); }
   form.askbar { display: flex; flex-direction: row; flex-wrap: nowrap; gap: 8px; align-items: stretch; } form.askbar input { flex: 1 1 auto; width: auto; min-width: 0; } form.askbar .btn { width: auto; }
   .askbar { gap: 8px; align-items: stretch; } .askbar input { min-height: 2.6rem; } .askbar .btn { flex: none; }
+  /* engagement */
+  .mention { font-weight: 600; text-decoration: none; } .mention:hover { text-decoration: underline; }
+  p.rich { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; } p.rich.clamp { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+  .clamp1 { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; } .clamp2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .engage { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+  .engrow { gap: 4px 12px; align-items: center; }
+  .eng { font: inherit; background: none; border: 0; color: var(--ink); cursor: pointer; display: inline-flex; align-items: center; gap: 5px; min-width: 44px; min-height: 44px; justify-content: center; border-radius: 999px; padding: 0 6px; font-weight: 600; font-size: .9rem; }
+  .eng svg { width: 1.5rem; height: 1.5rem; display: block; } .eng:hover { background: var(--soft); }
+  .eng.like.on { color: #d6336c; } .eng.like.on svg { fill: currentColor; }
+  .thread { display: flex; flex-direction: column; gap: 10px; padding-inline-start: 4px; }
+  .cmt { display: flex; gap: 8px; align-items: flex-start; min-width: 0; } .cmt .who { font-weight: 700; text-decoration: none; color: var(--strong); }
+  .cmtform { flex-wrap: nowrap; gap: 8px; align-items: center; } .cmtform input { flex: 1; min-width: 0; border-radius: 999px; }
+  .faces { display: inline-flex; align-items: center; flex: none; } .faces .avatar { border: 2px solid var(--panel); margin-inline-start: -8px; } .faces .avatar:first-child { margin-inline-start: 0; } .faces .more { font-size: .68rem; background: var(--soft); color: var(--muted); }
+  .tile .faces { margin-top: 4px; }
+  .facerow { display: flex; flex-wrap: wrap; gap: 6px 14px; } .face { display: inline-flex; align-items: center; gap: 6px; text-decoration: none; color: inherit; min-height: 36px; }
+  .hscroll { display: flex; gap: 12px; overflow-x: auto; padding: 4px 2px 10px; scroll-snap-type: x proximity; -webkit-overflow-scrolling: touch; }
+  .hscroll > * { flex: none; scroll-snap-align: start; }
+  .pcard { width: 9.5rem; border: 1px solid var(--line); border-radius: 12px; padding: 12px 10px; display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; }
+  .pcard .btn { width: 100%; justify-content: center; }
+  .story { width: 5.2rem; display: flex; flex-direction: column; align-items: center; gap: 4px; text-decoration: none; color: inherit; text-align: center; }
+  .ring { padding: 3px; border-radius: 999px; background: linear-gradient(135deg, var(--accent), #d6336c); display: inline-grid; } .ring.gold { background: linear-gradient(135deg, #e0b060, #9a6410); }
+  .ring .avatar { width: 4rem; height: 4rem; border: 3px solid var(--panel); font-size: 1.3rem; }
+  .avatar.xl { width: 6rem; height: 6rem; font-size: 2rem; border: 4px solid var(--panel); }
+  .avatar svg { width: 55%; height: 55%; display: block; } .avatar.ghost { background: none; }
+  .feedwrap { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+  .fcards { display: flex; flex-direction: column; gap: 14px; max-width: 36rem; width: 100%; margin-inline: auto; }
+  .fcard { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 12px; display: flex; flex-direction: column; gap: 10px; min-width: 0; box-shadow: var(--shadow); }
+  .fhead { display: flex; align-items: center; gap: 10px; min-width: 0; } .fhead .who { font-weight: 700; text-decoration: none; color: var(--strong); } .ftitle { font-weight: 600; overflow-wrap: anywhere; }
+  .fphoto { position: relative; margin-inline: -12px; background: var(--soft); overflow: hidden; cursor: pointer; user-select: none; -webkit-user-select: none; touch-action: manipulation; }
+  .fphoto img { display: block; width: 100%; height: auto; max-height: 34rem; object-fit: cover; }
+  .fphoto.blank { min-height: 9rem; display: grid; place-items: center; color: var(--muted); cursor: default; } .fphoto.blank svg { width: 3rem; height: 3rem; }
+  .posts .fphoto, .cw .fphoto { margin-inline: 0; border-radius: 12px; max-width: min(100%, 30rem); }
+  .burst { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; color: #fff; animation: burst .7s ease-out forwards; }
+  .burst svg { width: 6rem; height: 6rem; fill: currentColor; filter: drop-shadow(0 2px 10px rgb(0 0 0 / .4)); }
+  @keyframes burst { 0% { transform: scale(.3); opacity: 0; } 30% { transform: scale(1.1); opacity: 1; } 70% { transform: scale(1); opacity: 1; } 100% { transform: scale(1); opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { .burst { animation-duration: .01s; } }
+  .fcar { display: flex; flex-direction: column; gap: 2px; text-decoration: none; color: inherit; } .fcar b { color: var(--strong); font-size: 1.05rem; overflow-wrap: anywhere; }
+  .phead { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+  .cover { height: 9rem; border-radius: 16px; background: linear-gradient(135deg, var(--accent-soft), var(--soft)); background-size: cover; background-position: center; }
+  .pmain { display: flex; align-items: flex-end; gap: 14px; margin-top: -3.4rem; padding-inline: 12px; min-width: 0; } .pmain h1 { margin: 0; font-size: 1.5rem; }
+  .pcounts { display: flex; gap: 22px; flex-wrap: wrap; } .pcount { display: flex; flex-direction: column; text-decoration: none; color: inherit; min-width: 3.5rem; } .pcount b { font-size: 1.2rem; color: var(--strong); font-family: var(--f-display); }
+  .gcars { display: grid; grid-template-columns: repeat(auto-fill, minmax(7.5rem, 1fr)); gap: 8px; }
+  .gcar { display: flex; flex-direction: column; gap: 4px; text-decoration: none; color: inherit; min-width: 0; } .gcar .photo { border-radius: 10px; aspect-ratio: 1; }
+  .cws { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr)); gap: 12px; }
+  .cw { border: 1px solid var(--line); border-radius: 12px; padding: 10px; display: flex; flex-direction: column; gap: 8px; min-width: 0; } .cw.win { border-color: var(--hi); background: var(--soft); max-width: 30rem; }
+  .cw .fphoto img { max-height: 16rem; } #cotw h2 svg { width: 1.4rem; height: 1.4rem; color: var(--hi); flex: none; }
+  .qr { width: min(15rem, 70%); margin-inline: auto; border-radius: 12px; overflow: hidden; border: 1px solid var(--line); } .qr svg { display: block; width: 100%; height: auto; }
+  .acard { display: flex; align-items: center; gap: 10px; border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; background: var(--panel); text-decoration: none; color: inherit; min-width: 0; } .acard svg { width: 1.5rem; height: 1.5rem; flex: none; color: var(--accent); }
+  .bubble .postphoto { max-width: 16rem; } .bubble .who { font-weight: 700; }
+  .brow { display: flex; gap: 6px; align-items: flex-end; max-width: 100%; } .brow.mine { justify-content: flex-end; } .brow .bubble { max-width: min(82%, 26rem); }
+  .iconbtn { padding-inline: 10px; flex: none; } .iconbtn svg { width: 1.3rem; height: 1.3rem; display: block; }
+  .due-list li.note { align-items: center; }
   .bubble.thinking { opacity: .7; font-style: italic; }
   ul.ticks, ul.movers, ul.plain { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
   ul.ticks li, ul.plain li { position: relative; padding-inline-start: 1.3rem; line-height: 1.45; }
@@ -457,6 +509,7 @@
     api.profile = { name: '', city: '', avatar: '' }; api.profiles = false;
     try { var pr = await parse(await call('/rest/v1/garages?select=display_name,city,avatar')); api.profiles = true; if (pr && pr[0]) api.profile = { name: pr[0].display_name || '', city: pr[0].city || '', avatar: pr[0].avatar || '', username: '' }; } catch (e) {}
     try { var un = await parse(await call('/rest/v1/garages?select=username')); api.usernames = true; if (un && un[0]) api.profile.username = un[0].username || ''; } catch (e) { api.usernames = false; }
+    try { var bc = await parse(await call('/rest/v1/garages?select=bio,cover')); if (bc && bc[0]) { api.profile.bio = bc[0].bio || ''; api.profile.cover = bc[0].cover || ''; } } catch (e) {}
     api.prefsOn = false; api.prefs = {};
     try { var pf = await parse(await call('/rest/v1/garages?select=prefs')); api.prefsOn = true; api.prefs = (pf && pf[0] && pf[0].prefs) || {}; } catch (e) {}
     api.loaded = true; emit(); emitAuth();
@@ -485,7 +538,7 @@
       if (!j || !j.access_token) return { confirm: true };
       setSession(j); await loadCloud(); return { ok: true };
     },
-    signOut: async function () { try { await call('/auth/v1/logout', { method: 'POST' }); } catch (e) {} setSession(null); cloud = {}; api.garageName = ''; api.setupError = ''; api.friends = []; api.feed = []; api.communities = []; api.events = []; api.notes = []; api.blocks = []; api.projects = []; api.activity = []; api.chats = []; api.profile = { name: '', city: '', avatar: '', username: '' }; api.seenAt = ''; api.shared = false; api.links = {}; api.socialLoaded = false; emit(); emitAuth(); },
+    signOut: async function () { try { await call('/auth/v1/logout', { method: 'POST' }); } catch (e) {} setSession(null); cloud = {}; api.garageName = ''; api.setupError = ''; api.friends = []; api.feed = []; api.communities = []; api.events = []; api.notes = []; api.blocks = []; api.projects = []; api.activity = []; api.chats = []; api.home = []; api.gchats = []; api.people = []; api.engageOn = false; api.profile = { name: '', city: '', avatar: '', username: '', bio: '', cover: '' }; api.seenAt = ''; api.shared = false; api.links = {}; api.socialLoaded = false; emit(); emitAuth(); },
     saveGarageName: function (name) { return call('/rest/v1/garages?on_conflict=user_id', { method: 'POST', headers: Object.assign({ Prefer: 'resolution=merge-duplicates,return=minimal' }, JSONH), body: JSON.stringify({ user_id: session.user.id, name: name, updated_at: new Date().toISOString() }) }).then(parse).then(function () { api.garageName = name; }); },
     // Friends, shared garages and social links
     profile: { name: '', city: '', avatar: '' }, profiles: false,
@@ -503,6 +556,8 @@
       try { api.projects = (await rpc('list_projects', {})) || []; api.projectsOn = true; } catch (e) { api.projects = []; api.projectsOn = false; }
       try { api.activity = (await rpc('friends_activity', {})) || []; api.activityOn = true; } catch (e) { api.activity = []; api.activityOn = false; }
       try { api.chats = (await rpc('my_chats', {})) || []; api.chatsOn = true; } catch (e) { api.chats = []; api.chatsOn = false; }
+      try { var h = await Promise.all([rpc('home_feed', {}), rpc('my_group_chats', {}), rpc('suggest_people', {})]); api.home = h[0] || []; api.gchats = h[1] || []; api.people = h[2] || []; api.engageOn = true; }
+      catch (e) { api.home = []; api.gchats = []; api.people = []; api.engageOn = false; }
       api.socialLoaded = true; emitAuth();
     },
     notes: [], blocks: [], seenAt: '', extras: false,
@@ -544,7 +599,25 @@
     chats: [], chatsOn: false, usernames: false,
     findPeople: function (q) { return rpc('find_people', { p_q: q }); },
     chatWith: function (uid) { return rpc('chat_with', { p_user: uid }); },
-    sendMessage: function (uid, body) { return rpc('send_message', { p_to: uid, p_body: body }); },
+    sendMessage: function (uid, body, photo, attach) { return rpc('send_message', api.engageOn ? { p_to: uid, p_body: body || '', p_photo: photo || null, p_attach: attach || null } : { p_to: uid, p_body: body }); },
+    // Likes, comments, mentions, car of the week and group chats (community-update-11.sql)
+    home: [], gchats: [], people: [], engageOn: false,
+    setLike: function (kind, ref, on) { return rpc('set_like', { p_kind: kind, p_ref: ref, p_on: !!on }); },
+    addComment: function (kind, ref, body) { return rpc('add_comment', { p_kind: kind, p_ref: ref, p_body: body }); },
+    deleteComment: function (id) { return rpc('delete_comment', { p_id: id }); },
+    listComments: function (kind, ref) { return rpc('list_comments', { p_kind: kind, p_ref: ref }); },
+    listLikers: function (kind, ref) { return rpc('list_likers', { p_kind: kind, p_ref: ref }); },
+    engagement: function (kind, refs) { return refs.length ? rpc('engagement', { p_kind: kind, p_refs: refs }) : Promise.resolve([]); },
+    userByUsername: function (u) { return rpc('user_by_username', { p_username: u }); },
+    cotw: function (id) { return rpc('cotw', { p_community: id }); },
+    cotwEnter: function (id, name, photo, caption) { return rpc('cotw_enter', { p_community: id, p_car_name: name, p_photo: photo || null, p_caption: caption || null }); },
+    cotwVote: function (entry) { return rpc('cotw_vote', { p_entry: entry }); },
+    cotwWithdraw: function (entry) { return rpc('cotw_withdraw', { p_entry: entry }); },
+    groupChat: function (scope, ref) { return rpc('group_chat', { p_scope: scope, p_ref: ref }); },
+    sendGroup: function (scope, ref, body, photo) { return rpc('send_group', { p_scope: scope, p_ref: ref, p_body: body || '', p_photo: photo || null }); },
+    deleteGroupMessage: function (id) { return rpc('delete_group_message', { p_id: id }); },
+    loadGroups: async function () { if (!api.engageOn) return; try { api.gchats = (await rpc('my_group_chats', {})) || []; } catch (e) {} },
+    loadHome: async function () { if (!api.engageOn) return; try { api.home = (await rpc('home_feed', {})) || []; } catch (e) {} },
     loadChats: async function () { if (!api.chatsOn) return; try { api.chats = (await rpc('my_chats', {})) || []; } catch (e) {} },
     listGoing: function (id) { return rpc('list_going', { p_event: id }); },
     listMembers: function (id) { return rpc('list_members', { p_community: id }); },
@@ -554,7 +627,7 @@
     removeFriend: async function (id) { await parse(await call('/rest/v1/friendships?id=eq.' + encodeURIComponent(id), { method: 'DELETE' })); await api.loadSocial(); },
     friendCars: function (owner) { return rpc('friends_cars', { p_owner: owner }); },
     savePrefs: function (prefs) { if (!api.prefsOn || !session) return Promise.resolve(); api.prefs = prefs; return call('/rest/v1/garages?on_conflict=user_id', { method: 'POST', headers: Object.assign({ Prefer: 'resolution=merge-duplicates,return=minimal' }, JSONH), body: JSON.stringify({ user_id: session.user.id, prefs: prefs }) }).then(parse).catch(function () {}); },
-    saveProfile: function (patch) { return call('/rest/v1/garages?on_conflict=user_id', { method: 'POST', headers: Object.assign({ Prefer: 'resolution=merge-duplicates,return=minimal' }, JSONH), body: JSON.stringify(Object.assign({ user_id: session.user.id, updated_at: new Date().toISOString() }, patch)) }).then(parse).then(function () { if ('shared' in patch) api.shared = patch.shared; if ('links' in patch) api.links = patch.links; if ('display_name' in patch) api.profile.name = patch.display_name || ''; if ('city' in patch) api.profile.city = patch.city || ''; if ('username' in patch) api.profile.username = patch.username || ''; if ('avatar' in patch) api.profile.avatar = patch.avatar || ''; }); },
+    saveProfile: function (patch) { return call('/rest/v1/garages?on_conflict=user_id', { method: 'POST', headers: Object.assign({ Prefer: 'resolution=merge-duplicates,return=minimal' }, JSONH), body: JSON.stringify(Object.assign({ user_id: session.user.id, updated_at: new Date().toISOString() }, patch)) }).then(parse).then(function () { if ('shared' in patch) api.shared = patch.shared; if ('links' in patch) api.links = patch.links; if ('display_name' in patch) api.profile.name = patch.display_name || ''; if ('city' in patch) api.profile.city = patch.city || ''; if ('username' in patch) api.profile.username = patch.username || ''; if ('avatar' in patch) api.profile.avatar = patch.avatar || ''; if ('bio' in patch) api.profile.bio = patch.bio || ''; if ('cover' in patch) api.profile.cover = patch.cover || ''; }); },
     localCount: function () { return Object.keys(local()).length; },
     importLocal: async function () { var o = local(), ids = Object.keys(o); for (var i = 0; i < ids.length; i++) { var id = cloud[ids[i]] ? ids[i] + '-d' : ids[i]; await upsertCar(id, o[ids[i]]); cloud[id] = o[ids[i]]; } jset(LKEY, null); emit(); return ids.length; },
     upload: async function (carId, file) {
@@ -1822,6 +1895,103 @@ const AR = {
   'Photo of a {model}': 'صورة {model}',
   'Representative photo': 'صورة توضيحية',
   'via Wikimedia Commons': 'عبر ويكيميديا كومنز',
+  'Likes, comments and @mentions on posts, project updates, events and friends’ cars.': 'إعجابات وتعليقات وإشارات @ على المنشورات وتحديثات المشاريع والفعاليات وسيارات الأصدقاء.',
+  'A photo feed on Home, car of the week in each community, group chats, and invite links with a QR code.': 'خلاصة صور في الصفحة الرئيسية، وسيارة الأسبوع في كل مجتمع، ومحادثات جماعية، وروابط دعوة مع رمز QR.',
+  'You have been invited to a community. Sign in or create an account to join it.': 'تمت دعوتك إلى مجتمع. سجّل الدخول أو أنشئ حسابًا للانضمام إليه.',
+  'Group chat': 'محادثة جماعية',
+  'Invite': 'دعوة',
+  'Use @username to mention someone.': 'استخدم @اسم_المستخدم للإشارة إلى شخص.',
+  'Chat': 'محادثة',
+  'Your car won car of the week in {what}': 'فازت سيارتك بلقب سيارة الأسبوع في {what}',
+  'e.g. Air-cooled Porsches and old Mercedes. Always up for a morning drive.': 'مثال: بورشه بتبريد هوائي ومرسيدس قديمة. جاهز دائمًا لجولة صباحية.',
+  'Cover photo updated': 'تم تحديث صورة الغلاف',
+  'See my page as others see it': 'شاهد صفحتي كما يراها الآخرون',
+  'About you': 'نبذة عنك',
+  'A line or two shown on your page, up to 160 characters.': 'سطر أو سطران يظهران في صفحتك، حتى 160 حرفًا.',
+  'Just now': 'الآن',
+  '{n} min ago': 'قبل {n} د',
+  '{n} h ago': 'قبل {n} س',
+  '{n} d ago': 'قبل {n} ي',
+  'Unlike': 'إلغاء الإعجاب',
+  'Like': 'إعجاب',
+  '1 like': 'إعجاب واحد',
+  '{n} likes': '{n} إعجابات',
+  'Comments': 'التعليقات',
+  'View 1 comment': 'عرض تعليق واحد',
+  'View all {n} comments': 'عرض كل التعليقات ({n})',
+  'Comments could not be loaded. Try again later.': 'تعذّر تحميل التعليقات. حاول لاحقًا.',
+  'Add a comment': 'أضف تعليقًا',
+  'You are commenting very quickly. Wait a moment.': 'أنت تعلّق بسرعة كبيرة. انتظر لحظة.',
+  'Type @ and a username to mention someone.': 'اكتب @ ثم اسم المستخدم للإشارة إلى شخص.',
+  'Photo. Double tap to like.': 'صورة. انقر مرتين للإعجاب.',
+  'People you may know': 'أشخاص قد تعرفهم',
+  'Friend of {n}': 'صديق {n}',
+  'Also in {n}': 'عضو أيضًا في {n}',
+  'Add friend': 'إضافة صديق',
+  'posted in': 'نشر في',
+  'posted an update on': 'نشر تحديثًا في',
+  'joined': 'انضم إلى',
+  'Browse communities': 'تصفّح المجتمعات',
+  'Show more': 'عرض المزيد',
+  'Withdraw': 'سحب المشاركة',
+  'Voted ✓': 'تم التصويت ✓',
+  'Vote': 'صوّت',
+  'Voting for this week has closed.': 'انتهى التصويت لهذا الأسبوع.',
+  '1 vote': 'صوت واحد',
+  '{n} votes': '{n} أصوات',
+  'Car of the week': 'سيارة الأسبوع',
+  'Last week’s winner': 'فائز الأسبوع الماضي',
+  'Members enter one car each week and everyone votes. Voting closes on {d}, and the winner stays at the top for a week.': 'يشارك كل عضو بسيارة واحدة أسبوعيًا ويصوّت الجميع. ينتهي التصويت في {d}، وتبقى السيارة الفائزة في الأعلى لمدة أسبوع.',
+  'Another car': 'سيارة أخرى',
+  'Why this car? (optional)': 'لماذا هذه السيارة؟ (اختياري)',
+  'Leave empty to use the car’s main photo.': 'اتركه فارغًا لاستخدام الصورة الرئيسية للسيارة.',
+  'Give the car a name.': 'اكتب اسم السيارة.',
+  'Your car is entered': 'تمت مشاركة سيارتك',
+  'Which car': 'أي سيارة',
+  'Caption': 'تعليق',
+  'Enter': 'شارك',
+  'Enter my car': 'شارك بسيارتي',
+  'QR code for the invite link': 'رمز QR لرابط الدعوة',
+  'Join {n} on Garage 197': 'انضم إلى {n} في Garage 197',
+  'Link copied': 'تم نسخ الرابط',
+  'Invite people': 'دعوة أشخاص',
+  'Invite people to {n}': 'دعوة أشخاص إلى {n}',
+  'Anyone who opens this link can sign in or create an account and then join the community.': 'أي شخص يفتح هذا الرابط يمكنه تسجيل الدخول أو إنشاء حساب ثم الانضمام إلى المجتمع.',
+  'Copy link': 'نسخ الرابط',
+  'Send on WhatsApp': 'إرسال عبر واتساب',
+  'Share': 'مشاركة',
+  'Send to a friend': 'إرسال إلى صديق',
+  'Add a message (optional)': 'أضف رسالة (اختياري)',
+  'Sent to {n}': 'تم الإرسال إلى {n}',
+  'Your garage is not shared with friends, so they will see the car’s name only.': 'مرآبك غير مشارَك مع الأصدقاء، لذلك سيرون اسم السيارة فقط.',
+  'Add a friend first, then you can send them cars and market models.': 'أضف صديقًا أولًا، ثم يمكنك إرسال السيارات وموديلات السوق إليه.',
+  'Market values and recent sales': 'قيم السوق وأحدث المبيعات',
+  'Shared a car': 'شارك سيارة',
+  'You can no longer write in this chat.': 'لم يعد بإمكانك الكتابة في هذه المحادثة.',
+  'Event chat': 'محادثة الفعالية',
+  'Community chat': 'محادثة المجتمع',
+  'Group chats': 'المحادثات الجماعية',
+  'Nobody here uses the name @{n}.': 'لا أحد هنا يستخدم الاسم @{n}.',
+  'Change cover photo': 'تغيير صورة الغلاف',
+  'Add a cover photo': 'إضافة صورة غلاف',
+  'Nothing new yet. Posts, new cars, projects and updates from your friends and communities will show here.': 'لا جديد بعد. ستظهر هنا المنشورات والسيارات الجديدة والمشاريع والتحديثات من أصدقائك ومجتمعاتك.',
+  'Add friends or join a community to see their photos, cars and projects here.': 'أضف أصدقاء أو انضم إلى مجتمع لترى صورهم وسياراتهم ومشاريعهم هنا.',
+  '{who} liked your post in {what}': 'أعجب {who} بمنشورك في {what}',
+  '{who} liked your update on {what}': 'أعجب {who} بتحديثك في {what}',
+  '{who} liked your car {what}': 'أعجب {who} بسيارتك {what}',
+  '{who} liked your event {what}': 'أعجب {who} بفعاليتك {what}',
+  '{who} commented on your post in {what}': 'علّق {who} على منشورك في {what}',
+  '{who} commented on your update on {what}': 'علّق {who} على تحديثك في {what}',
+  '{who} commented on your car {what}': 'علّق {who} على سيارتك {what}',
+  '{who} commented on your event {what}': 'علّق {who} على فعاليتك {what}',
+  '{who} mentioned you in {what}': 'أشار {who} إليك في {what}',
+  '{who} mentioned you on {what}': 'أشار {who} إليك في {what}',
+  '{who} mentioned you on the car {what}': 'أشار {who} إليك في سيارة {what}',
+  '{who} mentioned you on the event {what}': 'أشار {who} إليك في فعالية {what}',
+  'This chat is for people going to the event. Say you are going to join it.': 'هذه المحادثة للمشاركين في الفعالية. أكّد حضورك للانضمام إليها.',
+  'This chat is for members of the community. Join to take part.': 'هذه المحادثة لأعضاء المجتمع. انضم للمشاركة.',
+  'Everyone going to this event can read this chat. Messages follow the': 'كل من سيحضر هذه الفعالية يمكنه قراءة هذه المحادثة. تخضع الرسائل لـ',
+  'Every member of this community can read this chat. Messages follow the': 'كل عضو في هذا المجتمع يمكنه قراءة هذه المحادثة. تخضع الرسائل لـ',
 };
 /* ===== Screens. Every visible string goes through t() so it can be shown in Arabic (see i18n.js). ===== */
 const CLOUD = window.g197cloud;
@@ -1885,7 +2055,7 @@ const dueOf = (car) => (car.reminders || []).map((r) => ({ r, car, st: remStatus
 /* ----- routing ----- */
 function route() { const p = (location.hash || '#/home').replace(/^#\/?/, '').split('/').map(decodeURIComponent); return { name: p[0] || 'home', a: p[1], b: p[2] }; }
 function nav(h, after) { if (location.hash === h) { if (after) after(); render(); } else { S.afterNav = after || null; location.hash = h; } window.scrollTo(0, 0); }
-window.addEventListener('hashchange', () => { S.rec = null; S.remOpen = false; S.addOpen = null; if (S.afterNav) { const f = S.afterNav; S.afterNav = null; f(); } render(); });
+window.addEventListener('hashchange', () => { S.rec = null; S.remOpen = false; S.addOpen = null; S.invite = null; S.share = null; S.engAsked = {}; if (S.afterNav) { const f = S.afterNav; S.afterNav = null; f(); } render(); });
 
 /* ----- small builders ----- */
 const panel = (title, note, ...kids) => el('section', { class: 'panel' }, title ? el('h2', { text: title }) : null, note ? el('p', { class: 'muted small', text: note }) : null, ...kids);
@@ -1938,7 +2108,7 @@ const mlink = (model) => el('a', { href: '#/model/' + encodeURIComponent(model),
 /* ----- login ----- */
 function langToggle() { return el('button', { type: 'button', class: 'linkbtn', text: S.lang === 'ar' ? 'English' : 'العربية', onclick: () => { S.lang = S.lang === 'ar' ? 'en' : 'ar'; ls.set('g197-lang', S.lang); render(); } }); }
 function viewLogin() {
-  const status = el('p', { class: 'status', role: 'status', text: S.loginMsg }); S.loginMsg = '';
+  const status = el('p', { class: 'status', role: 'status', text: S.loginMsg || (S.invited ? t('You have been invited to a community. Sign in or create an account to join it.') : '') }); S.loginMsg = '';
   const email = el('input', { type: 'email', autocomplete: 'email', inputmode: 'email', id: 'a-email' });
   const pass = el('input', { type: 'password', autocomplete: S.mode === 'newpass' ? 'new-password' : 'current-password', id: 'a-pass' });
   const say = (m) => { status.textContent = m; };
@@ -1970,7 +2140,7 @@ function viewLogin() {
       if (!/^\S+@\S+\.\S+$/.test(e)) { say(t('Enter your email address.')); email.focus(); return; }
       if (pass.value.length < 8) { say(t('Use a password of at least 8 characters.')); pass.focus(); return; }
       say(t(create ? 'Creating your account…' : 'Signing in…'));
-      try { const r = await CLOUD.sign(e, pass.value, create); if (r.confirm) say(t('Account created. Open the confirmation email we sent, then sign in here.')); else { location.hash = '#/home'; render(); } }
+      try { const r = await CLOUD.sign(e, pass.value, create); if (r.confirm) say(t('Account created. Open the confirmation email we sent, then sign in here.')); else { const to = S.inviteTo; S.inviteTo = null; location.hash = to ? '#/community/' + to : '#/home'; render(); } }
       catch (err) { say(friendly(err, create)); }
     };
     body = el('form', { novalidate: true, onsubmit: (ev) => { ev.preventDefault(); go(false); } }, field(t('Email'), email), field(t('Password'), pass),
@@ -2332,7 +2502,7 @@ function viewCar(car, sub) {
   const base = '#/car/' + car.id + '/', tabs = [['overview', t('Overview')], ['market', t('Market')], ['logbook', t('Logbook')]].concat(CLOUD.projectsOn ? [['projects', t('Projects')]] : []), e = estimate(car);
   const out = el('div', { class: 'col' },
     el('a', { class: 'small', href: '#/garage', text: '‹ ' + (CLOUD.garageName || t('My garage')) }), banner(car, e),
-    el('nav', { class: 'subtabs', 'aria-label': t('Car sections') }, tabs.map((x) => el('a', { class: 'tab', href: base + x[0], 'aria-current': sub === x[0] ? 'page' : 'false', text: x[1] }))), sub === 'overview' ? tip('car') : null);
+    el('nav', { class: 'subtabs', 'aria-label': t('Car sections') }, tabs.map((x) => el('a', { class: 'tab', href: base + x[0], 'aria-current': sub === x[0] ? 'page' : 'false', text: x[1] }))), sub === 'overview' ? tip('car') : null, sub === 'overview' && CLOUD.user && car.name ? ((b) => b ? el('div', { class: 'row' }, b) : null)(shareBtn({ type: 'car', owner: CLOUD.user.id, id: car.id, name: car.name })) : null);
   if (sub === 'market') { HELP.mark('market'); out.append(panel(null, null, mxPanel(car, modelOf(car)), marketView(modelOf(car), car))); }
   else if (sub === 'projects') { const mine = CLOUD.projects.filter((x) => x.mine && x.car_id === car.id); out.append(el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn primary', id: 'b-proj-new', onclick: () => { S.projCar = car.id; nav('#/project/new'); } }, ico('plus', t('Start a project')))), mine.length ? projectCards(mine) : starter(t('A project tracks a service, an upgrade or a restoration from start to finish. Post updates with photos and let friends suggest tools and know-how.'), el('button', { type: 'button', class: 'btn primary', onclick: () => { S.projCar = car.id; nav('#/project/new'); } }, ico('plus', t('Start a project'))))); }
   else if (sub === 'logbook') { const tp = tip('logbook'); if (tp) out.append(tp); out.append(logbookView(car)); }
@@ -2636,6 +2806,7 @@ function linksPanel() {
 }
 function feedPanel() {
   if (!CLOUD.social) return null;
+  if (engOn()) return feedPanel2();
   const req = incoming(), evs = CLOUD.events.slice(0, 4), items = [];
   CLOUD.feed.forEach((x) => items.push({ at: x.added, href: '#/friend/' + x.owner + '/' + encodeURIComponent(x.car_id), lead: photoBox(x.car), who: ((f) => f ? friendName(f) : (x.garage || x.email || t('A friend')))(CLOUD.friends.find((f) => f.other === x.owner)), line: t('added a car to their garage'), title: x.car.name || t('Unnamed car') }));
   if (CLOUD.activityOn) CLOUD.activity.forEach((n) => {
@@ -2677,6 +2848,7 @@ function viewFriends() {
       !CLOUD.profile.username ? el('p', { class: 'muted small' }, el('span', { text: t('You have no username yet.') + ' ' }), el('a', { href: '#/profile', text: t('Choose one so friends can find you') }), el('span', { text: '.' })) : el('p', { class: 'muted small', dir: 'auto', text: t('Your username is @{u}. Share it so friends can find you.', { u: CLOUD.profile.username }) })));
     show();
   }
+  const pp = peoplePanel(12); if (pp) out.append(pp);
   out.append(panel(CLOUD.usernames ? t('Add by email instead') : t('Add a friend'), t('Enter the email address your friend uses for Garage 197. They will see your request the next time they open the app.'),
     el('form', { class: 'row', style: 'flex-direction:row', onsubmit: async (ev) => {
       ev.preventDefault(); status.textContent = t('Sending…');
@@ -2727,19 +2899,20 @@ function viewFriend(uid, carId) {
 
 /* ----- communities and events ----- */
 const fmtWhen = (iso) => { try { return new Date(iso).toLocaleString(S.lang === 'ar' ? 'ar-u-nu-latn' : 'en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }); } catch (e) { return iso; } };
-const unreadChats = () => (CLOUD.chats || []).reduce((n, c) => n + Number(c.unread || 0), 0);
+const unreadChats = () => (CLOUD.chats || []).reduce((n, c) => n + Number(c.unread || 0), 0) + groupUnread();
 function viewMessages() {
   const out = el('div', { class: 'col', style: 'max-width:46rem' }, el('h1', { text: t('Messages') }));
   if (!CLOUD.socialLoaded) { out.append(skel('8rem')); return out; }
   if (!CLOUD.chatsOn) { out.append(el('p', { class: 'empty', text: t('Messages are not switched on yet.') })); return out; }
-  if (S.chatsAt !== location.hash) { S.chatsAt = location.hash; CLOUD.loadChats().then(render); }
+  if (S.chatsAt !== location.hash) { S.chatsAt = location.hash; CLOUD.loadChats().then(render); CLOUD.loadGroups().then(render); }
   const cs = CLOUD.chats, friends = CLOUD.friends.filter((f) => f.status === 'accepted' && !cs.some((c) => c.other === f.other));
-  out.append(panel(t('Conversations'), null, cs.length ? el('ul', { class: 'chats', id: 'chats' }, cs.map((c) => el('li', {}, el('a', { class: 'chatrow', href: '#/chat/' + c.other }, avatarEl(c.avatar, memberName(c.name)), el('span', { class: 'col', style: 'gap:2px;min-width:0;flex:1' }, el('span', { class: 'row between', style: 'flex-wrap:nowrap' }, el('b', { text: memberName(c.name), style: 'overflow:hidden;text-overflow:ellipsis;white-space:nowrap' }), el('span', { class: 'muted small', style: 'flex:none', text: fmtWhen(c.last_at) })), el('span', { class: 'muted small', style: 'overflow:hidden;text-overflow:ellipsis;white-space:nowrap', text: (c.last_mine ? t('You') + ': ' : '') + c.last_body })), Number(c.unread) ? el('span', { class: 'count', text: String(c.unread) }) : null))))
+  out.append(panel(t('Conversations'), null, cs.length ? el('ul', { class: 'chats', id: 'chats' }, cs.map((c) => el('li', {}, el('a', { class: 'chatrow', href: '#/chat/' + c.other }, avatarEl(c.avatar, memberName(c.name)), el('span', { class: 'col', style: 'gap:2px;min-width:0;flex:1' }, el('span', { class: 'row between', style: 'flex-wrap:nowrap' }, el('b', { text: memberName(c.name), style: 'overflow:hidden;text-overflow:ellipsis;white-space:nowrap' }), el('span', { class: 'muted small', style: 'flex:none', text: fmtWhen(c.last_at) })), el('span', { class: 'muted small', style: 'overflow:hidden;text-overflow:ellipsis;white-space:nowrap', text: (c.last_mine ? t('You') + ': ' : '') + msgBody(c.last_body) })), Number(c.unread) ? el('span', { class: 'count', text: String(c.unread) }) : null))))
     : starter(t('Private messages between you and a friend. Nobody else can read them. Pick a friend to start.'), friends.length ? null : el('a', { class: 'btn primary', href: '#/friends' }, ico('plus', t('Add a friend'))))));
+  const gp = groupsPanel(); if (gp) out.append(gp);
   if (friends.length) out.append(panel(t('Start a conversation'), null, el('ul', { class: 'due-list' }, friends.map((f) => el('li', {}, el('span', { class: 'row', style: 'gap:10px;flex-wrap:nowrap;min-width:0' }, avatarEl(f.avatar, friendName(f), 'sm'), el('b', { text: friendName(f), style: 'overflow-wrap:anywhere' })), el('a', { class: 'btn sm', href: '#/chat/' + f.other, text: t('Message') }))))));
   return out;
 }
-function loadChat(uid, quiet) { S.chat = S.chat || {}; if (!quiet) S.chat[uid] = S.chat[uid] || { loading: true }; return CLOUD.chatWith(uid).then((rows) => { const old = S.chat[uid] || {}; const same = old.rows && rows && old.rows.length === rows.length && (!rows.length || (old.rows[old.rows.length - 1].id === rows[rows.length - 1].id && old.rows[old.rows.length - 1].read === rows[rows.length - 1].read)); S.chat[uid] = { rows: rows || [] }; if (same && quiet) return false; return CLOUD.loadChats().then(() => true); }).catch(() => { if (!quiet) S.chat[uid] = { rows: [], failed: true }; return !quiet; }).then((ch) => { if (ch && route().name === 'chat' && route().a === uid) { if (quiet) { const ta = document.getElementById('c-body'); if (ta) S.chatDraft = ta.value; } S.chatDown = true; render(); } }); }
+function loadChat(uid, quiet) { S.chat = S.chat || {}; if (!quiet) S.chat[uid] = S.chat[uid] || { loading: true }; return CLOUD.chatWith(uid).then((rows) => { const old = S.chat[uid] || {}; const same = old.rows && rows && old.rows.length === rows.length && (!rows.length || (old.rows[old.rows.length - 1].id === rows[rows.length - 1].id && old.rows[old.rows.length - 1].read === rows[rows.length - 1].read)); S.chat[uid] = { rows: rows || [] }; if (same && quiet) return false; return CLOUD.loadChats().then(() => true); }).catch(() => { if (!quiet) S.chat[uid] = { rows: [], failed: true }; return !quiet; }).then((ch) => { if (ch && route().name === 'chat' && route().a === uid) { if (quiet) { const ta = document.getElementById('c-body'); if (ta) S.chatDraft = ta.value; if (ta && document.activeElement === ta) S.chatRefocus = true; } S.chatDown = true; render(); } }); }
 function viewChat(uid) {
   socialCache();
   const f = CLOUD.friends.find((x) => x.other === uid && x.status === 'accepted'), c = (CLOUD.chats || []).find((x) => x.other === uid), name = f ? friendName(f) : c ? memberName(c.name) : t('A member');
@@ -2747,19 +2920,15 @@ function viewChat(uid) {
   if (!CLOUD.socialLoaded) { out.append(skel('10rem')); return out; }
   out.append(el('div', { class: 'row', style: 'gap:12px;flex-wrap:nowrap' }, avatarEl((f && f.avatar) || (c && c.avatar), name), el('a', { class: 'who', href: '#/member/' + uid }, el('h1', { text: name, style: 'overflow-wrap:anywhere;font-size:1.3rem' }))));
   const got = (S.chat || {})[uid];
-  if (S.chatFor !== uid) { S.chatFor = uid; S.chatDraft = ''; loadChat(uid); }
+  if (S.chatFor !== 'p:' + uid) { S.chatFor = 'p:' + uid; S.chatDraft = ''; loadChat(uid); }
   clearInterval(viewChat.h); viewChat.h = setInterval(() => { if (route().name !== 'chat') { clearInterval(viewChat.h); S.chatFor = null; return; } if (!document.hidden) loadChat(route().a, true); }, 10000);
   if (!got || got.loading) { out.append(skel('10rem')); return out; }
-  const list = el('div', { class: 'bubbles', id: 'bubbles' }, got.rows.length ? got.rows.map((m, i) => el('div', { class: 'bubble' + (m.mine ? ' mine' : '') }, el('p', { text: m.body }), el('span', { class: 'small', text: fmtWhen(m.created_at) + (m.mine && i === got.rows.length - 1 && m.read ? ' · ' + t('Seen') : '') }), !m.mine && CLOUD.extras ? el('button', { type: 'button', class: 'linkbtn small', text: t('Report'), onclick: () => reportAsk('message', m.id, name + ': ' + m.body) }) : null))
+  const list = el('div', { class: 'bubbles', id: 'bubbles' }, got.rows.length ? got.rows.map((m, i) => el('div', { class: 'bubble' + (m.mine ? ' mine' : '') }, m.photo ? postPhoto(m.photo) : null, attachCard(m.attach), m.body ? richP(m.body) : null, el('span', { class: 'small', text: fmtWhen(m.created_at) + (m.mine && i === got.rows.length - 1 && m.read ? ' · ' + t('Seen') : '') }), !m.mine && CLOUD.extras ? el('button', { type: 'button', class: 'linkbtn small', text: t('Report'), onclick: () => reportAsk('message', m.id, name + ': ' + m.body) }) : null))
     : el('p', { class: 'muted small', text: t(got.failed ? 'Messages could not be loaded. Try again later.' : 'No messages yet. Say hello.') }));
   out.append(list);
   if (!f) { out.append(el('p', { class: 'muted small', text: t('You can only message friends. Add this person as a friend to write to them.') })); }
   else {
-    const body = el('textarea', { id: 'c-body', rows: 2, maxlength: 2000, placeholder: t('Write a message'), 'aria-label': t('Write a message') }), st = el('span', { class: 'status', role: 'status' }); body.value = S.chatDraft || '';
-    body.addEventListener('input', () => { S.chatDraft = body.value; });
-    const send = async () => { const v = body.value.trim(); if (!v) return; st.textContent = t('Sending…'); try { const r = await CLOUD.sendMessage(uid, v); if (r === 'sent') { S.chatDraft = ''; body.value = ''; st.textContent = ''; await loadChat(uid, true); } else st.textContent = r === 'slow' ? t('You are sending messages very quickly. Wait a moment.') : r === 'not_friends' ? t('You can only message friends.') : t('Couldn’t send. Try again.'); } catch (e) { st.textContent = t('Couldn’t send. Try again.'); } };
-    body.addEventListener('keydown', (ev) => { if (ev.key === 'Enter' && !ev.shiftKey && !matchMedia('(pointer: coarse)').matches) { ev.preventDefault(); send(); } });
-    out.append(el('form', { class: 'row chatform', style: 'flex-wrap:nowrap;align-items:flex-end', onsubmit: (ev) => { ev.preventDefault(); send(); } }, body, el('button', { type: 'submit', class: 'btn primary', id: 'b-send', text: t('Send') })), st,
+    out.append(...chatForm(async (v, ph) => { const r = await CLOUD.sendMessage(uid, v, ph, null); if (r === 'sent') await loadChat(uid, true); return r; }, 'p:' + uid),
       el('p', { class: 'muted small' }, el('span', { text: t('Only you and {n} can read this. Messages follow the', { n: name }) + ' ' }), el('a', { href: '#/guidelines', text: t('community guidelines') }), el('span', { text: '.' })));
   }
   if (S.chatDown) { S.chatDown = false; setTimeout(() => { const b = document.getElementById('bubbles'); if (b) b.scrollTop = b.scrollHeight; }, 0); }
@@ -2782,7 +2951,7 @@ function viewCommunities() {
         field(t('Name'), name), field(t('About'), about), el('div', { class: 'row' }, el('button', { type: 'submit', class: 'btn primary', id: 'b-cm-save', text: t('Create community') }), el('button', { type: 'button', class: 'btn', text: t('Cancel'), onclick: () => { S.newCom = false; render(); } }), status))));
   } else out.append(el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn primary', id: 'b-cm-new', onclick: () => { S.newCom = true; render(); } }, ico('plus', t('Start a community')))));
   const list = CLOUD.communities, joined = list.filter((c) => c.joined), evs = CLOUD.events.slice(0, 3);
-  if (joined.length) out.append(panel(t('Your communities'), null, el('div', { class: 'tiles', id: 'my-communities' }, joined.map((c) => el('a', { class: 'tile', href: '#/community/' + c.id }, el('span', { class: 'avatar', 'aria-hidden': 'true', text: (c.name.trim()[0] || '?').toUpperCase() }), el('span', { class: 'col', style: 'gap:2px;min-width:0' }, el('b', { text: c.name, style: 'overflow-wrap:anywhere' }), el('span', { class: 'muted small', text: t('Members: {n}', { n: c.members }) })))))));
+  if (joined.length) out.append(panel(t('Your communities'), null, el('div', { class: 'tiles', id: 'my-communities' }, joined.map((c) => el('a', { class: 'tile', href: '#/community/' + c.id }, el('span', { class: 'avatar', 'aria-hidden': 'true', text: (c.name.trim()[0] || '?').toUpperCase() }), el('span', { class: 'col', style: 'gap:2px;min-width:0' }, el('b', { text: c.name, style: 'overflow-wrap:anywhere' }), el('span', { class: 'muted small', text: t('Members: {n}', { n: c.members }) }), faces(c.faces, Number(c.members))))))));
   if (evs.length) out.append(panel(t('Upcoming events'), null, eventList(evs), CLOUD.events.length > evs.length ? el('a', { class: 'small', href: '#/events', text: t('See all events') }) : null));
   out.append(panel(t(joined.length ? 'Find more communities' : 'All communities'), null, list.filter((c) => !c.joined || !joined.length).length ? el('ul', { class: 'due-list' }, list.filter((c) => !c.joined || !joined.length).map((c) => el('li', {},
     el('span', { class: 'col', style: 'gap:2px;min-width:0;flex:1 1 14rem' }, el('a', { href: '#/community/' + c.id, style: 'font-weight:600;overflow-wrap:anywhere', text: c.name }), c.about ? el('span', { class: 'small', style: 'overflow-wrap:anywhere', text: c.about }) : null, el('span', { class: 'muted small', text: t('Members: {n}', { n: c.members }) + ' · ' + t('Started by {h}', { h: memberName(c.host) }) })),
@@ -2792,7 +2961,7 @@ function viewCommunities() {
 }
 const memberName = (n) => n === 'A member' ? t('A member') : n;
 function loadPosts(id) { S.posts = S.posts || {}; S.posts[id] = S.posts[id] || { loading: true }; return CLOUD.posts(id).then((rows) => { S.posts[id] = { rows: rows || [] }; }).catch(() => { S.posts[id] = { rows: [], failed: true }; }).then(render); }
-const socialCache = () => { const u = CLOUD.user && CLOUD.user.id; if (S.cacheUser !== u) { S.cacheUser = u; S.members = {}; S.member = {}; S.going = {}; S.allMembers = null; } };
+const socialCache = () => { const u = CLOUD.user && CLOUD.user.id; if (S.cacheUser !== u) { S.cacheUser = u; S.members = {}; S.member = {}; S.going = {}; S.allMembers = null; S.eng = {}; S.engAsked = {}; S.cotw = {}; S.gchat = {}; S.asked = {}; } };
 function loadMembers(id) { S.members = S.members || {}; S.members[id] = S.members[id] || { loading: true }; const key = S.members[id].key; return CLOUD.listMembers(id).then((rows) => { S.members[id] = { rows: rows || [], key }; }).catch((e) => { S.members[id] = { rows: [], off: true, key }; }).then(render); }
 const memberLink = (uid, name, mine) => uid && !(S.membersOff) ? el('a', { class: 'who', href: mine ? '#/profile' : '#/member/' + uid, text: name }) : el('b', { text: name });
 function membersPanel(id) {
@@ -2802,6 +2971,7 @@ function membersPanel(id) {
   if (got.loading) return skel('4rem'); if (got.off) { S.membersOff = true; return null; }
   S.membersOff = false;
   const all = got.rows, show = S.allMembers === id ? all : all.slice(0, 12);
+  if (engOn()) return storiesPanel(id, all);
   return panel(t('Members'), null, el('ul', { class: 'members', id: 'members' }, show.map((m) => el('li', {}, el('a', { class: 'member', href: m.me ? '#/profile' : '#/member/' + m.user_id }, avatarEl(m.avatar, memberName(m.name)), el('span', { class: 'col', style: 'gap:2px;min-width:0' }, el('b', { text: m.me ? t('You') : memberName(m.name), style: 'overflow-wrap:anywhere' }), m.founder ? el('span', { class: 'muted small', text: t('Founder') }) : null))))),
     all.length > show.length ? el('button', { type: 'button', class: 'linkbtn small', id: 'b-all-members', text: t('Show all {n} members', { n: all.length }), onclick: () => { S.allMembers = id; render(); } }) : null,
     all.length > 1 ? el('p', { class: 'muted small', text: t('Tap a member to see their page and add them as a friend.') }) : el('p', { class: 'muted small', text: t('You are the only member so far. Invite people to join.') }));
@@ -2816,7 +2986,7 @@ function viewMember(uid) {
   const m = got.m;
   if (!m) { out.append(el('p', { class: 'empty', text: t(got.failed ? 'This page could not be loaded. Try again later.' : 'This member’s page is not available.') })); return out; }
   const name = memberName(m.name), again = (fn, done) => async () => { try { await fn(); if (done) toast(done); } catch (e) { toast(t('Couldn’t save. Try again.')); } delete S.member[uid]; render(); };
-  out.append(el('div', { class: 'row', style: 'gap:16px;flex-wrap:nowrap;align-items:center' }, avatarEl(m.avatar, name, 'lg'), el('div', { class: 'col', style: 'gap:4px;min-width:0' }, el('h1', { text: name, style: 'overflow-wrap:anywhere' }), el('span', { class: 'muted small', style: 'overflow-wrap:anywhere', text: [m.username ? '@' + m.username : '', m.garage && m.garage !== m.name ? m.garage : '', m.city].filter(Boolean).join(' · ') }), socialLinks(m.links))));
+  if (engOn()) out.append(memberHead(m, name)); else out.append(el('div', { class: 'row', style: 'gap:16px;flex-wrap:nowrap;align-items:center' }, avatarEl(m.avatar, name, 'lg'), el('div', { class: 'col', style: 'gap:4px;min-width:0' }, el('h1', { text: name, style: 'overflow-wrap:anywhere' }), el('span', { class: 'muted small', style: 'overflow-wrap:anywhere', text: [m.username ? '@' + m.username : '', m.garage && m.garage !== m.name ? m.garage : '', m.city].filter(Boolean).join(' · ') }), socialLinks(m.links))));
   const acts = el('div', { class: 'row' });
   if (m.relation === 'self') acts.append(el('a', { class: 'btn', href: '#/profile', text: t('Edit my profile') }));
   else if (m.relation === 'none') acts.append(el('button', { type: 'button', class: 'btn primary', id: 'b-add-member' }, ico('plus', t('Add as a friend'))));
@@ -2827,6 +2997,7 @@ function viewMember(uid) {
   if (m.relation !== 'self' && CLOUD.extras) acts.append(el('button', { type: 'button', class: 'linkbtn small', text: t('Report'), onclick: () => reportAsk('user', uid, name) }), el('button', { type: 'button', class: 'linkbtn small', text: t('Block'), onclick: () => blockAsk(uid, name) }));
   out.append(acts);
   if (m.relation !== 'self' && m.relation !== 'friends') out.append(el('p', { class: 'muted small', text: t('Once you are friends, you can open {n}’s garage if they share it, follow their projects and join their events.', { n: name }) }));
+  if (engOn()) { const mc = memberCars(m); if (mc) out.append(mc); }
   const cs = m.communities || [];
   if (cs.length && m.relation !== 'self') out.append(panel(t('Communities you share'), null, el('ul', { class: 'due-list' }, cs.map((c) => el('li', {}, el('a', { href: '#/community/' + c.id, text: c.name }))))));
   const pj = (CLOUD.projects || []).filter((x) => !x.mine && x.owner === uid);
@@ -2840,20 +3011,23 @@ function viewCommunity(id) {
   if (!c) { out.append(el('p', { class: 'empty', text: t('That community no longer exists.') })); return out; }
   out.append(el('div', { class: 'col', style: 'gap:6px' }, el('h1', { text: c.name, style: 'overflow-wrap:anywhere' }), c.about ? el('p', { style: 'overflow-wrap:anywhere', text: c.about }) : null, ((fo) => el('p', { class: 'muted small' }, el('span', { text: t('Members: {n}', { n: c.members }) + ' · ' + t('Started by') + ' ' }), fo ? el('a', { id: 'a-founder', href: fo.me ? '#/profile' : '#/member/' + fo.user_id, text: memberName(c.host) }) : el('span', { text: memberName(c.host) })))(c.joined ? (((S.members || {})[id] || {}).rows || []).find((m) => m.founder) : null),
     el('div', { class: 'row' }, !c.joined ? el('button', { type: 'button', class: 'btn primary', id: 'b-join', text: t('Join'), onclick: doing(() => CLOUD.joinCommunity(c.id), t('You joined {n}', { n: c.name })) }) : null,
+      c.joined && engOn() ? el('a', { class: 'btn', id: 'a-gchat', href: '#/gchat/community/' + c.id }, ico('chat', t('Group chat') + ((n) => n ? ' (' + n + ')' : '')(Number(((CLOUD.gchats || []).find((g) => g.scope === 'community' && g.ref === c.id) || {}).unread || 0)))) : null,
+      el('button', { type: 'button', class: 'btn', id: 'b-invite', onclick: () => { S.invite = { id: c.id, name: c.name }; render(); } }, ico('share', t('Invite'))),
       c.joined ? el('button', { type: 'button', class: 'btn', onclick: () => { S.evFor = c.id; S.newEv = true; nav('#/events'); } }, ico('plus', t('Create an event'))) : null,
       c.joined && !c.mine ? el('button', { type: 'button', class: 'btn', text: t('Leave'), onclick: () => { if (confirm(t('Leave {n}?', { n: c.name }))) { S.posts = {}; doing(() => CLOUD.leaveCommunity(c.id))(); } } }) : null,
       !c.mine && CLOUD.extras ? el('button', { type: 'button', class: 'linkbtn small', text: t('Report'), onclick: () => reportAsk('community', c.id, c.name + ' / ' + (c.about || '')) }) : null,
       c.mine ? el('button', { type: 'button', class: 'btn', text: t('Delete community'), onclick: () => { if (confirm(t('Delete {n} with all its posts and events? This cannot be undone.', { n: c.name }))) CLOUD.deleteCommunity(c.id).then(() => { toast(t('Community deleted')); nav('#/communities'); }).catch(() => toast(t('Couldn’t save. Try again.'))); } }) : null)));
   if (!c.joined) { out.append(el('p', { class: 'empty', text: t('Join to read and write posts and to see this community’s events.') })); return out; }
   out.append(membersPanel(id));
+  const cw = cotwPanel(c); if (cw) out.append(cw);
   const evs = CLOUD.events.filter((e) => e.community_id === c.id);
   if (evs.length) out.append(panel(t('Upcoming events'), null, eventList(evs)));
   S.draft = S.draft || {}; const dr = S.draft[id] = S.draft[id] || { text: '', file: null };
   const pfile = el('input', { type: 'file', accept: 'image/*', id: 'p-photo', style: 'display:none' }), pname = el('div', { class: 'attach', id: 'p-attach' });
   const showPick = () => { pname.replaceChildren(); if (!dr.file) return; const im = el('img', { alt: '' }); try { im.src = URL.createObjectURL(dr.file); } catch (e) {} pname.append(im, el('span', { class: 'small', text: t('Photo attached. Press Post to share it.') }), el('button', { type: 'button', class: 'linkbtn small', id: 'p-unpick', text: t('Remove'), onclick: () => { dr.file = null; pfile.value = ''; showPick(); } })); };
   pfile.addEventListener('change', () => { if (pfile.files[0]) dr.file = pfile.files[0]; showPick(); }); showPick();
-  const body = el('textarea', { id: 'p-body', rows: 3, maxlength: 2000, placeholder: t('Share news, a question or a photo with the community') }), status = el('span', { class: 'status', role: 'status' }); body.value = dr.text; body.addEventListener('input', () => { dr.text = body.value; });
-  const got = (S.posts || {})[id]; if (!got) loadPosts(id);
+  const body = el('textarea', { id: 'p-body', rows: 3, maxlength: 2000, placeholder: t('Share news, a question or a photo with the community') + (engOn() ? '. ' + t('Use @username to mention someone.') : '') }), status = el('span', { class: 'status', role: 'status' }); body.value = dr.text; body.addEventListener('input', () => { dr.text = body.value; });
+  const got = (S.posts || {})[id]; if (!got) loadPosts(id); else if (got.rows) ensureSeeds('post', got.rows.map((p) => p.id));
   if (S.focusPost && Date.now() < S.focusPost) setTimeout(() => { const b = document.getElementById('p-body'); if (b && document.activeElement !== b) { b.focus(); b.scrollIntoView({ block: 'center' }); } }, 0); else S.focusPost = 0;
   out.append(panel(t('Posts'), null,
     el('form', { class: 'col', style: 'gap:8px', onsubmit: async (ev) => { ev.preventDefault(); const v = body.value.trim(), f = CLOUD.extras && dr.file; if (!v && !f) { status.textContent = t('Write something or add a photo.'); return; } if (!ls.get('g197-rules-' + CLOUD.user.id, '')) { if (!confirm(t('Before your first post: be respectful, stay on cars, no abuse, spam or other people’s private details. Posts that break the community guidelines are removed and accounts can be closed. Do you agree?'))) return; ls.set('g197-rules-' + CLOUD.user.id, '1'); } const btn = document.getElementById('b-post'); if (btn) btn.disabled = true; status.textContent = f ? t('Uploading the photo…') : t('Sending…'); let step = 'photo'; try { let ph = null; if (f) ph = (await CLOUD.upload('community-' + id, await shrink(f))).path; step = 'post'; status.textContent = t('Sending…'); await CLOUD.post(id, v, ph); dr.text = ''; dr.file = null; body.value = ''; pfile.value = ''; showPick(); status.textContent = ''; body.blur(); await loadPosts(id); } catch (e) { const why = String((e && e.message) || '').slice(0, 140); status.textContent = (step === 'photo' ? t('The photo could not be uploaded. Try again.') : t('Couldn’t save. Try again.')) + (why ? ' (' + why + ')' : ''); } if (btn) btn.disabled = false; } }, body, pname, el('div', { class: 'row' }, el('button', { type: 'submit', class: 'btn primary', id: 'b-post', text: t('Post') }), CLOUD.extras ? el('button', { type: 'button', class: 'btn', onclick: () => pfile.click() }, ico('camera', t('Add a photo'))) : null, pfile), status),
@@ -2861,7 +3035,7 @@ function viewCommunity(id) {
     !got || got.loading ? skel('5rem') : got.rows.length ? el('ul', { class: 'posts' }, got.rows.map((p) => el('li', {}, el('div', { class: 'row between' }, el('span', { class: 'row', style: 'gap:8px' }, avatarEl(p.avatar, memberName(p.author), 'sm'), memberLink(p.author_id, p.mine ? t('You') : memberName(p.author), p.mine), el('span', { class: 'muted small', text: fmtWhen(p.created_at) })),
       el('span', { class: 'row', style: 'gap:12px' }, p.mine || c.mine ? el('button', { type: 'button', class: 'linkbtn small', text: t('Remove'), onclick: async () => { try { await CLOUD.deletePost(p.id); if (p.mine && p.photo) CLOUD.removeFiles([p.photo]); await loadPosts(id); } catch (e) { toast(t('Couldn’t save. Try again.')); } } }) : null,
         !p.mine && CLOUD.extras ? el('button', { type: 'button', class: 'linkbtn small', text: t('Report'), onclick: () => reportAsk('post', p.id, p.author + ': ' + p.body + (p.photo ? ' [' + p.photo + ']' : '')) }) : null,
-        !p.mine && CLOUD.extras && p.author_id ? el('button', { type: 'button', class: 'linkbtn small', text: t('Block'), onclick: () => blockAsk(p.author_id, memberName(p.author)) }) : null)), p.body ? el('p', { text: p.body }) : null, p.photo ? postPhoto(p.photo) : null)))
+        !p.mine && CLOUD.extras && p.author_id ? el('button', { type: 'button', class: 'linkbtn small', text: t('Block'), onclick: () => blockAsk(p.author_id, memberName(p.author)) }) : null)), p.body ? richP(p.body) : null, p.photo ? (engOn() ? bigPhoto(p.photo, 'post', p.id) : postPhoto(p.photo)) : null, engageBar('post', p.id))))
       : el('p', { class: 'empty', text: t(got.failed ? 'Posts could not be loaded. Try again later.' : 'No posts yet. Say hello.') })));
   return out;
 }
@@ -2881,13 +3055,15 @@ function toggleGoing(e) {
 }
 const reGoing = (e) => { const g = (S.going || {})[e.id]; if (g && g.open && !g.off) CLOUD.listGoing(e.id).then((rows) => { S.going[e.id] = { open: true, rows: rows || [] }; render(); }).catch(() => {}); };
 function eventList(evs) {
+  ensureSeeds('event', evs.map((e) => e.id));
   return el('ul', { class: 'posts' }, evs.map((e) => el('li', {},
     el('div', { class: 'row between' }, el('b', { text: e.title, style: 'overflow-wrap:anywhere' }), el('span', { class: 'tag', text: fmtWhen(e.starts_at) })),
     el('span', { class: 'muted small', text: [e.place, e.community ? e.community : t('For friends of {h}', { h: e.mine ? t('You') : memberName(e.host) }), t('Hosted by {h}', { h: e.mine ? t('You') : memberName(e.host) })].filter(Boolean).join(' · ') }),
-    e.details ? el('p', { text: e.details }) : null,
-    el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn sm' + (e.me_going ? '' : ' primary'), 'aria-pressed': e.me_going ? 'true' : 'false', text: e.me_going ? t('You are going ✓') : t('I’m going'), onclick: doing(() => CLOUD.rsvp(e.id, !e.me_going).then(() => reGoing(e))) }), el('button', { type: 'button', class: 'linkbtn small going-btn', 'aria-expanded': ((S.going || {})[e.id] || {}).open ? 'true' : 'false', text: t('Going: {n}', { n: e.going }) + ' · ' + (((S.going || {})[e.id] || {}).open ? t('Hide') : t('See who')), onclick: () => toggleGoing(e) }),
+    e.details ? richP(e.details) : null,
+    el('div', { class: 'row' }, faces(e.faces, Number(e.going)), el('button', { type: 'button', class: 'btn sm' + (e.me_going ? '' : ' primary'), 'aria-pressed': e.me_going ? 'true' : 'false', text: e.me_going ? t('You are going ✓') : t('I’m going'), onclick: doing(() => CLOUD.rsvp(e.id, !e.me_going).then(() => reGoing(e))) }), el('button', { type: 'button', class: 'linkbtn small going-btn', 'aria-expanded': ((S.going || {})[e.id] || {}).open ? 'true' : 'false', text: t('Going: {n}', { n: e.going }) + ' · ' + (((S.going || {})[e.id] || {}).open ? t('Hide') : t('See who')), onclick: () => toggleGoing(e) }),
       !e.mine && CLOUD.extras ? el('button', { type: 'button', class: 'linkbtn small', text: t('Report'), onclick: () => reportAsk('event', e.id, e.host + ': ' + e.title + ' / ' + (e.place || '') + ' / ' + (e.details || '')) }) : null,
-      e.mine ? el('button', { type: 'button', class: 'linkbtn small', text: t('Cancel event'), onclick: () => { if (confirm(t('Cancel {n}?', { n: e.title }))) doing(() => CLOUD.deleteEvent(e.id), t('Event cancelled'))(); } }) : null), goingBox(e))));
+      engOn() && (e.me_going || e.mine) ? el('a', { class: 'btn sm', href: '#/gchat/event/' + e.id }, ico('chat', t('Chat'))) : null,
+      e.mine ? el('button', { type: 'button', class: 'linkbtn small', text: t('Cancel event'), onclick: () => { if (confirm(t('Cancel {n}?', { n: e.title }))) doing(() => CLOUD.deleteEvent(e.id), t('Event cancelled'))(); } }) : null), goingBox(e), engageBar('event', e.id))));
 }
 function viewEvents() {
   const out = el('div', { class: 'col', style: 'max-width:46rem' }, socialTabs('events'), tip('events'));
@@ -2931,6 +3107,12 @@ function noteLine(n) {
   if (n.kind === 'suggest') return [t('{who} made a suggestion on your project {what}', { who, what }), '#/project/' + n.ref];
   if (n.kind === 'helpful') return [t('{who} responded to your suggestion on {what}', { who, what }), '#/project/' + n.ref];
   if (n.kind === 'cheer') return [t('{who} cheered your project {what}', { who, what }), '#/project/' + n.ref];
+  if (n.kind === 'like' || n.kind === 'comment' || n.kind === 'mention') {
+    const i = String(n.ref).indexOf(':'), k = n.ref.slice(0, i), href = '#/' + n.ref.slice(i + 1).split('/').map(encodeURIComponent).join('/');
+    const L = { like: { post: '{who} liked your post in {what}', pupdate: '{who} liked your update on {what}', car: '{who} liked your car {what}', event: '{who} liked your event {what}' }, comment: { post: '{who} commented on your post in {what}', pupdate: '{who} commented on your update on {what}', car: '{who} commented on your car {what}', event: '{who} commented on your event {what}' }, mention: { post: '{who} mentioned you in {what}', pupdate: '{who} mentioned you on {what}', car: '{who} mentioned you on the car {what}', event: '{who} mentioned you on the event {what}' } };
+    return [t(L[n.kind][k] || L[n.kind].post, { who, what }), href];
+  }
+  if (n.kind === 'cotw') return [t('Your car won car of the week in {what}', { what }), '#/community/' + n.ref];
   return [t('{who} is going to {what}', { who, what }), '#/events'];
 }
 function viewNotifications() {
@@ -2938,7 +3120,7 @@ function viewNotifications() {
   if (!CLOUD.socialLoaded) { out.append(skel('10rem')); return out; }
   const seen = S.noteSeen != null ? S.noteSeen : (S.noteSeen = CLOUD.seenAt ? Date.parse(CLOUD.seenAt) : 0);
   if (CLOUD.unread()) CLOUD.markSeen();
-  out.append(panel(null, null, CLOUD.notes.length ? el('ul', { class: 'due-list' }, CLOUD.notes.map((n) => { const [text, href] = noteLine(n), fresh = Date.parse(n.at) > seen; return el('li', { class: fresh ? 'fresh' : '' }, el('a', { href, text, style: fresh ? 'font-weight:600' : '' }), el('span', { class: 'muted small', text: fmtWhen(n.at) })); }))
+  out.append(panel(null, null, CLOUD.notes.length ? el('ul', { class: 'due-list' }, CLOUD.notes.map((n) => { const [text, href] = noteLine(n), fresh = Date.parse(n.at) > seen; return el('li', { class: 'note' + (fresh ? ' fresh' : '') }, el('a', { class: 'row', href, style: 'gap:10px;flex-wrap:nowrap;min-width:0;text-decoration:none;color:inherit' + (fresh ? ';font-weight:600' : '') }, n.kind === 'cotw' ? el('span', { class: 'avatar sm', 'aria-hidden': 'true' }, svgIcon(ICONS.trophy)) : avatarEl(n.avatar, memberName(n.who || '?'), 'sm'), el('span', { text, style: 'overflow-wrap:anywhere' })), el('span', { class: 'muted small', text: engOn() ? ago(n.at) : fmtWhen(n.at) })); }))
     : el('p', { class: 'empty', text: t('Nothing new yet. Friend requests, new cars, posts and events will show here.') })),
     el('p', { class: 'muted small', text: t('These show while the app is open. Alerts on your phone when the app is closed are not available yet.') }));
   return out;
@@ -2979,11 +3161,14 @@ function viewProfile() {
   if (CLOUD.profiles) {
     const name = el('input', { type: 'text', id: 'pr-name', maxlength: 40, autocomplete: 'name', value: CLOUD.profile.name }), city = el('input', { type: 'text', id: 'pr-city', maxlength: 60, value: CLOUD.profile.city, placeholder: t('e.g. Doha') }), status = el('span', { class: 'status' });
     const uname = el('input', { type: 'text', id: 'pr-username', maxlength: 20, value: CLOUD.profile.username || '', placeholder: t('e.g. amethyst964'), autocapitalize: 'off', autocomplete: 'off', spellcheck: 'false', dir: 'ltr' });
+    const bio = el('textarea', { id: 'pr-bio', rows: 2, maxlength: 160, placeholder: t('e.g. Air-cooled Porsches and old Mercedes. Always up for a morning drive.') }); bio.value = CLOUD.profile.bio || '';
+    const cfile = el('input', { type: 'file', accept: 'image/*', id: 'pr-cover', style: 'display:none' });
+    cfile.addEventListener('change', async () => { const f = cfile.files[0]; if (!f) return; status.textContent = t('Uploading…'); try { const old = CLOUD.profile.cover, up = await CLOUD.upload('profile', await shrink(f)); await CLOUD.saveProfile({ cover: up.path }); if (old) CLOUD.removeFiles([old]); S.member = {}; toast(t('Cover photo updated')); render(); } catch (e) { status.textContent = t('Couldn’t save: {m}', { m: (e && e.message) || '' }); } });
     const file = el('input', { type: 'file', accept: 'image/*', id: 'pr-photo', style: 'display:none' });
-    file.addEventListener('change', async () => { const f = file.files[0]; if (!f) return; status.textContent = t('Uploading…'); try { const old = CLOUD.profile.avatar, up = await CLOUD.upload('profile', await shrink(f)); await CLOUD.saveProfile({ avatar: up.path }); if (old) CLOUD.removeFiles([old]); toast(t('Photo updated')); render(); } catch (e) { status.textContent = t('Couldn’t save: {m}', { m: (e && e.message) || '' }); } });
-    out.append(el('section', { class: 'panel' }, el('div', { class: 'row', style: 'gap:16px' }, avatarEl(CLOUD.profile.avatar, CLOUD.profile.name || CLOUD.user.email || '', 'lg'), el('div', { class: 'col', style: 'gap:6px' }, el('button', { type: 'button', class: 'btn', id: 'b-pr-photo', onclick: () => file.click() }, ico('camera', t(CLOUD.profile.avatar ? 'Change photo' : 'Add a photo'))), file, el('span', { class: 'muted small', text: t('Your name, username and photo are shown to other members. Your email is not shown to them.') }))),
-      el('form', { class: 'col', style: 'gap:12px', onsubmit: async (ev) => { ev.preventDefault(); const un = uname.value.trim().replace(/^@/, '').toLowerCase(); if (CLOUD.usernames && un && !/^[a-z0-9_]{3,20}$/.test(un)) { status.textContent = t('A username is 3 to 20 characters: English letters, numbers and underscores only.'); return; } const patch = { display_name: name.value.trim().slice(0, 40) || null, city: city.value.trim().slice(0, 60) || null }; if (CLOUD.usernames) patch.username = un || null; try { await CLOUD.saveProfile(patch); document.activeElement && document.activeElement.blur(); toast(t('Saved')); render(); } catch (e) { status.textContent = e && (e.status === 409 || e.code === '23505') ? t('That username is taken. Try another.') : t('Couldn’t save. Try again.'); } } },
-        field(t('Your name'), name), CLOUD.usernames ? field(t('Username'), uname, t('Friends can find you by this instead of your email.')) : null, field(t('City'), city, t('Shown to friends only.')), el('div', { class: 'row' }, el('button', { type: 'submit', class: 'btn primary', id: 'b-pr-save', text: t('Save profile') }), status))));
+    file.addEventListener('change', async () => { const f = file.files[0]; if (!f) return; status.textContent = t('Uploading…'); try { const old = CLOUD.profile.avatar, up = await CLOUD.upload('profile', await shrink(f)); await CLOUD.saveProfile({ avatar: up.path }); if (old) CLOUD.removeFiles([old]); S.member = {}; toast(t('Photo updated')); render(); } catch (e) { status.textContent = t('Couldn’t save: {m}', { m: (e && e.message) || '' }); } });
+    out.append(el('section', { class: 'panel' }, el('div', { class: 'row', style: 'gap:16px' }, avatarEl(CLOUD.profile.avatar, CLOUD.profile.name || CLOUD.user.email || '', 'lg'), el('div', { class: 'col', style: 'gap:6px' }, el('button', { type: 'button', class: 'btn', id: 'b-pr-photo', onclick: () => file.click() }, ico('camera', t(CLOUD.profile.avatar ? 'Change photo' : 'Add a photo'))), file, engOn() ? el('button', { type: 'button', class: 'btn', id: 'b-pr-cover', onclick: () => cfile.click() }, ico('camera', t(CLOUD.profile.cover ? 'Change cover photo' : 'Add a cover photo'))) : null, cfile, engOn() ? el('a', { class: 'small', id: 'a-my-page', href: myPage(), text: t('See my page as others see it') }) : null, el('span', { class: 'muted small', text: t('Your name, username and photo are shown to other members. Your email is not shown to them.') }))),
+      el('form', { class: 'col', style: 'gap:12px', onsubmit: async (ev) => { ev.preventDefault(); const un = uname.value.trim().replace(/^@/, '').toLowerCase(); if (CLOUD.usernames && un && !/^[a-z0-9_]{3,20}$/.test(un)) { status.textContent = t('A username is 3 to 20 characters: English letters, numbers and underscores only.'); return; } const patch = { display_name: name.value.trim().slice(0, 40) || null, city: city.value.trim().slice(0, 60) || null }; if (engOn()) patch.bio = bio.value.trim().slice(0, 160) || null; if (CLOUD.usernames) patch.username = un || null; try { await CLOUD.saveProfile(patch); S.member = {}; document.activeElement && document.activeElement.blur(); toast(t('Saved')); render(); } catch (e) { status.textContent = e && (e.status === 409 || e.code === '23505') ? t('That username is taken. Try another.') : t('Couldn’t save. Try again.'); } } },
+        field(t('Your name'), name), engOn() ? field(t('About you'), bio, t('A line or two shown on your page, up to 160 characters.')) : null, CLOUD.usernames ? field(t('Username'), uname, t('Friends can find you by this instead of your email.')) : null, field(t('City'), city, t('Shown to friends only.')), el('div', { class: 'row' }, el('button', { type: 'submit', class: 'btn primary', id: 'b-pr-save', text: t('Save profile') }), status))));
   }
   const lp = linksPanel(); if (lp) out.append(lp);
   if (CLOUD.social) {
@@ -3073,8 +3258,8 @@ const HELP = {
   set(patch) { const h = { ...this.get(), ...patch }; ls.set(this.key(), JSON.stringify(h)); this.push(); return h; },
   mark(what) { const h = this.get(), did = h.did || {}; if (!did[what]) { did[what] = 1; this.set({ did }); } }
 };
-const NEWS_V = 4;
-const NEWS = ['BMW M, Ferrari, Lamborghini and Toyota Land Cruiser models are now in the market data.', 'A simpler layout: four tabs, with Settings and About behind your photo at the top.', 'One Add button for cars, logbook records, reminders, projects, posts and events.', 'Search everything from the top: your cars, market models, people and communities.', 'Private messages with friends, and usernames so friends can find you without your email.', 'Communities now show their members and who is going to each event.'];
+const NEWS_V = 5;
+const NEWS = ['Likes, comments and @mentions on posts, project updates, events and friends’ cars.', 'A photo feed on Home, car of the week in each community, group chats, and invite links with a QR code.', 'BMW M, Ferrari, Lamborghini and Toyota Land Cruiser models are now in the market data.', 'A simpler layout: four tabs, with Settings and About behind your photo at the top.', 'One Add button for cars, logbook records, reminders, projects, posts and events.', 'Search everything from the top: your cars, market models, people and communities.', 'Private messages with friends, and usernames so friends can find you without your email.', 'Communities now show their members and who is going to each event.'];
 function startSteps() {
   const c = S.cars[0], did = HELP.get().did || {}, base = c ? '#/car/' + c.id + '/' : '#/car/new';
   const steps = [
@@ -3220,7 +3405,8 @@ function viewProject(id) {
       try { let ph = null; if (f) ph = (await CLOUD.upload('project-' + id, await shrink(f))).path; await CLOUD.addUpdate(id, v, ph); body.value = ''; body.blur(); CLOUD.loadSocial(); await loadProject(id); } catch (e) { st.textContent = t('Couldn’t save. Try again.'); } } },
       body, el('div', { class: 'row' }, el('button', { type: 'submit', class: 'btn primary', id: 'b-u-post', text: t('Post update') }), el('button', { type: 'button', class: 'btn', onclick: () => file.click() }, ico('camera', t('Add a photo'))), draftBtn(x, body, file, st), file, fname, st)));
   }
-  upPanel.append(loading ? skel('5rem') : d.updates.length ? el('ul', { class: 'posts timeline' }, d.updates.map((u) => el('li', {}, el('div', { class: 'row between' }, el('span', { class: 'muted small', text: fmtWhen(u.created_at) }), x.mine ? el('button', { type: 'button', class: 'linkbtn small', text: t('Remove'), onclick: async () => { try { await CLOUD.deleteUpdate(u.id); if (u.photo) CLOUD.removeFiles([u.photo]); CLOUD.loadSocial(); await loadProject(id); } catch (e) { toast(t('Couldn’t save. Try again.')); } } }) : null), u.body ? el('p', { text: u.body }) : null, u.photo ? postPhoto(u.photo) : null)))
+  if (!loading) ensureSeeds('pupdate', d.updates.map((u) => u.id));
+  upPanel.append(loading ? skel('5rem') : d.updates.length ? el('ul', { class: 'posts timeline' }, d.updates.map((u) => el('li', {}, el('div', { class: 'row between' }, el('span', { class: 'muted small', text: fmtWhen(u.created_at) }), x.mine ? el('button', { type: 'button', class: 'linkbtn small', text: t('Remove'), onclick: async () => { try { await CLOUD.deleteUpdate(u.id); if (u.photo) CLOUD.removeFiles([u.photo]); CLOUD.loadSocial(); await loadProject(id); } catch (e) { toast(t('Couldn’t save. Try again.')); } } }) : null), u.body ? richP(u.body) : null, u.photo ? postPhoto(u.photo) : null, engageBar('pupdate', u.id))))
     : el('p', { class: 'empty', text: t(x.mine ? 'No updates yet. Post the first one to show where the project stands.' : 'No updates yet.') }));
   out.append(upPanel);
   // suggestions
@@ -3513,18 +3699,21 @@ function render() {
   const dark = S.theme === 'dark' || (S.theme === 'auto' && window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches), tc = document.querySelector('meta[name=theme-color]'); if (tc) tc.content = dark ? '#120d1c' : '#ffffff';
   const r = route(); aiCheck();
   if (!CLOUD.user && PAGES[r.name]) { app.replaceChildren(el('header', { class: 'head' }, brand('#/home'), el('a', { class: 'btn sm', href: '#/home', text: t('Sign in') })), el('main', {}, viewPage(r.name)), footer()); return; }
+  if (!CLOUD.user && r.name === 'community' && /^[0-9a-f-]{36}$/.test(r.a || '')) { ls.set('g197-invite', r.a); S.invited = true; S.inviteTo = r.a; }
   if (!CLOUD.user || S.mode === 'newpass') { app.replaceChildren(el('main', {}, viewLogin())); return; }
-  const top = r.name === 'home' ? 'home' : ['friends', 'friend', 'member', 'communities', 'community', 'events'].includes(r.name) ? 'friends' : r.name === 'market' || r.name === 'model' ? 'market' : ['settings', 'profile', 'notifications', 'messages', 'chat', 'search', 'projects', 'project'].includes(r.name) || PAGES[r.name] ? '' : 'garage';
+  if (ls.get('g197-invite', '')) { const inv = ls.get('g197-invite', ''); ls.set('g197-invite', ''); S.invited = false; if (r.name !== 'community') { location.hash = '#/community/' + inv; return; } }
+  const top = r.name === 'home' ? 'home' : ['friends', 'friend', 'member', 'communities', 'community', 'events', 'u'].includes(r.name) ? 'friends' : r.name === 'market' || r.name === 'model' ? 'market' : ['settings', 'profile', 'notifications', 'messages', 'chat', 'gchat', 'search', 'projects', 'project'].includes(r.name) || PAGES[r.name] ? '' : 'garage';
   const tab = (id, href, label) => el('a', { class: 'tab', id: 't-' + id, href, 'aria-current': top === id ? 'page' : 'false' }, ico(id, label));
   const nUnread = CLOUD.extras ? CLOUD.unread() : 0, bell = CLOUD.extras ? el('a', { class: 'bell', id: 'a-bell', href: '#/notifications', 'aria-label': nUnread ? t('Notifications, {n} new', { n: nUnread }) : t('Notifications'), 'aria-current': r.name === 'notifications' ? 'page' : 'false' }, svgIcon(ICONS.bell), nUnread ? el('span', { class: 'count', text: nUnread > 9 ? '9+' : String(nUnread) }) : null) : null;
   const me = el('a', { class: 'mebtn', id: 'a-me', href: '#/profile', 'aria-label': t('Your profile and settings'), 'aria-current': ['profile', 'settings'].includes(r.name) ? 'page' : 'false' }, avatarEl(CLOUD.profile.avatar, CLOUD.profile.name || CLOUD.user.email || '', 'sm'));
   const nMsg = unreadChats(), tool = (id, href, icon, label, n, cur) => el('a', { class: 'bell', id, href, 'aria-label': label, title: label, 'aria-current': cur ? 'page' : 'false' }, svgIcon(ICONS[icon]), n ? el('span', { class: 'count', text: n > 9 ? '9+' : String(n) }) : null);
   const find = el('a', { class: 'bell', id: 'a-search', href: '#/search', 'aria-label': t('Search'), title: t('Search'), 'aria-current': r.name === 'search' ? 'page' : 'false', onclick: () => { S.qFocus = true; } }, svgIcon(ICONS.search));
-  const msgs = CLOUD.chatsOn ? tool('a-msgs', '#/messages', 'chat', nMsg ? t('Messages, {n} new', { n: nMsg }) : t('Messages'), nMsg, r.name === 'messages' || r.name === 'chat') : null;
+  const msgs = CLOUD.chatsOn ? tool('a-msgs', '#/messages', 'chat', nMsg ? t('Messages, {n} new', { n: nMsg }) : t('Messages'), nMsg, r.name === 'messages' || r.name === 'chat' || r.name === 'gchat') : null;
   const plus = el('button', { type: 'button', class: 'fab', id: 'b-add', 'aria-label': t('Add'), title: t('Add'), onclick: () => { S.addOpen = {}; render(); } }, svgIcon(ICONS.plus), el('span', { text: t('Add') }));
   const head = el('header', { class: 'head' }, brand('#/home'), el('span', { class: 'headtools' }, find, msgs, bell, me), el('nav', { class: 'tabs', 'aria-label': t('Sections') }, tab('home', '#/home', t('Home')), tab('garage', '#/garage', t('Garage')), tab('market', '#/market', t('Market')), tab('friends', '#/communities', t('Community') + (incoming().length ? ' (' + incoming().length + ')' : ''))), plus);
   let main;
   if (r.name !== 'notifications') S.noteSeen = null;
+  if (r.name !== 'messages') S.chatsAt = null;
   if (r.name === 'garage') main = viewGarage();
   else if (r.name === 'market') main = viewMarket();
   else if (r.name === 'settings') main = viewSettings();
@@ -3541,17 +3730,324 @@ function render() {
   else if (r.name === 'search') main = viewSearch();
   else if (r.name === 'ask') main = viewAsk();
   else if (r.name === 'chat') main = viewChat(r.a);
-  else if (r.name === 'model') { HELP.mark('market'); const m = catOf(r.a); let mb = null, mc = null; main = el('div', { class: 'col' }, el('div', { class: 'col', style: 'gap:6px' }, el('a', { class: 'small', href: '#/market', text: '‹ ' + t('Market') }), m ? (mb = banner({ name: shortModel(m.name) }, null)) : el('h1', { text: t('Model not found') }), m ? (mc = el('p', { class: 'muted small photo-credit', id: 'model-credit' })) : null, m ? el('p', { class: 'muted', text: t('Built {a} to {b}', { a: m.from, b: m.to }) }) : null), m ? panel(null, null, marketView(m.name, null)) : null, m ? el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn primary', id: 'b-own-one', text: t('I own one: add it to my garage'), onclick: () => { S.prefill = m.name; nav('#/car/new'); } })) : null); if (m) modelPhotoInto(mb, mc, m.name); }
+  else if (r.name === 'gchat') main = viewGroupChat(r.a, r.b);
+  else if (r.name === 'u') main = viewU(r.a || '');
+  else if (r.name === 'model') { HELP.mark('market'); const m = catOf(r.a); let mb = null, mc = null; main = el('div', { class: 'col' }, el('div', { class: 'col', style: 'gap:6px' }, el('a', { class: 'small', href: '#/market', text: '‹ ' + t('Market') }), m ? (mb = banner({ name: shortModel(m.name) }, null)) : el('h1', { text: t('Model not found') }), m ? (mc = el('p', { class: 'muted small photo-credit', id: 'model-credit' })) : null, m ? el('p', { class: 'muted', text: t('Built {a} to {b}', { a: m.from, b: m.to }) }) : null), m ? panel(null, null, marketView(m.name, null)) : null, m ? el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn primary', id: 'b-own-one', text: t('I own one: add it to my garage'), onclick: () => { S.prefill = m.name; nav('#/car/new'); } }), shareBtn({ type: 'model', name: m.name })) : null); if (m) modelPhotoInto(mb, mc, m.name); }
   else if (r.name === 'projects') main = viewProjects();
   else if (r.name === 'project') main = r.a === 'new' ? projectForm() : viewProject(r.a);
   else if (r.name === 'car' && r.a === 'new') main = carForm(null);
   else if (r.name === 'car') { const car = S.cars.find((c) => c.id === r.a); main = !car ? el('p', { class: 'empty', text: t(CLOUD.loaded ? 'That car is no longer in your garage.' : 'Loading your garage…') }) : r.b === 'edit' ? carForm(car) : viewCar(car, r.b || 'overview'); }
   else main = viewHome();
-  const hideAdd = ['chat', 'search', 'ask'].includes(r.name) || (r.name === 'car' && (r.a === 'new' || r.b === 'edit')) || (r.name === 'project' && r.a === 'new'); if (hideAdd) plus.hidden = true;
-  app.replaceChildren(...[head, el('main', {}, main), CLOUD.user && !(r.name === 'profile' || r.name === 'settings' || PAGES[r.name]) ? el('div', { class: 'footpad' }) : footer(), addSheet()].filter(Boolean));
+  const hideAdd = ['chat', 'gchat', 'search', 'ask'].includes(r.name) || (r.name === 'car' && (r.a === 'new' || r.b === 'edit')) || (r.name === 'project' && r.a === 'new'); if (hideAdd) plus.hidden = true;
+  app.replaceChildren(...[head, el('main', {}, main), CLOUD.user && !(r.name === 'profile' || r.name === 'settings' || PAGES[r.name]) ? el('div', { class: 'footpad' }) : footer(), addSheet(), inviteSheet(), shareSheet()].filter(Boolean));
 }
 let rz; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { if (S.redraw) S.redraw(); }, 150); });
 
+/* QR Code Generator for JavaScript 2.0.4. Copyright (c) 2009 Kazuhiko Arase. MIT licence. http://www.d-project.com/ */
+var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],f={},c=function(t,r){o=function(t){for(var r=new Array(t),e=0;e<t;e+=1){r[e]=new Array(t);for(var n=0;n<t;n+=1)r[e][n]=null}return r}(i=4*e+17),l(0,0),l(i-7,0),l(0,i-7),s(),h(),d(t,r),e>=7&&v(t),null==a&&(a=p(e,n,u)),w(a,r)},l=function(t,r){for(var e=-1;e<=7;e+=1)if(!(t+e<=-1||i<=t+e))for(var n=-1;n<=7;n+=1)r+n<=-1||i<=r+n||(o[t+e][r+n]=0<=e&&e<=6&&(0==n||6==n)||0<=n&&n<=6&&(0==e||6==e)||2<=e&&e<=4&&2<=n&&n<=4)},h=function(){for(var t=8;t<i-8;t+=1)null==o[t][6]&&(o[t][6]=t%2==0);for(var r=8;r<i-8;r+=1)null==o[6][r]&&(o[6][r]=r%2==0)},s=function(){for(var t=B.getPatternPosition(e),r=0;r<t.length;r+=1)for(var n=0;n<t.length;n+=1){var i=t[r],a=t[n];if(null==o[i][a])for(var u=-2;u<=2;u+=1)for(var f=-2;f<=2;f+=1)o[i+u][a+f]=-2==u||2==u||-2==f||2==f||0==u&&0==f}},v=function(t){for(var r=B.getBCHTypeNumber(e),n=0;n<18;n+=1){var a=!t&&1==(r>>n&1);o[Math.floor(n/3)][n%3+i-8-3]=a}for(n=0;n<18;n+=1){a=!t&&1==(r>>n&1);o[n%3+i-8-3][Math.floor(n/3)]=a}},d=function(t,r){for(var e=n<<3|r,a=B.getBCHTypeInfo(e),u=0;u<15;u+=1){var f=!t&&1==(a>>u&1);u<6?o[u][8]=f:u<8?o[u+1][8]=f:o[i-15+u][8]=f}for(u=0;u<15;u+=1){f=!t&&1==(a>>u&1);u<8?o[8][i-u-1]=f:u<9?o[8][15-u-1+1]=f:o[8][15-u-1]=f}o[i-8][8]=!t},w=function(t,r){for(var e=-1,n=i-1,a=7,u=0,f=B.getMaskFunction(r),c=i-1;c>0;c-=2)for(6==c&&(c-=1);;){for(var g=0;g<2;g+=1)if(null==o[n][c-g]){var l=!1;u<t.length&&(l=1==(t[u]>>>a&1)),f(n,c-g)&&(l=!l),o[n][c-g]=l,-1==(a-=1)&&(u+=1,a=7)}if((n+=e)<0||i<=n){n-=e,e=-e;break}}},p=function(t,r,e){for(var n=A.getRSBlocks(t,r),o=b(),i=0;i<e.length;i+=1){var a=e[i];o.put(a.getMode(),4),o.put(a.getLength(),B.getLengthInBits(a.getMode(),t)),a.write(o)}var u=0;for(i=0;i<n.length;i+=1)u+=n[i].dataCount;if(o.getLengthInBits()>8*u)throw"code length overflow. ("+o.getLengthInBits()+">"+8*u+")";for(o.getLengthInBits()+4<=8*u&&o.put(0,4);o.getLengthInBits()%8!=0;)o.putBit(!1);for(;!(o.getLengthInBits()>=8*u||(o.put(236,8),o.getLengthInBits()>=8*u));)o.put(17,8);return function(t,r){for(var e=0,n=0,o=0,i=new Array(r.length),a=new Array(r.length),u=0;u<r.length;u+=1){var f=r[u].dataCount,c=r[u].totalCount-f;n=Math.max(n,f),o=Math.max(o,c),i[u]=new Array(f);for(var g=0;g<i[u].length;g+=1)i[u][g]=255&t.getBuffer()[g+e];e+=f;var l=B.getErrorCorrectPolynomial(c),h=k(i[u],l.getLength()-1).mod(l);for(a[u]=new Array(l.getLength()-1),g=0;g<a[u].length;g+=1){var s=g+h.getLength()-a[u].length;a[u][g]=s>=0?h.getAt(s):0}}var v=0;for(g=0;g<r.length;g+=1)v+=r[g].totalCount;var d=new Array(v),w=0;for(g=0;g<n;g+=1)for(u=0;u<r.length;u+=1)g<i[u].length&&(d[w]=i[u][g],w+=1);for(g=0;g<o;g+=1)for(u=0;u<r.length;u+=1)g<a[u].length&&(d[w]=a[u][g],w+=1);return d}(o,n)};f.addData=function(t,r){var e=null;switch(r=r||"Byte"){case"Numeric":e=M(t);break;case"Alphanumeric":e=x(t);break;case"Byte":e=m(t);break;case"Kanji":e=L(t);break;default:throw"mode:"+r}u.push(e),a=null},f.isDark=function(t,r){if(t<0||i<=t||r<0||i<=r)throw t+","+r;return o[t][r]},f.getModuleCount=function(){return i},f.make=function(){if(e<1){for(var t=1;t<40;t++){for(var r=A.getRSBlocks(t,n),o=b(),i=0;i<u.length;i++){var a=u[i];o.put(a.getMode(),4),o.put(a.getLength(),B.getLengthInBits(a.getMode(),t)),a.write(o)}var g=0;for(i=0;i<r.length;i++)g+=r[i].dataCount;if(o.getLengthInBits()<=8*g)break}e=t}c(!1,function(){for(var t=0,r=0,e=0;e<8;e+=1){c(!0,e);var n=B.getLostPoint(f);(0==e||t>n)&&(t=n,r=e)}return r}())},f.createTableTag=function(t,r){t=t||2;var e="";e+='<table style="',e+=" border-width: 0px; border-style: none;",e+=" border-collapse: collapse;",e+=" padding: 0px; margin: "+(r=void 0===r?4*t:r)+"px;",e+='">',e+="<tbody>";for(var n=0;n<f.getModuleCount();n+=1){e+="<tr>";for(var o=0;o<f.getModuleCount();o+=1)e+='<td style="',e+=" border-width: 0px; border-style: none;",e+=" border-collapse: collapse;",e+=" padding: 0px; margin: 0px;",e+=" width: "+t+"px;",e+=" height: "+t+"px;",e+=" background-color: ",e+=f.isDark(n,o)?"#000000":"#ffffff",e+=";",e+='"/>';e+="</tr>"}return e+="</tbody>",e+="</table>"},f.createSvgTag=function(t,r,e,n){var o={};"object"==typeof arguments[0]&&(t=(o=arguments[0]).cellSize,r=o.margin,e=o.alt,n=o.title),t=t||2,r=void 0===r?4*t:r,(e="string"==typeof e?{text:e}:e||{}).text=e.text||null,e.id=e.text?e.id||"qrcode-description":null,(n="string"==typeof n?{text:n}:n||{}).text=n.text||null,n.id=n.text?n.id||"qrcode-title":null;var i,a,u,c,g=f.getModuleCount()*t+2*r,l="";for(c="l"+t+",0 0,"+t+" -"+t+",0 0,-"+t+"z ",l+='<svg version="1.1" xmlns="http://www.w3.org/2000/svg"',l+=o.scalable?"":' width="'+g+'px" height="'+g+'px"',l+=' viewBox="0 0 '+g+" "+g+'" ',l+=' preserveAspectRatio="xMinYMin meet"',l+=n.text||e.text?' role="img" aria-labelledby="'+y([n.id,e.id].join(" ").trim())+'"':"",l+=">",l+=n.text?'<title id="'+y(n.id)+'">'+y(n.text)+"</title>":"",l+=e.text?'<description id="'+y(e.id)+'">'+y(e.text)+"</description>":"",l+='<rect width="100%" height="100%" fill="white" cx="0" cy="0"/>',l+='<path d="',a=0;a<f.getModuleCount();a+=1)for(u=a*t+r,i=0;i<f.getModuleCount();i+=1)f.isDark(a,i)&&(l+="M"+(i*t+r)+","+u+c);return l+='" stroke="transparent" fill="black"/>',l+="</svg>"},f.createDataURL=function(t,r){t=t||2,r=void 0===r?4*t:r;var e=f.getModuleCount()*t+2*r,n=r,o=e-r;return I(e,e,function(r,e){if(n<=r&&r<o&&n<=e&&e<o){var i=Math.floor((r-n)/t),a=Math.floor((e-n)/t);return f.isDark(a,i)?0:1}return 1})},f.createImgTag=function(t,r,e){t=t||2,r=void 0===r?4*t:r;var n=f.getModuleCount()*t+2*r,o="";return o+="<img",o+=' src="',o+=f.createDataURL(t,r),o+='"',o+=' width="',o+=n,o+='"',o+=' height="',o+=n,o+='"',e&&(o+=' alt="',o+=y(e),o+='"'),o+="/>"};var y=function(t){for(var r="",e=0;e<t.length;e+=1){var n=t.charAt(e);switch(n){case"<":r+="&lt;";break;case">":r+="&gt;";break;case"&":r+="&amp;";break;case'"':r+="&quot;";break;default:r+=n}}return r};return f.createASCII=function(t,r){if((t=t||1)<2)return function(t){t=void 0===t?2:t;var r,e,n,o,i,a=1*f.getModuleCount()+2*t,u=t,c=a-t,g={"██":"█","█ ":"▀"," █":"▄","  ":" "},l={"██":"▀","█ ":"▀"," █":" ","  ":" "},h="";for(r=0;r<a;r+=2){for(n=Math.floor((r-u)/1),o=Math.floor((r+1-u)/1),e=0;e<a;e+=1)i="█",u<=e&&e<c&&u<=r&&r<c&&f.isDark(n,Math.floor((e-u)/1))&&(i=" "),u<=e&&e<c&&u<=r+1&&r+1<c&&f.isDark(o,Math.floor((e-u)/1))?i+=" ":i+="█",h+=t<1&&r+1>=c?l[i]:g[i];h+="\n"}return a%2&&t>0?h.substring(0,h.length-a-1)+Array(a+1).join("▀"):h.substring(0,h.length-1)}(r);t-=1,r=void 0===r?2*t:r;var e,n,o,i,a=f.getModuleCount()*t+2*r,u=r,c=a-r,g=Array(t+1).join("██"),l=Array(t+1).join("  "),h="",s="";for(e=0;e<a;e+=1){for(o=Math.floor((e-u)/t),s="",n=0;n<a;n+=1)i=1,u<=n&&n<c&&u<=e&&e<c&&f.isDark(o,Math.floor((n-u)/t))&&(i=0),s+=i?g:l;for(o=0;o<t;o+=1)h+=s+"\n"}return h.substring(0,h.length-1)},f.renderTo2dContext=function(t,r){r=r||2;for(var e=f.getModuleCount(),n=0;n<e;n++)for(var o=0;o<e;o++)t.fillStyle=f.isDark(n,o)?"black":"white",t.fillRect(o*r,n*r,r,r)},f};t.stringToBytes=(t.stringToBytesFuncs={default:function(t){for(var r=[],e=0;e<t.length;e+=1){var n=t.charCodeAt(e);r.push(255&n)}return r}}).default,t.createStringToBytes=function(t,r){var e=function(){for(var e=S(t),n=function(){var t=e.read();if(-1==t)throw"eof";return t},o=0,i={};;){var a=e.read();if(-1==a)break;var u=n(),f=n()<<8|n();i[String.fromCharCode(a<<8|u)]=f,o+=1}if(o!=r)throw o+" != "+r;return i}(),n="?".charCodeAt(0);return function(t){for(var r=[],o=0;o<t.length;o+=1){var i=t.charCodeAt(o);if(i<128)r.push(i);else{var a=e[t.charAt(o)];"number"==typeof a?(255&a)==a?r.push(a):(r.push(a>>>8),r.push(255&a)):r.push(n)}}return r}};var r,e,n,o,i,a=1,u=2,f=4,c=8,g={L:1,M:0,Q:3,H:2},l=0,h=1,s=2,v=3,d=4,w=5,p=6,y=7,B=(r=[[],[6,18],[6,22],[6,26],[6,30],[6,34],[6,22,38],[6,24,42],[6,26,46],[6,28,50],[6,30,54],[6,32,58],[6,34,62],[6,26,46,66],[6,26,48,70],[6,26,50,74],[6,30,54,78],[6,30,56,82],[6,30,58,86],[6,34,62,90],[6,28,50,72,94],[6,26,50,74,98],[6,30,54,78,102],[6,28,54,80,106],[6,32,58,84,110],[6,30,58,86,114],[6,34,62,90,118],[6,26,50,74,98,122],[6,30,54,78,102,126],[6,26,52,78,104,130],[6,30,56,82,108,134],[6,34,60,86,112,138],[6,30,58,86,114,142],[6,34,62,90,118,146],[6,30,54,78,102,126,150],[6,24,50,76,102,128,154],[6,28,54,80,106,132,158],[6,32,58,84,110,136,162],[6,26,54,82,110,138,166],[6,30,58,86,114,142,170]],e=1335,n=7973,i=function(t){for(var r=0;0!=t;)r+=1,t>>>=1;return r},(o={}).getBCHTypeInfo=function(t){for(var r=t<<10;i(r)-i(e)>=0;)r^=e<<i(r)-i(e);return 21522^(t<<10|r)},o.getBCHTypeNumber=function(t){for(var r=t<<12;i(r)-i(n)>=0;)r^=n<<i(r)-i(n);return t<<12|r},o.getPatternPosition=function(t){return r[t-1]},o.getMaskFunction=function(t){switch(t){case l:return function(t,r){return(t+r)%2==0};case h:return function(t,r){return t%2==0};case s:return function(t,r){return r%3==0};case v:return function(t,r){return(t+r)%3==0};case d:return function(t,r){return(Math.floor(t/2)+Math.floor(r/3))%2==0};case w:return function(t,r){return t*r%2+t*r%3==0};case p:return function(t,r){return(t*r%2+t*r%3)%2==0};case y:return function(t,r){return(t*r%3+(t+r)%2)%2==0};default:throw"bad maskPattern:"+t}},o.getErrorCorrectPolynomial=function(t){for(var r=k([1],0),e=0;e<t;e+=1)r=r.multiply(k([1,C.gexp(e)],0));return r},o.getLengthInBits=function(t,r){if(1<=r&&r<10)switch(t){case a:return 10;case u:return 9;case f:case c:return 8;default:throw"mode:"+t}else if(r<27)switch(t){case a:return 12;case u:return 11;case f:return 16;case c:return 10;default:throw"mode:"+t}else{if(!(r<41))throw"type:"+r;switch(t){case a:return 14;case u:return 13;case f:return 16;case c:return 12;default:throw"mode:"+t}}},o.getLostPoint=function(t){for(var r=t.getModuleCount(),e=0,n=0;n<r;n+=1)for(var o=0;o<r;o+=1){for(var i=0,a=t.isDark(n,o),u=-1;u<=1;u+=1)if(!(n+u<0||r<=n+u))for(var f=-1;f<=1;f+=1)o+f<0||r<=o+f||0==u&&0==f||a==t.isDark(n+u,o+f)&&(i+=1);i>5&&(e+=3+i-5)}for(n=0;n<r-1;n+=1)for(o=0;o<r-1;o+=1){var c=0;t.isDark(n,o)&&(c+=1),t.isDark(n+1,o)&&(c+=1),t.isDark(n,o+1)&&(c+=1),t.isDark(n+1,o+1)&&(c+=1),0!=c&&4!=c||(e+=3)}for(n=0;n<r;n+=1)for(o=0;o<r-6;o+=1)t.isDark(n,o)&&!t.isDark(n,o+1)&&t.isDark(n,o+2)&&t.isDark(n,o+3)&&t.isDark(n,o+4)&&!t.isDark(n,o+5)&&t.isDark(n,o+6)&&(e+=40);for(o=0;o<r;o+=1)for(n=0;n<r-6;n+=1)t.isDark(n,o)&&!t.isDark(n+1,o)&&t.isDark(n+2,o)&&t.isDark(n+3,o)&&t.isDark(n+4,o)&&!t.isDark(n+5,o)&&t.isDark(n+6,o)&&(e+=40);var g=0;for(o=0;o<r;o+=1)for(n=0;n<r;n+=1)t.isDark(n,o)&&(g+=1);return e+=Math.abs(100*g/r/r-50)/5*10},o),C=function(){for(var t=new Array(256),r=new Array(256),e=0;e<8;e+=1)t[e]=1<<e;for(e=8;e<256;e+=1)t[e]=t[e-4]^t[e-5]^t[e-6]^t[e-8];for(e=0;e<255;e+=1)r[t[e]]=e;var n={glog:function(t){if(t<1)throw"glog("+t+")";return r[t]},gexp:function(r){for(;r<0;)r+=255;for(;r>=256;)r-=255;return t[r]}};return n}();function k(t,r){if(void 0===t.length)throw t.length+"/"+r;var e=function(){for(var e=0;e<t.length&&0==t[e];)e+=1;for(var n=new Array(t.length-e+r),o=0;o<t.length-e;o+=1)n[o]=t[o+e];return n}(),n={getAt:function(t){return e[t]},getLength:function(){return e.length},multiply:function(t){for(var r=new Array(n.getLength()+t.getLength()-1),e=0;e<n.getLength();e+=1)for(var o=0;o<t.getLength();o+=1)r[e+o]^=C.gexp(C.glog(n.getAt(e))+C.glog(t.getAt(o)));return k(r,0)},mod:function(t){if(n.getLength()-t.getLength()<0)return n;for(var r=C.glog(n.getAt(0))-C.glog(t.getAt(0)),e=new Array(n.getLength()),o=0;o<n.getLength();o+=1)e[o]=n.getAt(o);for(o=0;o<t.getLength();o+=1)e[o]^=C.gexp(C.glog(t.getAt(o))+r);return k(e,0).mod(t)}};return n}var A=function(){var t=[[1,26,19],[1,26,16],[1,26,13],[1,26,9],[1,44,34],[1,44,28],[1,44,22],[1,44,16],[1,70,55],[1,70,44],[2,35,17],[2,35,13],[1,100,80],[2,50,32],[2,50,24],[4,25,9],[1,134,108],[2,67,43],[2,33,15,2,34,16],[2,33,11,2,34,12],[2,86,68],[4,43,27],[4,43,19],[4,43,15],[2,98,78],[4,49,31],[2,32,14,4,33,15],[4,39,13,1,40,14],[2,121,97],[2,60,38,2,61,39],[4,40,18,2,41,19],[4,40,14,2,41,15],[2,146,116],[3,58,36,2,59,37],[4,36,16,4,37,17],[4,36,12,4,37,13],[2,86,68,2,87,69],[4,69,43,1,70,44],[6,43,19,2,44,20],[6,43,15,2,44,16],[4,101,81],[1,80,50,4,81,51],[4,50,22,4,51,23],[3,36,12,8,37,13],[2,116,92,2,117,93],[6,58,36,2,59,37],[4,46,20,6,47,21],[7,42,14,4,43,15],[4,133,107],[8,59,37,1,60,38],[8,44,20,4,45,21],[12,33,11,4,34,12],[3,145,115,1,146,116],[4,64,40,5,65,41],[11,36,16,5,37,17],[11,36,12,5,37,13],[5,109,87,1,110,88],[5,65,41,5,66,42],[5,54,24,7,55,25],[11,36,12,7,37,13],[5,122,98,1,123,99],[7,73,45,3,74,46],[15,43,19,2,44,20],[3,45,15,13,46,16],[1,135,107,5,136,108],[10,74,46,1,75,47],[1,50,22,15,51,23],[2,42,14,17,43,15],[5,150,120,1,151,121],[9,69,43,4,70,44],[17,50,22,1,51,23],[2,42,14,19,43,15],[3,141,113,4,142,114],[3,70,44,11,71,45],[17,47,21,4,48,22],[9,39,13,16,40,14],[3,135,107,5,136,108],[3,67,41,13,68,42],[15,54,24,5,55,25],[15,43,15,10,44,16],[4,144,116,4,145,117],[17,68,42],[17,50,22,6,51,23],[19,46,16,6,47,17],[2,139,111,7,140,112],[17,74,46],[7,54,24,16,55,25],[34,37,13],[4,151,121,5,152,122],[4,75,47,14,76,48],[11,54,24,14,55,25],[16,45,15,14,46,16],[6,147,117,4,148,118],[6,73,45,14,74,46],[11,54,24,16,55,25],[30,46,16,2,47,17],[8,132,106,4,133,107],[8,75,47,13,76,48],[7,54,24,22,55,25],[22,45,15,13,46,16],[10,142,114,2,143,115],[19,74,46,4,75,47],[28,50,22,6,51,23],[33,46,16,4,47,17],[8,152,122,4,153,123],[22,73,45,3,74,46],[8,53,23,26,54,24],[12,45,15,28,46,16],[3,147,117,10,148,118],[3,73,45,23,74,46],[4,54,24,31,55,25],[11,45,15,31,46,16],[7,146,116,7,147,117],[21,73,45,7,74,46],[1,53,23,37,54,24],[19,45,15,26,46,16],[5,145,115,10,146,116],[19,75,47,10,76,48],[15,54,24,25,55,25],[23,45,15,25,46,16],[13,145,115,3,146,116],[2,74,46,29,75,47],[42,54,24,1,55,25],[23,45,15,28,46,16],[17,145,115],[10,74,46,23,75,47],[10,54,24,35,55,25],[19,45,15,35,46,16],[17,145,115,1,146,116],[14,74,46,21,75,47],[29,54,24,19,55,25],[11,45,15,46,46,16],[13,145,115,6,146,116],[14,74,46,23,75,47],[44,54,24,7,55,25],[59,46,16,1,47,17],[12,151,121,7,152,122],[12,75,47,26,76,48],[39,54,24,14,55,25],[22,45,15,41,46,16],[6,151,121,14,152,122],[6,75,47,34,76,48],[46,54,24,10,55,25],[2,45,15,64,46,16],[17,152,122,4,153,123],[29,74,46,14,75,47],[49,54,24,10,55,25],[24,45,15,46,46,16],[4,152,122,18,153,123],[13,74,46,32,75,47],[48,54,24,14,55,25],[42,45,15,32,46,16],[20,147,117,4,148,118],[40,75,47,7,76,48],[43,54,24,22,55,25],[10,45,15,67,46,16],[19,148,118,6,149,119],[18,75,47,31,76,48],[34,54,24,34,55,25],[20,45,15,61,46,16]],r=function(t,r){var e={};return e.totalCount=t,e.dataCount=r,e},e={};return e.getRSBlocks=function(e,n){var o=function(r,e){switch(e){case g.L:return t[4*(r-1)+0];case g.M:return t[4*(r-1)+1];case g.Q:return t[4*(r-1)+2];case g.H:return t[4*(r-1)+3];default:return}}(e,n);if(void 0===o)throw"bad rs block @ typeNumber:"+e+"/errorCorrectionLevel:"+n;for(var i=o.length/3,a=[],u=0;u<i;u+=1)for(var f=o[3*u+0],c=o[3*u+1],l=o[3*u+2],h=0;h<f;h+=1)a.push(r(c,l));return a},e}(),b=function(){var t=[],r=0,e={getBuffer:function(){return t},getAt:function(r){var e=Math.floor(r/8);return 1==(t[e]>>>7-r%8&1)},put:function(t,r){for(var n=0;n<r;n+=1)e.putBit(1==(t>>>r-n-1&1))},getLengthInBits:function(){return r},putBit:function(e){var n=Math.floor(r/8);t.length<=n&&t.push(0),e&&(t[n]|=128>>>r%8),r+=1}};return e},M=function(t){var r=a,e=t,n={getMode:function(){return r},getLength:function(t){return e.length},write:function(t){for(var r=e,n=0;n+2<r.length;)t.put(o(r.substring(n,n+3)),10),n+=3;n<r.length&&(r.length-n==1?t.put(o(r.substring(n,n+1)),4):r.length-n==2&&t.put(o(r.substring(n,n+2)),7))}},o=function(t){for(var r=0,e=0;e<t.length;e+=1)r=10*r+i(t.charAt(e));return r},i=function(t){if("0"<=t&&t<="9")return t.charCodeAt(0)-"0".charCodeAt(0);throw"illegal char :"+t};return n},x=function(t){var r=u,e=t,n={getMode:function(){return r},getLength:function(t){return e.length},write:function(t){for(var r=e,n=0;n+1<r.length;)t.put(45*o(r.charAt(n))+o(r.charAt(n+1)),11),n+=2;n<r.length&&t.put(o(r.charAt(n)),6)}},o=function(t){if("0"<=t&&t<="9")return t.charCodeAt(0)-"0".charCodeAt(0);if("A"<=t&&t<="Z")return t.charCodeAt(0)-"A".charCodeAt(0)+10;switch(t){case" ":return 36;case"$":return 37;case"%":return 38;case"*":return 39;case"+":return 40;case"-":return 41;case".":return 42;case"/":return 43;case":":return 44;default:throw"illegal char :"+t}};return n},m=function(r){var e=f,n=t.stringToBytes(r),o={getMode:function(){return e},getLength:function(t){return n.length},write:function(t){for(var r=0;r<n.length;r+=1)t.put(n[r],8)}};return o},L=function(r){var e=c,n=t.stringToBytesFuncs.SJIS;if(!n)throw"sjis not supported.";!function(){var t=n("友");if(2!=t.length||38726!=(t[0]<<8|t[1]))throw"sjis not supported."}();var o=n(r),i={getMode:function(){return e},getLength:function(t){return~~(o.length/2)},write:function(t){for(var r=o,e=0;e+1<r.length;){var n=(255&r[e])<<8|255&r[e+1];if(33088<=n&&n<=40956)n-=33088;else{if(!(57408<=n&&n<=60351))throw"illegal char at "+(e+1)+"/"+n;n-=49472}n=192*(n>>>8&255)+(255&n),t.put(n,13),e+=2}if(e<r.length)throw"illegal char at "+(e+1)}};return i},D=function(){var t=[],r={writeByte:function(r){t.push(255&r)},writeShort:function(t){r.writeByte(t),r.writeByte(t>>>8)},writeBytes:function(t,e,n){e=e||0,n=n||t.length;for(var o=0;o<n;o+=1)r.writeByte(t[o+e])},writeString:function(t){for(var e=0;e<t.length;e+=1)r.writeByte(t.charCodeAt(e))},toByteArray:function(){return t},toString:function(){var r="";r+="[";for(var e=0;e<t.length;e+=1)e>0&&(r+=","),r+=t[e];return r+="]"}};return r},S=function(t){var r=t,e=0,n=0,o=0,i={read:function(){for(;o<8;){if(e>=r.length){if(0==o)return-1;throw"unexpected end of file./"+o}var t=r.charAt(e);if(e+=1,"="==t)return o=0,-1;t.match(/^\s$/)||(n=n<<6|a(t.charCodeAt(0)),o+=6)}var i=n>>>o-8&255;return o-=8,i}},a=function(t){if(65<=t&&t<=90)return t-65;if(97<=t&&t<=122)return t-97+26;if(48<=t&&t<=57)return t-48+52;if(43==t)return 62;if(47==t)return 63;throw"c:"+t};return i},I=function(t,r,e){for(var n=function(t,r){var e=t,n=r,o=new Array(t*r),i={setPixel:function(t,r,n){o[r*e+t]=n},write:function(t){t.writeString("GIF87a"),t.writeShort(e),t.writeShort(n),t.writeByte(128),t.writeByte(0),t.writeByte(0),t.writeByte(0),t.writeByte(0),t.writeByte(0),t.writeByte(255),t.writeByte(255),t.writeByte(255),t.writeString(","),t.writeShort(0),t.writeShort(0),t.writeShort(e),t.writeShort(n),t.writeByte(0);var r=a(2);t.writeByte(2);for(var o=0;r.length-o>255;)t.writeByte(255),t.writeBytes(r,o,255),o+=255;t.writeByte(r.length-o),t.writeBytes(r,o,r.length-o),t.writeByte(0),t.writeString(";")}},a=function(t){for(var r=1<<t,e=1+(1<<t),n=t+1,i=u(),a=0;a<r;a+=1)i.add(String.fromCharCode(a));i.add(String.fromCharCode(r)),i.add(String.fromCharCode(e));var f,c,g,l=D(),h=(f=l,c=0,g=0,{write:function(t,r){if(t>>>r!=0)throw"length over";for(;c+r>=8;)f.writeByte(255&(t<<c|g)),r-=8-c,t>>>=8-c,g=0,c=0;g|=t<<c,c+=r},flush:function(){c>0&&f.writeByte(g)}});h.write(r,n);var s=0,v=String.fromCharCode(o[s]);for(s+=1;s<o.length;){var d=String.fromCharCode(o[s]);s+=1,i.contains(v+d)?v+=d:(h.write(i.indexOf(v),n),i.size()<4095&&(i.size()==1<<n&&(n+=1),i.add(v+d)),v=d)}return h.write(i.indexOf(v),n),h.write(e,n),h.flush(),l.toByteArray()},u=function(){var t={},r=0,e={add:function(n){if(e.contains(n))throw"dup key:"+n;t[n]=r,r+=1},size:function(){return r},indexOf:function(r){return t[r]},contains:function(r){return void 0!==t[r]}};return e};return i}(t,r),o=0;o<r;o+=1)for(var i=0;i<t;i+=1)n.setPixel(i,o,e(i,o));var a=D();n.write(a);for(var u=function(){var t=0,r=0,e=0,n="",o={},i=function(t){n+=String.fromCharCode(a(63&t))},a=function(t){if(t<0);else{if(t<26)return 65+t;if(t<52)return t-26+97;if(t<62)return t-52+48;if(62==t)return 43;if(63==t)return 47}throw"n:"+t};return o.writeByte=function(n){for(t=t<<8|255&n,r+=8,e+=1;r>=6;)i(t>>>r-6),r-=6},o.flush=function(){if(r>0&&(i(t<<6-r),t=0,r=0),e%3!=0)for(var o=3-e%3,a=0;a<o;a+=1)n+="="},o.toString=function(){return n},o}(),f=a.toByteArray(),c=0;c<f.length;c+=1)u.writeByte(f[c]);return u.flush(),"data:image/gif;base64,"+u};return t}();qrcode.stringToBytesFuncs["UTF-8"]=function(t){return function(t){for(var r=[],e=0;e<t.length;e++){var n=t.charCodeAt(e);n<128?r.push(n):n<2048?r.push(192|n>>6,128|63&n):n<55296||n>=57344?r.push(224|n>>12,128|n>>6&63,128|63&n):(e++,n=65536+((1023&n)<<10|1023&t.charCodeAt(e)),r.push(240|n>>18,128|n>>12&63,128|n>>6&63,128|63&n))}return r}(t)},function(t){"function"==typeof define&&define.amd?define([],t):"object"==typeof exports&&(module.exports=t())}(function(){return qrcode});
+/* ----- engagement: likes, comments, mentions, photo feed, car of the week, group chats, invites ----- */
+Object.assign(ICONS, {
+  heart: '<path d="M12 20.3s-7.6-4.5-7.6-10.2a4.4 4.4 0 0 1 7.6-3 4.4 4.4 0 0 1 7.6 3c0 5.700-7.600 10.200-7.600 10.200z"/>',
+  share: '<path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><path d="M12 15V3.500"/><path d="m7.500 8 4.500-4.500L16.500 8"/>',
+  trophy: '<path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M8 5.500H4.500V7A3.500 3.500 0 0 0 8 10.500M16 5.500h3.500V7a3.500 3.500 0 0 1-3.500 3.500"/><path d="M12 13v4M8.500 20h7M9.500 17h5v3h-5z"/>',
+  link: '<path d="M10 14a4 4 0 0 0 5.700 0l3-3a4 4 0 0 0-5.700-5.700l-1 1"/><path d="M14 10a4 4 0 0 0-5.700 0l-3 3a4 4 0 0 0 5.700 5.700l1-1"/>',
+  group: '<circle cx="9" cy="8.500" r="3.200"/><path d="M2.800 19.500c.5-3.300 3-5.200 6.200-5.200s5.700 1.900 6.200 5.200"/><path d="M15.500 5.600a3.200 3.200 0 0 1 0 5.900M17.800 14.700c1.800.700 3 2.400 3.400 4.800"/>'
+});
+const engOn = () => !!CLOUD.engageOn;
+const myPage = () => '#/member/' + (CLOUD.user ? CLOUD.user.id : '');
+const rich = (text) => String(text || '').split(/(@[A-Za-z0-9_]{3,20})(?![A-Za-z0-9_])/).map((s, i) => i % 2 ? el('a', { class: 'mention', href: '#/u/' + s.slice(1).toLowerCase(), text: s }) : document.createTextNode(s));
+const richP = (text, cls) => el('p', { class: 'rich' + (cls ? ' ' + cls : '') }, rich(text));
+function ago(iso) {
+  const s = (Date.now() - Date.parse(iso)) / 1000;
+  if (!(s >= 0)) return fmtWhen(iso);
+  if (s < 60) return t('Just now');
+  if (s < 3600) return t('{n} min ago', { n: Math.floor(s / 60) });
+  if (s < 86400) return t('{n} h ago', { n: Math.floor(s / 3600) });
+  if (s < 7 * 86400) return t('{n} d ago', { n: Math.floor(s / 86400) });
+  return fmtWhen(iso);
+}
+const who = (uid, name, mine) => el('a', { class: 'who', href: mine ? myPage() : '#/member/' + uid, text: name });
+function engState(kind, ref, seed) {
+  S.eng = S.eng || {};
+  const k = kind + '|' + ref, st = S.eng[k] = S.eng[k] || { likes: 0, me: false, comments: 0 };
+  if (seed && st.seed !== seed) { st.seed = seed; st.likes = Number(seed.likes || 0); st.me = !!seed.me_liked; st.comments = Number(seed.comments || 0); }
+  return st;
+}
+function ensureSeeds(kind, refs) {
+  if (!engOn() || !refs.length) return;
+  S.engAsked = S.engAsked || {};
+  const key = kind + ':' + refs.join(',');
+  if (Date.now() - (S.engAsked[key] || 0) < 45000) return;
+  S.engAsked[key] = Date.now();
+  CLOUD.engagement(kind, refs).then((rows) => { for (const r of rows || []) engState(kind, r.ref, r); render(); }).catch(() => {});
+}
+async function likeToggle(kind, ref, on) {
+  const st = engState(kind, ref);
+  if (st.busy || st.me === on) return;
+  st.busy = true; st.me = on; st.likes = Math.max(0, st.likes + (on ? 1 : -1)); st.likers = null; render();
+  try { st.likes = Number(await CLOUD.setLike(kind, ref, on)); } catch (e) { st.me = !on; st.likes = Math.max(0, st.likes + (on ? -1 : 1)); toast(t('Couldn’t save. Try again.')); }
+  st.busy = false; render();
+}
+function loadComments(kind, ref) {
+  const st = engState(kind, ref);
+  return CLOUD.listComments(kind, ref).then((rows) => { st.rows = rows || []; st.comments = st.rows.length; st.failed = false; }).catch(() => { st.rows = st.rows || []; st.failed = true; }).then(render);
+}
+function engageBar(kind, ref, seed) {
+  if (!engOn()) return null;
+  const st = engState(kind, ref, seed), id = kind + '-' + String(ref).replace(/[^A-Za-z0-9]/g, '').slice(0, 12);
+  const like = el('button', { type: 'button', class: 'eng like' + (st.me ? ' on' : ''), 'aria-pressed': st.me ? 'true' : 'false', 'aria-label': st.me ? t('Unlike') : t('Like'), title: st.me ? t('Unlike') : t('Like'), onclick: () => likeToggle(kind, ref, !st.me) }, svgIcon(ICONS.heart));
+  const nLikes = el('button', { type: 'button', class: 'linkbtn small eng-n', 'aria-expanded': st.showLikers ? 'true' : 'false', text: st.likes === 1 ? t('1 like') : t('{n} likes', { n: st.likes }), onclick: () => { st.showLikers = !st.showLikers; if (st.showLikers && !st.likers) CLOUD.listLikers(kind, ref).then((r) => { st.likers = r || []; render(); }).catch(() => { st.likers = []; render(); }); render(); } });
+  const cm = el('button', { type: 'button', class: 'eng cm', 'aria-expanded': st.open ? 'true' : 'false', 'aria-label': t('Comments'), title: t('Comments'), onclick: () => { st.open = !st.open; if (st.open) { loadComments(kind, ref); S.cmFocus = id; } render(); } }, svgIcon(ICONS.chat), el('span', { text: st.comments ? String(st.comments) : '' }));
+  const out = el('div', { class: 'engage', id: 'eng-' + id }, el('div', { class: 'row engrow' }, like, st.likes ? nLikes : null, cm, !st.open && st.comments ? el('button', { type: 'button', class: 'linkbtn small', text: st.comments === 1 ? t('View 1 comment') : t('View all {n} comments', { n: st.comments }), onclick: () => cm.click() }) : null));
+  if (st.showLikers && st.likes) out.append(!st.likers ? skel('2rem') : el('div', { class: 'facerow likers' }, st.likers.map((p) => el('a', { class: 'face', href: p.me ? myPage() : '#/member/' + p.user_id }, avatarEl(p.avatar, memberName(p.name), 'sm'), el('span', { class: 'small', text: p.me ? t('You') : memberName(p.name) })))));
+  if (st.open) {
+    const box = el('div', { class: 'thread' });
+    if (!st.rows) box.append(skel('3rem'));
+    else {
+      if (st.failed) box.append(el('p', { class: 'muted small', text: t('Comments could not be loaded. Try again later.') }));
+      for (const c of st.rows) box.append(el('div', { class: 'cmt' }, avatarEl(c.avatar, memberName(c.author), 'sm'), el('div', { class: 'col', style: 'gap:2px;min-width:0;flex:1' },
+        el('p', { class: 'rich' }, who(c.author_id, c.mine ? t('You') : memberName(c.author), c.mine), document.createTextNode(' '), rich(c.body)),
+        el('span', { class: 'row small muted', style: 'gap:12px' }, el('span', { text: ago(c.created_at) }),
+          c.can_remove ? el('button', { type: 'button', class: 'linkbtn small', text: t('Remove'), onclick: async () => { try { await CLOUD.deleteComment(c.id); } catch (e) { toast(t('Couldn’t save. Try again.')); } loadComments(kind, ref); } }) : null,
+          !c.mine && CLOUD.extras ? el('button', { type: 'button', class: 'linkbtn small', text: t('Report'), onclick: () => reportAsk('comment', c.id, c.author + ': ' + c.body) }) : null))));
+      const input = el('input', { type: 'text', class: 'cmt-in', id: 'cin-' + id, maxlength: 1000, placeholder: t('Add a comment'), 'aria-label': t('Add a comment'), autocomplete: 'off', value: st.draft || '' });
+      input.addEventListener('input', () => { st.draft = input.value; });
+      box.append(el('form', { class: 'row cmtform', onsubmit: async (ev) => { ev.preventDefault(); const v = input.value.trim(); if (!v || st.sending) return; st.sending = true; try { await CLOUD.addComment(kind, ref, v); st.draft = ''; input.value = ''; input.blur(); await loadComments(kind, ref); } catch (e) { toast(/slow/i.test((e && e.message) || '') ? t('You are commenting very quickly. Wait a moment.') : t('Couldn’t save. Try again.')); } st.sending = false; } },
+        avatarEl(CLOUD.profile.avatar, CLOUD.profile.name || '?', 'sm'), input, el('button', { type: 'submit', class: 'btn sm primary', text: t('Send') })),
+        el('p', { class: 'muted small', text: t('Type @ and a username to mention someone.') }));
+      if (S.cmFocus === id) { S.cmFocus = null; setTimeout(() => { const i = document.getElementById('cin-' + id); if (i) i.focus(); }, 0); }
+    }
+    out.append(box);
+  }
+  return out;
+}
+function tapLike(node, kind, ref) {
+  let last = 0;
+  node.addEventListener('click', () => {
+    const now = Date.now();
+    if (now - last < 400) { last = 0; const h = el('span', { class: 'burst', 'aria-hidden': 'true' }, svgIcon(ICONS.heart)); node.append(h); setTimeout(() => h.remove(), 700); if (!engState(kind, ref).me) setTimeout(() => likeToggle(kind, ref, true), 450); }
+    else last = now;
+  });
+}
+function bigPhoto(path, kind, ref) {
+  const b = el('div', { class: 'fphoto', role: 'img', 'aria-label': t('Photo. Double tap to like.') });
+  CLOUD.fileUrl(path).then((url) => { const im = el('img', { src: url, alt: '', loading: 'lazy' }); im.addEventListener('error', () => b.remove()); b.prepend(im); }).catch(() => b.remove());
+  if (kind) tapLike(b, kind, ref);
+  return b;
+}
+const faces = (list, extra) => { const f = (list || []).slice(0, 5); return f.length ? el('span', { class: 'faces', 'aria-hidden': 'true' }, f.map((p) => avatarEl(p.avatar, memberName(p.name), 'sm')), extra > f.length ? el('span', { class: 'avatar sm more', text: '+' + (extra - f.length) }) : null) : null; };
+
+/* ----- people you may know ----- */
+function peoplePanel(max) {
+  if (!engOn()) return null;
+  S.asked = S.asked || {};
+  const list = (CLOUD.people || []).filter((p) => !S.asked[p.user_id]).slice(0, max || 12);
+  if (!list.length) return null;
+  return el('section', { class: 'panel', id: 'people' }, el('h2', { text: t('People you may know') }), el('div', { class: 'hscroll' }, list.map((p) => el('div', { class: 'pcard' },
+    el('a', { class: 'col', style: 'align-items:center;gap:6px;text-decoration:none;color:inherit', href: '#/member/' + p.user_id }, avatarEl(p.avatar, memberName(p.name), 'lg'), el('b', { class: 'clamp1', text: memberName(p.name) })),
+    el('span', { class: 'muted small clamp2', text: p.why === 'mutual' ? t('Friend of {n}', { n: memberName(p.via) }) : t('Also in {n}', { n: p.via }) }),
+    el('button', { type: 'button', class: 'btn sm primary', text: t('Add friend'), onclick: async () => { try { const r = await CLOUD.requestFriendMember(p.user_id); S.asked[p.user_id] = 1; toast(r === 'accepted' ? t('You are now friends.') : r === 'sent' || r === 'exists' ? t('Friend request sent') : r === 'limit' ? t('You have sent a lot of requests today. Try again tomorrow.') : t('The request could not be sent.')); } catch (e) { toast(t('The request could not be sent.')); } render(); } })))));
+}
+
+/* ----- photo-first home feed ----- */
+function feedCard(x) {
+  const name = x.mine ? t('You') : memberName(x.who_name), k = x.kind, href = '#/' + x.link.split('/').map(encodeURIComponent).join('/');
+  const line = k === 'post' ? t('posted in') : k === 'pupdate' ? t('posted an update on') : k === 'car' ? t('added a car to their garage') : k === 'project' ? t('started a {k} project', { k: t(PKIND[x.body] || 'Maintenance').toLowerCase() }) : t('joined');
+  const head = el('div', { class: 'fhead' }, el('a', { href: x.mine ? myPage() : '#/member/' + x.who, 'aria-label': name }, avatarEl(x.avatar, name)), el('div', { class: 'col', style: 'gap:1px;min-width:0;flex:1' },
+    el('span', {}, who(x.who, name, x.mine), el('span', { class: 'muted', text: ' ' + line + ' ' }), k === 'car' ? null : el('a', { class: 'ftitle', href, text: x.title })),
+    el('span', { class: 'muted small', text: ago(x.at) })));
+  if (k === 'project' || k === 'joined') return el('article', { class: 'fcard slim' }, head);
+  return el('article', { class: 'fcard' }, head,
+    x.photo ? bigPhoto(x.photo, k, x.ref) : null,
+    k === 'car' ? el('a', { class: 'fcar', href }, el('b', { text: x.title || t('Unnamed car') }), x.body ? el('span', { class: 'muted small', text: x.body }) : null) : x.body ? richP(x.body, x.photo ? 'clamp' : '') : null,
+    engageBar(k, x.ref, x));
+}
+function feedPanel2() {
+  const req = incoming(), evs = CLOUD.events.slice(0, 4), items = CLOUD.home || [], n = S.feedN || 10, friends = CLOUD.friends.some((f) => f.status === 'accepted'), any = friends || CLOUD.communities.some((c) => c.joined);
+  return el('section', { class: 'feedwrap', id: 'home-community' }, el('h2', { text: t('What’s new') }),
+    req.length ? el('p', {}, el('a', { href: '#/friends', id: 'a-requests', text: req.length === 1 ? t('You have a friend request') : t('You have {n} friend requests', { n: req.length }) })) : null,
+    items.length ? el('div', { class: 'fcards', id: 'feed' }, items.slice(0, n).map(feedCard))
+      : el('section', { class: 'panel' }, starter(t(any ? 'Nothing new yet. Posts, new cars, projects and updates from your friends and communities will show here.' : 'Add friends or join a community to see their photos, cars and projects here.'), any ? null : el('a', { class: 'btn primary', href: '#/friends' }, ico('plus', t('Find a friend'))), any ? null : el('a', { class: 'btn', href: '#/communities', text: t('Browse communities') }))),
+    items.length > n ? el('button', { type: 'button', class: 'btn', id: 'b-feed-more', style: 'align-self:center', text: t('Show more'), onclick: () => { S.feedN = n + 10; render(); } }) : null,
+    peoplePanel(8),
+    el('section', { class: 'panel' }, el('h2', { text: t('Upcoming events') }),
+      evs.length ? el('ul', { class: 'due-list' }, evs.map((e) => el('li', {}, el('span', {}, el('a', { href: '#/events', text: e.title }), el('span', { class: 'muted', text: ' · ' + (e.community || t('Friends')) + (e.place ? ' · ' + e.place : '') })), el('span', { class: 'row', style: 'gap:8px;flex-wrap:nowrap' }, faces(e.faces, Number(e.going)), el('span', { class: 'tag', text: fmtWhen(e.starts_at) })))))
+        : el('p', { class: 'muted small', text: t('No upcoming events. Create one for your friends or a community.') })));
+}
+
+/* ----- members shown as a row of photos ----- */
+function storiesPanel(id, all) {
+  return panel(t('Members'), null, el('div', { class: 'hscroll stories', id: 'members' }, all.map((m) => el('a', { class: 'story', href: m.me ? myPage() : '#/member/' + m.user_id }, el('span', { class: 'ring' + (m.founder ? ' gold' : '') }, avatarEl(m.avatar, memberName(m.name), 'lg')), el('span', { class: 'small clamp1', text: m.me ? t('You') : memberName(m.name) }), m.founder ? el('span', { class: 'muted small', text: t('Founder') }) : null))),
+    all.length > 1 ? null : el('p', { class: 'muted small', text: t('You are the only member so far. Invite people to join.') }));
+}
+
+/* ----- richer member page ----- */
+function coverEl(path) { const c = el('div', { class: 'cover' }); if (path) CLOUD.fileUrl(path).then((url) => { c.style.backgroundImage = 'url("' + url + '")'; c.classList.add('has'); }).catch(() => {}); return c; }
+function memberHead(m, name) {
+  const count = (n, label, href) => n == null ? null : el(href ? 'a' : 'span', { class: 'pcount', href }, el('b', { text: String(n) }), el('span', { class: 'muted small', text: label }));
+  return el('div', { class: 'phead' }, coverEl(m.cover), el('div', { class: 'pmain' }, avatarEl(m.avatar, name, 'xl'),
+    el('div', { class: 'col', style: 'gap:4px;min-width:0' }, el('h1', { text: name, style: 'overflow-wrap:anywhere' }), el('span', { class: 'muted small', style: 'overflow-wrap:anywhere', text: [m.username ? '@' + m.username : '', m.garage && m.garage !== m.name ? m.garage : '', m.city].filter(Boolean).join(' · ') }))),
+    m.bio ? richP(m.bio, 'bio') : null, socialLinks(m.links),
+    el('div', { class: 'pcounts' }, count(m.n_cars, t('Cars'), m.relation === 'self' ? '#/garage' : m.shared && m.relation === 'friends' ? '#/friend/' + m.user_id : null), count(m.n_friends, t('Friends'), m.relation === 'self' ? '#/friends' : null), count(m.n_communities, t('Communities'), m.relation === 'self' ? '#/communities' : null)));
+}
+function memberCars(m) {
+  const tile = (c, href) => el('a', { class: 'gcar', href }, photoBox(c), el('span', { class: 'small clamp1', text: c.name || t('Unnamed car') }));
+  if (m.relation === 'self') return S.cars.length ? panel(t('Garage'), null, el('div', { class: 'gcars', id: 'member-cars' }, S.cars.map((c) => tile(c, '#/car/' + c.id)))) : null;
+  if (m.relation !== 'friends' || !m.shared) return null;
+  S.fcars = S.fcars || {};
+  const got = S.fcars[m.user_id];
+  if (!got) { S.fcars[m.user_id] = { loading: true }; CLOUD.friendCars(m.user_id).then((rows) => { S.fcars[m.user_id] = { rows: rows || [] }; }).catch(() => { S.fcars[m.user_id] = { rows: [], failed: true }; }).then(render); return skel('6rem'); }
+  if (got.loading) return skel('6rem');
+  const rows = got.rows || [];
+  return rows.length ? panel(t('Garage'), null, el('div', { class: 'gcars', id: 'member-cars' }, rows.map((x) => tile(x.car || x, '#/friend/' + m.user_id + '/' + encodeURIComponent(x.car_id || x.id))))) : null;
+}
+
+/* ----- car of the week ----- */
+function loadCotw(id) { S.cotw = S.cotw || {}; return CLOUD.cotw(id).then((d) => { S.cotw[id] = { d: d || { entries: [] }, at: Date.now() }; }).catch(() => { S.cotw[id] = { off: true, at: Date.now() }; }).then(render); }
+function cotwCard(e, id, voting) {
+  const name = e.mine ? t('You') : memberName(e.name);
+  return el('div', { class: 'cw' + (voting ? '' : ' win') }, e.photo ? bigPhoto(e.photo) : el('div', { class: 'fphoto blank', 'aria-hidden': 'true' }, svgIcon(ICONS.garage)),
+    el('div', { class: 'col', style: 'gap:4px;min-width:0' }, el('b', { text: e.car_name, style: 'overflow-wrap:anywhere' }), el('span', { class: 'row small', style: 'gap:6px;flex-wrap:nowrap' }, avatarEl(e.avatar, name, 'sm'), who(e.user_id, name, e.mine)), e.caption ? richP(e.caption, 'small') : null,
+      voting ? el('div', { class: 'row', style: 'gap:10px' }, e.mine ? el('button', { type: 'button', class: 'btn sm', text: t('Withdraw'), onclick: async () => { try { await CLOUD.cotwWithdraw(e.id); } catch (x) { toast(t('Couldn’t save. Try again.')); } loadCotw(id); } })
+        : el('button', { type: 'button', class: 'btn sm' + (e.me_voted ? '' : ' primary'), 'aria-pressed': e.me_voted ? 'true' : 'false', text: e.me_voted ? t('Voted ✓') : t('Vote'), onclick: async () => { try { const r = await CLOUD.cotwVote(e.id); if (r === 'closed') toast(t('Voting for this week has closed.')); } catch (x) { toast(t('Couldn’t save. Try again.')); } loadCotw(id); } }),
+        el('span', { class: 'muted small', text: Number(e.votes) === 1 ? t('1 vote') : t('{n} votes', { n: e.votes }) })) : el('span', { class: 'muted small', text: Number(e.votes) === 1 ? t('1 vote') : t('{n} votes', { n: e.votes }) })));
+}
+function cotwPanel(c) {
+  if (!engOn()) return null;
+  S.cotw = S.cotw || {};
+  const got = S.cotw[c.id];
+  if (!got) { S.cotw[c.id] = { loading: true, at: Date.now() }; loadCotw(c.id); return skel('5rem'); }
+  if (got.loading) return skel('5rem');
+  if (got.off) return null;
+  if (Date.now() - got.at > 60000) { got.at = Date.now(); loadCotw(c.id); }
+  const d = got.d, mine = d.entries.find((e) => e.mine), f = S.cwForm === c.id;
+  const out = el('section', { class: 'panel', id: 'cotw' }, el('h2', { class: 'row', style: 'gap:8px;flex-wrap:nowrap' }, svgIcon(ICONS.trophy), el('span', { text: t('Car of the week') })));
+  if (d.winner) out.append(el('span', { class: 'label', text: t('Last week’s winner') }), cotwCard(d.winner, c.id, false));
+  out.append(el('p', { class: 'muted small', text: t('Members enter one car each week and everyone votes. Voting closes on {d}, and the winner stays at the top for a week.', { d: fmtDate(d.ends) }) }));
+  if (d.entries.length) out.append(el('div', { class: 'cws' }, d.entries.map((e) => cotwCard(e, c.id, true))));
+  if (f) {
+    const cars = S.cars, pick = select(cars.map((x) => [x.id, x.name || t('Unnamed car')]).concat([['', t('Another car')]]), cars[0] ? cars[0].id : '', { id: 'cw-car' }), other = el('input', { type: 'text', id: 'cw-name', maxlength: 120, placeholder: t('Car name') }), cap = el('input', { type: 'text', id: 'cw-cap', maxlength: 300, placeholder: t('Why this car? (optional)') }), file = el('input', { type: 'file', accept: 'image/*', id: 'cw-photo' }), st = el('span', { class: 'status', role: 'status' });
+    const otherF = field(t('Car name'), other), fileF = field(t('Photo'), file, t('Leave empty to use the car’s main photo.'));
+    const sync = () => { otherF.hidden = !!pick.value; }; pick.addEventListener('change', sync); sync();
+    out.append(el('form', { class: 'col', style: 'gap:12px', id: 'cw-form', onsubmit: async (ev) => {
+      ev.preventDefault(); const car = cars.find((x) => x.id === pick.value), name = (car ? car.name || '' : other.value).trim(); if (!name) { st.textContent = t('Give the car a name.'); return; }
+      st.textContent = t('Saving…');
+      try { let ph = car && car.photo && car.photo.path ? car.photo.path : null; if (file.files[0]) ph = (await CLOUD.upload('cotw-' + c.id, await shrink(file.files[0]))).path; await CLOUD.cotwEnter(c.id, name, ph, cap.value.trim()); S.cwForm = null; document.activeElement && document.activeElement.blur(); toast(t('Your car is entered')); await loadCotw(c.id); } catch (e) { st.textContent = t('Couldn’t save. Try again.'); }
+    } }, field(t('Which car'), pick), otherF, fileF, field(t('Caption'), cap), el('div', { class: 'row' }, el('button', { type: 'submit', class: 'btn primary', id: 'b-cw-save', text: t('Enter') }), el('button', { type: 'button', class: 'btn', text: t('Cancel'), onclick: () => { S.cwForm = null; render(); } }), st)));
+  } else if (!mine) out.append(el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn' + (d.entries.length ? '' : ' primary'), id: 'b-cw-enter', onclick: () => { S.cwForm = c.id; render(); } }, ico('plus', t('Enter my car')))));
+  return out;
+}
+
+/* ----- invite link and QR code ----- */
+const inviteUrl = (id) => location.origin + location.pathname + '#/community/' + id;
+function qrSvg(text) {
+  const q = qrcode(0, 'M'); q.addData(text); q.make();
+  const n = q.getModuleCount(); let d = '';
+  for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (q.isDark(r, c)) d += 'M' + (c + 2) + ' ' + (r + 2) + 'h1v1h-1z';
+  const box = el('div', { class: 'qr', role: 'img', 'aria-label': t('QR code for the invite link') });
+  box.innerHTML = '<svg viewBox="0 0 ' + (n + 4) + ' ' + (n + 4) + '" shape-rendering="crispEdges"><rect width="100%" height="100%" fill="#fff"/><path fill="#000" d="' + d + '"/></svg>';
+  return box;
+}
+function inviteSheet() {
+  const v = S.invite; if (!v) return null;
+  const url = inviteUrl(v.id), msg = t('Join {n} on Garage 197', { n: v.name }) + ': ' + url, close = () => { S.invite = null; render(); };
+  const copy = async () => { try { await navigator.clipboard.writeText(url); toast(t('Link copied')); } catch (e) { const i = document.getElementById('inv-url'); if (i) { i.select(); try { document.execCommand('copy'); toast(t('Link copied')); } catch (x) {} } } };
+  return el('div', { class: 'sheetback', id: 'invite-sheet', onclick: (ev) => { if (ev.target === ev.currentTarget) close(); } }, el('div', { class: 'sheet', role: 'dialog', 'aria-modal': 'true', 'aria-label': t('Invite people') },
+    el('h2', { text: t('Invite people to {n}', { n: v.name }) }), el('p', { class: 'muted small', text: t('Anyone who opens this link can sign in or create an account and then join the community.') }),
+    qrSvg(url), el('input', { type: 'text', id: 'inv-url', readonly: true, value: url, dir: 'ltr', onfocus: (ev) => ev.target.select() }),
+    el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn primary', id: 'b-inv-copy', onclick: copy }, ico('link', t('Copy link'))),
+      el('a', { class: 'btn', id: 'a-inv-wa', href: 'https://wa.me/?text=' + encodeURIComponent(msg), target: '_blank', rel: 'noopener noreferrer', text: t('Send on WhatsApp') }),
+      navigator.share ? el('button', { type: 'button', class: 'btn', onclick: () => { navigator.share({ title: 'Garage 197', text: t('Join {n} on Garage 197', { n: v.name }), url }).catch(() => {}); } }, ico('share', t('Share'))) : null),
+    el('button', { type: 'button', class: 'btn', text: t('Close'), onclick: close })));
+}
+
+/* ----- sharing a car or a model into a chat ----- */
+function shareBtn(attach, label) { return engOn() && CLOUD.chatsOn ? el('button', { type: 'button', class: 'btn', id: 'b-share', onclick: () => { S.share = attach; render(); } }, ico('share', label || t('Send to a friend'))) : null; }
+function shareSheet() {
+  const a = S.share; if (!a) return null;
+  const close = () => { S.share = null; render(); }, friends = CLOUD.friends.filter((f) => f.status === 'accepted');
+  const note = el('input', { type: 'text', id: 'sh-note', maxlength: 500, placeholder: t('Add a message (optional)') });
+  const send = async (f) => { try { const r = await CLOUD.sendMessage(f.other, note.value.trim(), null, a); if (r === 'sent') { toast(t('Sent to {n}', { n: friendName(f) })); S.share = null; CLOUD.loadChats(); } else toast(r === 'slow' ? t('You are sending messages very quickly. Wait a moment.') : t('Couldn’t send. Try again.')); } catch (e) { toast(t('Couldn’t send. Try again.')); } render(); };
+  return el('div', { class: 'sheetback', id: 'share-sheet', onclick: (ev) => { if (ev.target === ev.currentTarget) close(); } }, el('div', { class: 'sheet', role: 'dialog', 'aria-modal': 'true', 'aria-label': t('Send to a friend') },
+    el('h2', { text: t('Send to a friend') }), attachCard(a, true),
+    a.type === 'car' && !CLOUD.shared ? el('p', { class: 'muted small', text: t('Your garage is not shared with friends, so they will see the car’s name only.') }) : null,
+    friends.length ? note : null,
+    friends.length ? el('div', { class: 'menu' }, friends.map((f) => el('button', { type: 'button', class: 'menurow', onclick: () => send(f) }, avatarEl(f.avatar, friendName(f), 'sm'), el('b', { style: 'flex:1;min-width:0;overflow-wrap:anywhere', text: friendName(f) }), el('span', { class: 'muted small', text: t('Send') }))))
+      : starter(t('Add a friend first, then you can send them cars and market models.'), el('a', { class: 'btn primary', href: '#/friends', onclick: close, text: t('Find a friend') })),
+    el('button', { type: 'button', class: 'btn', text: t('Close'), onclick: close })));
+}
+function attachCard(a, plain) {
+  if (!a || typeof a !== 'object') return null;
+  const me = CLOUD.user && CLOUD.user.id;
+  if (a.type === 'car' && a.name) { const href = a.owner === me ? '#/car/' + encodeURIComponent(a.id) : '#/friend/' + a.owner + '/' + encodeURIComponent(a.id); return el(plain ? 'div' : 'a', { class: 'acard', href: plain ? null : href }, svgIcon(ICONS.garage), el('span', { class: 'col', style: 'gap:1px;min-width:0' }, el('b', { text: String(a.name).slice(0, 120) }), el('span', { class: 'muted small', text: t('Car') }))); }
+  if (a.type === 'model' && a.name) return el(plain ? 'div' : 'a', { class: 'acard', href: plain ? null : '#/model/' + encodeURIComponent(a.name) }, svgIcon(ICONS.market), el('span', { class: 'col', style: 'gap:1px;min-width:0' }, el('b', { text: shortModel(String(a.name).slice(0, 120)) }), el('span', { class: 'muted small', text: t('Market values and recent sales') })));
+  return null;
+}
+const msgBody = (s) => s === '[photo]' ? t('Photo') : s === '[shared]' ? t('Shared a car') : s || '';
+
+/* ----- group chats for communities and events ----- */
+const groupUnread = () => (CLOUD.gchats || []).reduce((n, c) => n + Number(c.unread || 0), 0);
+function loadGroup(scope, ref, quiet) {
+  S.gchat = S.gchat || {}; const k = scope + '/' + ref;
+  if (!quiet) S.gchat[k] = S.gchat[k] || { loading: true };
+  return CLOUD.groupChat(scope, ref).then((rows) => { const old = S.gchat[k] || {}, same = old.rows && rows && old.rows.length === rows.length && (!rows.length || old.rows[old.rows.length - 1].id === rows[rows.length - 1].id); S.gchat[k] = { rows: rows || [] }; if (same && quiet) return false; CLOUD.loadGroups(); return true; })
+    .catch(() => { if (!quiet) S.gchat[k] = { rows: [], failed: true }; return !quiet; })
+    .then((ch) => { const r = route(); if (ch && r.name === 'gchat' && r.a === scope && r.b === ref) { if (quiet) { const ta = document.getElementById('c-body'); if (ta) S.chatDraft = ta.value; if (ta && document.activeElement === ta) S.chatRefocus = true; } S.chatDown = true; render(); } });
+}
+function chatForm(send, key) {
+  const body = el('textarea', { id: 'c-body', rows: 2, maxlength: 2000, placeholder: t('Write a message'), 'aria-label': t('Write a message') }), st = el('span', { class: 'status', role: 'status' }); body.value = S.chatDraft || '';
+  body.addEventListener('input', () => { S.chatDraft = body.value; });
+  S.chatPick = S.chatPick && S.chatPick.key === key ? S.chatPick : { key, file: null };
+  const pk = S.chatPick, file = el('input', { type: 'file', accept: 'image/*', id: 'c-photo', style: 'display:none' }), prev = el('div', { class: 'attach', id: 'c-attach' });
+  const show = () => { prev.replaceChildren(); if (!pk.file) return; const im = el('img', { alt: '' }); try { im.src = URL.createObjectURL(pk.file); } catch (e) {} prev.append(im, el('button', { type: 'button', class: 'linkbtn small', text: t('Remove'), onclick: () => { pk.file = null; file.value = ''; show(); } })); };
+  file.addEventListener('change', () => { if (file.files[0]) pk.file = file.files[0]; show(); }); show();
+  const go = async () => {
+    const v = body.value.trim(); if ((!v && !pk.file) || pk.busy) return;
+    pk.busy = true; st.textContent = pk.file ? t('Uploading the photo…') : t('Sending…');
+    try { let ph = null; if (pk.file) ph = (await CLOUD.upload('chat', await shrink(pk.file))).path; const r = await send(v, ph); if (r === 'sent') { S.chatDraft = ''; body.value = ''; pk.file = null; st.textContent = ''; } else st.textContent = r === 'slow' ? t('You are sending messages very quickly. Wait a moment.') : r === 'not_friends' ? t('You can only message friends.') : r === 'closed' ? t('You can no longer write in this chat.') : t('Couldn’t send. Try again.'); }
+    catch (e) { st.textContent = t('Couldn’t send. Try again.'); }
+    pk.busy = false; show();
+  };
+  body.addEventListener('keydown', (ev) => { if (ev.key === 'Enter' && !ev.shiftKey && !matchMedia('(pointer: coarse)').matches) { ev.preventDefault(); go(); } });
+  if (S.chatRefocus) { S.chatRefocus = false; setTimeout(() => { const b = document.getElementById('c-body'); if (b) { b.focus(); b.setSelectionRange(b.value.length, b.value.length); } }, 0); }
+  return [prev, el('form', { class: 'row chatform', style: 'flex-wrap:nowrap;align-items:flex-end', onsubmit: (ev) => { ev.preventDefault(); go(); } }, engOn() ? el('button', { type: 'button', class: 'btn iconbtn', id: 'b-c-photo', 'aria-label': t('Add a photo'), title: t('Add a photo'), onclick: () => file.click() }, svgIcon(ICONS.camera)) : null, file, body, el('button', { type: 'submit', class: 'btn primary', id: 'b-send', text: t('Send') })), st];
+}
+function viewGroupChat(scope, ref) {
+  const out = el('div', { class: 'col chat', style: 'max-width:40rem' }, el('a', { class: 'small', href: '#/messages', text: '‹ ' + t('Messages') }));
+  if (!CLOUD.socialLoaded) { out.append(skel('10rem')); return out; }
+  const g = (CLOUD.gchats || []).find((x) => x.scope === scope && x.ref === ref), k = scope + '/' + ref;
+  if (!engOn() || !g) { out.append(el('p', { class: 'empty', text: t(scope === 'event' ? 'This chat is for people going to the event. Say you are going to join it.' : 'This chat is for members of the community. Join to take part.') })); return out; }
+  out.append(el('div', { class: 'row', style: 'gap:12px;flex-wrap:nowrap' }, el('span', { class: 'avatar', 'aria-hidden': 'true' }, svgIcon(ICONS.group)), el('div', { class: 'col', style: 'gap:2px;min-width:0' }, el('h1', { text: g.title, style: 'overflow-wrap:anywhere;font-size:1.3rem' }),
+    el('a', { class: 'muted small', href: scope === 'event' ? '#/events' : '#/community/' + ref, text: scope === 'event' ? t('Event chat') + ' · ' + fmtWhen(g.sub) : t('Community chat') }))));
+  const key = 'g:' + k;
+  if (S.chatFor !== key) { S.chatFor = key; S.chatDraft = ''; loadGroup(scope, ref); }
+  clearInterval(viewChat.h); viewChat.h = setInterval(() => { const r = route(); if (r.name !== 'gchat') { clearInterval(viewChat.h); S.chatFor = null; return; } if (!document.hidden) loadGroup(r.a, r.b, true); }, 10000);
+  const got = (S.gchat || {})[k];
+  if (!got || got.loading) { out.append(skel('10rem')); return out; }
+  out.append(el('div', { class: 'bubbles', id: 'bubbles' }, got.rows.length ? got.rows.map((m, i) => { const first = !m.mine && (i === 0 || got.rows[i - 1].author_id !== m.author_id); return el('div', { class: 'brow' + (m.mine ? ' mine' : '') }, m.mine ? null : first ? el('a', { href: '#/member/' + m.author_id, 'aria-label': memberName(m.author) }, avatarEl(m.avatar, memberName(m.author), 'sm')) : el('span', { class: 'avatar sm ghost' }),
+    el('div', { class: 'bubble' + (m.mine ? ' mine' : '') }, first ? el('b', { class: 'small', text: memberName(m.author) }) : null, m.photo ? postPhoto(m.photo) : null, m.body ? richP(m.body) : null,
+      el('span', { class: 'row small', style: 'gap:10px' }, el('span', { text: fmtWhen(m.created_at) }), m.mine ? el('button', { type: 'button', class: 'linkbtn small', text: t('Remove'), onclick: async () => { try { await CLOUD.deleteGroupMessage(m.id); if (m.photo) CLOUD.removeFiles([m.photo]); } catch (e) { toast(t('Couldn’t save. Try again.')); } loadGroup(scope, ref, false); } }) : CLOUD.extras ? el('button', { type: 'button', class: 'linkbtn small', text: t('Report'), onclick: () => reportAsk('gmessage', m.id, m.author + ': ' + m.body) }) : null))); })
+    : el('p', { class: 'muted small', text: t(got.failed ? 'Messages could not be loaded. Try again later.' : 'No messages yet. Say hello.') })));
+  out.append(...chatForm(async (v, ph) => { const r = await CLOUD.sendGroup(scope, ref, v, ph); if (r === 'sent') await loadGroup(scope, ref, true); return r; }, key),
+    el('p', { class: 'muted small' }, el('span', { text: t(scope === 'event' ? 'Everyone going to this event can read this chat. Messages follow the' : 'Every member of this community can read this chat. Messages follow the') + ' ' }), el('a', { href: '#/guidelines', text: t('community guidelines') }), el('span', { text: '.' })));
+  if (S.chatDown) { S.chatDown = false; setTimeout(() => { const b = document.getElementById('bubbles'); if (b) b.scrollTop = b.scrollHeight; }, 0); }
+  return out;
+}
+function groupsPanel() {
+  if (!engOn()) return null;
+  const gs = CLOUD.gchats || [];
+  if (!gs.length) return null;
+  return panel(t('Group chats'), null, el('ul', { class: 'chats', id: 'gchats' }, gs.map((c) => el('li', {}, el('a', { class: 'chatrow', href: '#/gchat/' + c.scope + '/' + c.ref }, el('span', { class: 'avatar', 'aria-hidden': 'true' }, svgIcon(ICONS.group)), el('span', { class: 'col', style: 'gap:2px;min-width:0;flex:1' },
+    el('span', { class: 'row between', style: 'flex-wrap:nowrap' }, el('b', { text: c.title, style: 'overflow:hidden;text-overflow:ellipsis;white-space:nowrap' }), c.last_at ? el('span', { class: 'muted small', style: 'flex:none', text: ago(c.last_at) }) : null),
+    el('span', { class: 'muted small', style: 'overflow:hidden;text-overflow:ellipsis;white-space:nowrap', text: c.last_at ? memberName(c.last_author) + ': ' + msgBody(c.last_body) : c.scope === 'event' ? t('Event chat') + ' · ' + fmtWhen(c.sub) : t('Community chat') })), Number(c.unread) ? el('span', { class: 'count', text: String(c.unread) }) : null)))));
+}
+function viewU(name) {
+  const out = el('div', { class: 'col' }, skel('8rem'));
+  if (!CLOUD.socialLoaded) return out;
+  if (S.uFor !== name) { S.uFor = name; S.uMiss = false; CLOUD.userByUsername(name).then((id) => { if (route().name !== 'u') return; if (id) location.replace('#/member/' + id); else { S.uMiss = true; render(); } }).catch(() => { S.uMiss = true; render(); }); }
+  if (S.uMiss) out.replaceChildren(el('p', { class: 'empty', text: t('Nobody here uses the name @{n}.', { n: name }) }));
+  return out;
+}
 /* ----- start ----- */
 fetch('sales.csv').then((r) => { if (!r.ok) throw new Error('load'); return r.text(); }).then((txt) => { S.sales = prepSales(parseCsv(txt)); S.counts = {}; for (const r of S.sales) S.counts[r.model] = (S.counts[r.model] || 0) + 1; render(); }).catch(() => { S.salesError = true; render(); });
 (async () => {
@@ -3559,7 +4055,7 @@ fetch('sales.csv').then((r) => { if (!r.ok) throw new Error('load'); return r.te
   let busy = () => { const a = document.activeElement; return !!(a && a.closest && a.closest('form') && /INPUT|TEXTAREA|SELECT/.test(a.tagName)); };
   S.db.collection('cars').onSnapshot((snap) => { S.cars = snap.docs.map((d) => ({ id: d.id, ...d.data() })).sort((a, b) => (a.name || '').localeCompare(b.name || '')); if (!busy()) render(); });
   CLOUD.onAuth(() => { if (!CLOUD.user) { S.fcars = {}; S.posts = {}; S.proj = {}; } if (!busy() || !CLOUD.user) render(); });
-  let lastSocial = 0; window.addEventListener('hashchange', () => { const n = route().name; if (['home', 'friends', 'communities', 'community', 'events', 'notifications', 'projects', 'project'].includes(n) && CLOUD.user && CLOUD.social && Date.now() - lastSocial > 20000) { lastSocial = Date.now(); S.fcars = {}; S.posts = {}; S.proj = {}; CLOUD.loadSocial(); } });
+  let lastSocial = 0; window.addEventListener('hashchange', () => { const n = route().name; if (['home', 'friends', 'communities', 'community', 'events', 'notifications', 'projects', 'project', 'messages'].includes(n) && CLOUD.user && CLOUD.social && Date.now() - lastSocial > 20000) { lastSocial = Date.now(); S.fcars = {}; S.posts = {}; S.proj = {}; CLOUD.loadSocial(); } });
   setInterval(() => { if (CLOUD.user && CLOUD.social && document.visibilityState === 'visible' && !busy()) CLOUD.loadSocial(); }, 120000);
   try { const k = await CLOUD.fromLink(); if (k === 'recovery') S.mode = 'newpass'; else if (k && k.error) S.loginMsg = t('That link didn’t work: {m}. Ask for a new one.', { m: k.error }); } catch (e) { S.loginMsg = t('That link has expired. Ask for a new one.'); }
   render();

@@ -53,6 +53,7 @@
     api.profile = { name: '', city: '', avatar: '' }; api.profiles = false;
     try { var pr = await parse(await call('/rest/v1/garages?select=display_name,city,avatar')); api.profiles = true; if (pr && pr[0]) api.profile = { name: pr[0].display_name || '', city: pr[0].city || '', avatar: pr[0].avatar || '', username: '' }; } catch (e) {}
     try { var un = await parse(await call('/rest/v1/garages?select=username')); api.usernames = true; if (un && un[0]) api.profile.username = un[0].username || ''; } catch (e) { api.usernames = false; }
+    try { var bc = await parse(await call('/rest/v1/garages?select=bio,cover')); if (bc && bc[0]) { api.profile.bio = bc[0].bio || ''; api.profile.cover = bc[0].cover || ''; } } catch (e) {}
     api.prefsOn = false; api.prefs = {};
     try { var pf = await parse(await call('/rest/v1/garages?select=prefs')); api.prefsOn = true; api.prefs = (pf && pf[0] && pf[0].prefs) || {}; } catch (e) {}
     api.loaded = true; emit(); emitAuth();
@@ -81,7 +82,7 @@
       if (!j || !j.access_token) return { confirm: true };
       setSession(j); await loadCloud(); return { ok: true };
     },
-    signOut: async function () { try { await call('/auth/v1/logout', { method: 'POST' }); } catch (e) {} setSession(null); cloud = {}; api.garageName = ''; api.setupError = ''; api.friends = []; api.feed = []; api.communities = []; api.events = []; api.notes = []; api.blocks = []; api.projects = []; api.activity = []; api.chats = []; api.profile = { name: '', city: '', avatar: '', username: '' }; api.seenAt = ''; api.shared = false; api.links = {}; api.socialLoaded = false; emit(); emitAuth(); },
+    signOut: async function () { try { await call('/auth/v1/logout', { method: 'POST' }); } catch (e) {} setSession(null); cloud = {}; api.garageName = ''; api.setupError = ''; api.friends = []; api.feed = []; api.communities = []; api.events = []; api.notes = []; api.blocks = []; api.projects = []; api.activity = []; api.chats = []; api.home = []; api.gchats = []; api.people = []; api.engageOn = false; api.profile = { name: '', city: '', avatar: '', username: '', bio: '', cover: '' }; api.seenAt = ''; api.shared = false; api.links = {}; api.socialLoaded = false; emit(); emitAuth(); },
     saveGarageName: function (name) { return call('/rest/v1/garages?on_conflict=user_id', { method: 'POST', headers: Object.assign({ Prefer: 'resolution=merge-duplicates,return=minimal' }, JSONH), body: JSON.stringify({ user_id: session.user.id, name: name, updated_at: new Date().toISOString() }) }).then(parse).then(function () { api.garageName = name; }); },
     // Friends, shared garages and social links
     profile: { name: '', city: '', avatar: '' }, profiles: false,
@@ -99,6 +100,8 @@
       try { api.projects = (await rpc('list_projects', {})) || []; api.projectsOn = true; } catch (e) { api.projects = []; api.projectsOn = false; }
       try { api.activity = (await rpc('friends_activity', {})) || []; api.activityOn = true; } catch (e) { api.activity = []; api.activityOn = false; }
       try { api.chats = (await rpc('my_chats', {})) || []; api.chatsOn = true; } catch (e) { api.chats = []; api.chatsOn = false; }
+      try { var h = await Promise.all([rpc('home_feed', {}), rpc('my_group_chats', {}), rpc('suggest_people', {})]); api.home = h[0] || []; api.gchats = h[1] || []; api.people = h[2] || []; api.engageOn = true; }
+      catch (e) { api.home = []; api.gchats = []; api.people = []; api.engageOn = false; }
       api.socialLoaded = true; emitAuth();
     },
     notes: [], blocks: [], seenAt: '', extras: false,
@@ -140,7 +143,25 @@
     chats: [], chatsOn: false, usernames: false,
     findPeople: function (q) { return rpc('find_people', { p_q: q }); },
     chatWith: function (uid) { return rpc('chat_with', { p_user: uid }); },
-    sendMessage: function (uid, body) { return rpc('send_message', { p_to: uid, p_body: body }); },
+    sendMessage: function (uid, body, photo, attach) { return rpc('send_message', api.engageOn ? { p_to: uid, p_body: body || '', p_photo: photo || null, p_attach: attach || null } : { p_to: uid, p_body: body }); },
+    // Likes, comments, mentions, car of the week and group chats (community-update-11.sql)
+    home: [], gchats: [], people: [], engageOn: false,
+    setLike: function (kind, ref, on) { return rpc('set_like', { p_kind: kind, p_ref: ref, p_on: !!on }); },
+    addComment: function (kind, ref, body) { return rpc('add_comment', { p_kind: kind, p_ref: ref, p_body: body }); },
+    deleteComment: function (id) { return rpc('delete_comment', { p_id: id }); },
+    listComments: function (kind, ref) { return rpc('list_comments', { p_kind: kind, p_ref: ref }); },
+    listLikers: function (kind, ref) { return rpc('list_likers', { p_kind: kind, p_ref: ref }); },
+    engagement: function (kind, refs) { return refs.length ? rpc('engagement', { p_kind: kind, p_refs: refs }) : Promise.resolve([]); },
+    userByUsername: function (u) { return rpc('user_by_username', { p_username: u }); },
+    cotw: function (id) { return rpc('cotw', { p_community: id }); },
+    cotwEnter: function (id, name, photo, caption) { return rpc('cotw_enter', { p_community: id, p_car_name: name, p_photo: photo || null, p_caption: caption || null }); },
+    cotwVote: function (entry) { return rpc('cotw_vote', { p_entry: entry }); },
+    cotwWithdraw: function (entry) { return rpc('cotw_withdraw', { p_entry: entry }); },
+    groupChat: function (scope, ref) { return rpc('group_chat', { p_scope: scope, p_ref: ref }); },
+    sendGroup: function (scope, ref, body, photo) { return rpc('send_group', { p_scope: scope, p_ref: ref, p_body: body || '', p_photo: photo || null }); },
+    deleteGroupMessage: function (id) { return rpc('delete_group_message', { p_id: id }); },
+    loadGroups: async function () { if (!api.engageOn) return; try { api.gchats = (await rpc('my_group_chats', {})) || []; } catch (e) {} },
+    loadHome: async function () { if (!api.engageOn) return; try { api.home = (await rpc('home_feed', {})) || []; } catch (e) {} },
     loadChats: async function () { if (!api.chatsOn) return; try { api.chats = (await rpc('my_chats', {})) || []; } catch (e) {} },
     listGoing: function (id) { return rpc('list_going', { p_event: id }); },
     listMembers: function (id) { return rpc('list_members', { p_community: id }); },
@@ -150,7 +171,7 @@
     removeFriend: async function (id) { await parse(await call('/rest/v1/friendships?id=eq.' + encodeURIComponent(id), { method: 'DELETE' })); await api.loadSocial(); },
     friendCars: function (owner) { return rpc('friends_cars', { p_owner: owner }); },
     savePrefs: function (prefs) { if (!api.prefsOn || !session) return Promise.resolve(); api.prefs = prefs; return call('/rest/v1/garages?on_conflict=user_id', { method: 'POST', headers: Object.assign({ Prefer: 'resolution=merge-duplicates,return=minimal' }, JSONH), body: JSON.stringify({ user_id: session.user.id, prefs: prefs }) }).then(parse).catch(function () {}); },
-    saveProfile: function (patch) { return call('/rest/v1/garages?on_conflict=user_id', { method: 'POST', headers: Object.assign({ Prefer: 'resolution=merge-duplicates,return=minimal' }, JSONH), body: JSON.stringify(Object.assign({ user_id: session.user.id, updated_at: new Date().toISOString() }, patch)) }).then(parse).then(function () { if ('shared' in patch) api.shared = patch.shared; if ('links' in patch) api.links = patch.links; if ('display_name' in patch) api.profile.name = patch.display_name || ''; if ('city' in patch) api.profile.city = patch.city || ''; if ('username' in patch) api.profile.username = patch.username || ''; if ('avatar' in patch) api.profile.avatar = patch.avatar || ''; }); },
+    saveProfile: function (patch) { return call('/rest/v1/garages?on_conflict=user_id', { method: 'POST', headers: Object.assign({ Prefer: 'resolution=merge-duplicates,return=minimal' }, JSONH), body: JSON.stringify(Object.assign({ user_id: session.user.id, updated_at: new Date().toISOString() }, patch)) }).then(parse).then(function () { if ('shared' in patch) api.shared = patch.shared; if ('links' in patch) api.links = patch.links; if ('display_name' in patch) api.profile.name = patch.display_name || ''; if ('city' in patch) api.profile.city = patch.city || ''; if ('username' in patch) api.profile.username = patch.username || ''; if ('avatar' in patch) api.profile.avatar = patch.avatar || ''; if ('bio' in patch) api.profile.bio = patch.bio || ''; if ('cover' in patch) api.profile.cover = patch.cover || ''; }); },
     localCount: function () { return Object.keys(local()).length; },
     importLocal: async function () { var o = local(), ids = Object.keys(o); for (var i = 0; i < ids.length; i++) { var id = cloud[ids[i]] ? ids[i] + '-d' : ids[i]; await upsertCar(id, o[ids[i]]); cloud[id] = o[ids[i]]; } jset(LKEY, null); emit(); return ids.length; },
     upload: async function (carId, file) {

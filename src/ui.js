@@ -60,7 +60,7 @@ const dueOf = (car) => (car.reminders || []).map((r) => ({ r, car, st: remStatus
 /* ----- routing ----- */
 function route() { const p = (location.hash || '#/home').replace(/^#\/?/, '').split('/').map(decodeURIComponent); return { name: p[0] || 'home', a: p[1], b: p[2] }; }
 function nav(h, after) { if (location.hash === h) { if (after) after(); render(); } else { S.afterNav = after || null; location.hash = h; } window.scrollTo(0, 0); }
-window.addEventListener('hashchange', () => { S.rec = null; S.remOpen = false; S.addOpen = null; if (S.afterNav) { const f = S.afterNav; S.afterNav = null; f(); } render(); });
+window.addEventListener('hashchange', () => { S.rec = null; S.remOpen = false; S.addOpen = null; S.invite = null; S.share = null; S.engAsked = {}; if (S.afterNav) { const f = S.afterNav; S.afterNav = null; f(); } render(); });
 
 /* ----- small builders ----- */
 const panel = (title, note, ...kids) => el('section', { class: 'panel' }, title ? el('h2', { text: title }) : null, note ? el('p', { class: 'muted small', text: note }) : null, ...kids);
@@ -113,7 +113,7 @@ const mlink = (model) => el('a', { href: '#/model/' + encodeURIComponent(model),
 /* ----- login ----- */
 function langToggle() { return el('button', { type: 'button', class: 'linkbtn', text: S.lang === 'ar' ? 'English' : 'العربية', onclick: () => { S.lang = S.lang === 'ar' ? 'en' : 'ar'; ls.set('g197-lang', S.lang); render(); } }); }
 function viewLogin() {
-  const status = el('p', { class: 'status', role: 'status', text: S.loginMsg }); S.loginMsg = '';
+  const status = el('p', { class: 'status', role: 'status', text: S.loginMsg || (S.invited ? t('You have been invited to a community. Sign in or create an account to join it.') : '') }); S.loginMsg = '';
   const email = el('input', { type: 'email', autocomplete: 'email', inputmode: 'email', id: 'a-email' });
   const pass = el('input', { type: 'password', autocomplete: S.mode === 'newpass' ? 'new-password' : 'current-password', id: 'a-pass' });
   const say = (m) => { status.textContent = m; };
@@ -145,7 +145,7 @@ function viewLogin() {
       if (!/^\S+@\S+\.\S+$/.test(e)) { say(t('Enter your email address.')); email.focus(); return; }
       if (pass.value.length < 8) { say(t('Use a password of at least 8 characters.')); pass.focus(); return; }
       say(t(create ? 'Creating your account…' : 'Signing in…'));
-      try { const r = await CLOUD.sign(e, pass.value, create); if (r.confirm) say(t('Account created. Open the confirmation email we sent, then sign in here.')); else { location.hash = '#/home'; render(); } }
+      try { const r = await CLOUD.sign(e, pass.value, create); if (r.confirm) say(t('Account created. Open the confirmation email we sent, then sign in here.')); else { const to = S.inviteTo; S.inviteTo = null; location.hash = to ? '#/community/' + to : '#/home'; render(); } }
       catch (err) { say(friendly(err, create)); }
     };
     body = el('form', { novalidate: true, onsubmit: (ev) => { ev.preventDefault(); go(false); } }, field(t('Email'), email), field(t('Password'), pass),
@@ -507,7 +507,7 @@ function viewCar(car, sub) {
   const base = '#/car/' + car.id + '/', tabs = [['overview', t('Overview')], ['market', t('Market')], ['logbook', t('Logbook')]].concat(CLOUD.projectsOn ? [['projects', t('Projects')]] : []), e = estimate(car);
   const out = el('div', { class: 'col' },
     el('a', { class: 'small', href: '#/garage', text: '‹ ' + (CLOUD.garageName || t('My garage')) }), banner(car, e),
-    el('nav', { class: 'subtabs', 'aria-label': t('Car sections') }, tabs.map((x) => el('a', { class: 'tab', href: base + x[0], 'aria-current': sub === x[0] ? 'page' : 'false', text: x[1] }))), sub === 'overview' ? tip('car') : null);
+    el('nav', { class: 'subtabs', 'aria-label': t('Car sections') }, tabs.map((x) => el('a', { class: 'tab', href: base + x[0], 'aria-current': sub === x[0] ? 'page' : 'false', text: x[1] }))), sub === 'overview' ? tip('car') : null, sub === 'overview' && CLOUD.user && car.name ? ((b) => b ? el('div', { class: 'row' }, b) : null)(shareBtn({ type: 'car', owner: CLOUD.user.id, id: car.id, name: car.name })) : null);
   if (sub === 'market') { HELP.mark('market'); out.append(panel(null, null, mxPanel(car, modelOf(car)), marketView(modelOf(car), car))); }
   else if (sub === 'projects') { const mine = CLOUD.projects.filter((x) => x.mine && x.car_id === car.id); out.append(el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn primary', id: 'b-proj-new', onclick: () => { S.projCar = car.id; nav('#/project/new'); } }, ico('plus', t('Start a project')))), mine.length ? projectCards(mine) : starter(t('A project tracks a service, an upgrade or a restoration from start to finish. Post updates with photos and let friends suggest tools and know-how.'), el('button', { type: 'button', class: 'btn primary', onclick: () => { S.projCar = car.id; nav('#/project/new'); } }, ico('plus', t('Start a project'))))); }
   else if (sub === 'logbook') { const tp = tip('logbook'); if (tp) out.append(tp); out.append(logbookView(car)); }
@@ -811,6 +811,7 @@ function linksPanel() {
 }
 function feedPanel() {
   if (!CLOUD.social) return null;
+  if (engOn()) return feedPanel2();
   const req = incoming(), evs = CLOUD.events.slice(0, 4), items = [];
   CLOUD.feed.forEach((x) => items.push({ at: x.added, href: '#/friend/' + x.owner + '/' + encodeURIComponent(x.car_id), lead: photoBox(x.car), who: ((f) => f ? friendName(f) : (x.garage || x.email || t('A friend')))(CLOUD.friends.find((f) => f.other === x.owner)), line: t('added a car to their garage'), title: x.car.name || t('Unnamed car') }));
   if (CLOUD.activityOn) CLOUD.activity.forEach((n) => {
@@ -852,6 +853,7 @@ function viewFriends() {
       !CLOUD.profile.username ? el('p', { class: 'muted small' }, el('span', { text: t('You have no username yet.') + ' ' }), el('a', { href: '#/profile', text: t('Choose one so friends can find you') }), el('span', { text: '.' })) : el('p', { class: 'muted small', dir: 'auto', text: t('Your username is @{u}. Share it so friends can find you.', { u: CLOUD.profile.username }) })));
     show();
   }
+  const pp = peoplePanel(12); if (pp) out.append(pp);
   out.append(panel(CLOUD.usernames ? t('Add by email instead') : t('Add a friend'), t('Enter the email address your friend uses for Garage 197. They will see your request the next time they open the app.'),
     el('form', { class: 'row', style: 'flex-direction:row', onsubmit: async (ev) => {
       ev.preventDefault(); status.textContent = t('Sending…');
@@ -902,19 +904,20 @@ function viewFriend(uid, carId) {
 
 /* ----- communities and events ----- */
 const fmtWhen = (iso) => { try { return new Date(iso).toLocaleString(S.lang === 'ar' ? 'ar-u-nu-latn' : 'en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }); } catch (e) { return iso; } };
-const unreadChats = () => (CLOUD.chats || []).reduce((n, c) => n + Number(c.unread || 0), 0);
+const unreadChats = () => (CLOUD.chats || []).reduce((n, c) => n + Number(c.unread || 0), 0) + groupUnread();
 function viewMessages() {
   const out = el('div', { class: 'col', style: 'max-width:46rem' }, el('h1', { text: t('Messages') }));
   if (!CLOUD.socialLoaded) { out.append(skel('8rem')); return out; }
   if (!CLOUD.chatsOn) { out.append(el('p', { class: 'empty', text: t('Messages are not switched on yet.') })); return out; }
-  if (S.chatsAt !== location.hash) { S.chatsAt = location.hash; CLOUD.loadChats().then(render); }
+  if (S.chatsAt !== location.hash) { S.chatsAt = location.hash; CLOUD.loadChats().then(render); CLOUD.loadGroups().then(render); }
   const cs = CLOUD.chats, friends = CLOUD.friends.filter((f) => f.status === 'accepted' && !cs.some((c) => c.other === f.other));
-  out.append(panel(t('Conversations'), null, cs.length ? el('ul', { class: 'chats', id: 'chats' }, cs.map((c) => el('li', {}, el('a', { class: 'chatrow', href: '#/chat/' + c.other }, avatarEl(c.avatar, memberName(c.name)), el('span', { class: 'col', style: 'gap:2px;min-width:0;flex:1' }, el('span', { class: 'row between', style: 'flex-wrap:nowrap' }, el('b', { text: memberName(c.name), style: 'overflow:hidden;text-overflow:ellipsis;white-space:nowrap' }), el('span', { class: 'muted small', style: 'flex:none', text: fmtWhen(c.last_at) })), el('span', { class: 'muted small', style: 'overflow:hidden;text-overflow:ellipsis;white-space:nowrap', text: (c.last_mine ? t('You') + ': ' : '') + c.last_body })), Number(c.unread) ? el('span', { class: 'count', text: String(c.unread) }) : null))))
+  out.append(panel(t('Conversations'), null, cs.length ? el('ul', { class: 'chats', id: 'chats' }, cs.map((c) => el('li', {}, el('a', { class: 'chatrow', href: '#/chat/' + c.other }, avatarEl(c.avatar, memberName(c.name)), el('span', { class: 'col', style: 'gap:2px;min-width:0;flex:1' }, el('span', { class: 'row between', style: 'flex-wrap:nowrap' }, el('b', { text: memberName(c.name), style: 'overflow:hidden;text-overflow:ellipsis;white-space:nowrap' }), el('span', { class: 'muted small', style: 'flex:none', text: fmtWhen(c.last_at) })), el('span', { class: 'muted small', style: 'overflow:hidden;text-overflow:ellipsis;white-space:nowrap', text: (c.last_mine ? t('You') + ': ' : '') + msgBody(c.last_body) })), Number(c.unread) ? el('span', { class: 'count', text: String(c.unread) }) : null))))
     : starter(t('Private messages between you and a friend. Nobody else can read them. Pick a friend to start.'), friends.length ? null : el('a', { class: 'btn primary', href: '#/friends' }, ico('plus', t('Add a friend'))))));
+  const gp = groupsPanel(); if (gp) out.append(gp);
   if (friends.length) out.append(panel(t('Start a conversation'), null, el('ul', { class: 'due-list' }, friends.map((f) => el('li', {}, el('span', { class: 'row', style: 'gap:10px;flex-wrap:nowrap;min-width:0' }, avatarEl(f.avatar, friendName(f), 'sm'), el('b', { text: friendName(f), style: 'overflow-wrap:anywhere' })), el('a', { class: 'btn sm', href: '#/chat/' + f.other, text: t('Message') }))))));
   return out;
 }
-function loadChat(uid, quiet) { S.chat = S.chat || {}; if (!quiet) S.chat[uid] = S.chat[uid] || { loading: true }; return CLOUD.chatWith(uid).then((rows) => { const old = S.chat[uid] || {}; const same = old.rows && rows && old.rows.length === rows.length && (!rows.length || (old.rows[old.rows.length - 1].id === rows[rows.length - 1].id && old.rows[old.rows.length - 1].read === rows[rows.length - 1].read)); S.chat[uid] = { rows: rows || [] }; if (same && quiet) return false; return CLOUD.loadChats().then(() => true); }).catch(() => { if (!quiet) S.chat[uid] = { rows: [], failed: true }; return !quiet; }).then((ch) => { if (ch && route().name === 'chat' && route().a === uid) { if (quiet) { const ta = document.getElementById('c-body'); if (ta) S.chatDraft = ta.value; } S.chatDown = true; render(); } }); }
+function loadChat(uid, quiet) { S.chat = S.chat || {}; if (!quiet) S.chat[uid] = S.chat[uid] || { loading: true }; return CLOUD.chatWith(uid).then((rows) => { const old = S.chat[uid] || {}; const same = old.rows && rows && old.rows.length === rows.length && (!rows.length || (old.rows[old.rows.length - 1].id === rows[rows.length - 1].id && old.rows[old.rows.length - 1].read === rows[rows.length - 1].read)); S.chat[uid] = { rows: rows || [] }; if (same && quiet) return false; return CLOUD.loadChats().then(() => true); }).catch(() => { if (!quiet) S.chat[uid] = { rows: [], failed: true }; return !quiet; }).then((ch) => { if (ch && route().name === 'chat' && route().a === uid) { if (quiet) { const ta = document.getElementById('c-body'); if (ta) S.chatDraft = ta.value; if (ta && document.activeElement === ta) S.chatRefocus = true; } S.chatDown = true; render(); } }); }
 function viewChat(uid) {
   socialCache();
   const f = CLOUD.friends.find((x) => x.other === uid && x.status === 'accepted'), c = (CLOUD.chats || []).find((x) => x.other === uid), name = f ? friendName(f) : c ? memberName(c.name) : t('A member');
@@ -922,19 +925,15 @@ function viewChat(uid) {
   if (!CLOUD.socialLoaded) { out.append(skel('10rem')); return out; }
   out.append(el('div', { class: 'row', style: 'gap:12px;flex-wrap:nowrap' }, avatarEl((f && f.avatar) || (c && c.avatar), name), el('a', { class: 'who', href: '#/member/' + uid }, el('h1', { text: name, style: 'overflow-wrap:anywhere;font-size:1.3rem' }))));
   const got = (S.chat || {})[uid];
-  if (S.chatFor !== uid) { S.chatFor = uid; S.chatDraft = ''; loadChat(uid); }
+  if (S.chatFor !== 'p:' + uid) { S.chatFor = 'p:' + uid; S.chatDraft = ''; loadChat(uid); }
   clearInterval(viewChat.h); viewChat.h = setInterval(() => { if (route().name !== 'chat') { clearInterval(viewChat.h); S.chatFor = null; return; } if (!document.hidden) loadChat(route().a, true); }, 10000);
   if (!got || got.loading) { out.append(skel('10rem')); return out; }
-  const list = el('div', { class: 'bubbles', id: 'bubbles' }, got.rows.length ? got.rows.map((m, i) => el('div', { class: 'bubble' + (m.mine ? ' mine' : '') }, el('p', { text: m.body }), el('span', { class: 'small', text: fmtWhen(m.created_at) + (m.mine && i === got.rows.length - 1 && m.read ? ' · ' + t('Seen') : '') }), !m.mine && CLOUD.extras ? el('button', { type: 'button', class: 'linkbtn small', text: t('Report'), onclick: () => reportAsk('message', m.id, name + ': ' + m.body) }) : null))
+  const list = el('div', { class: 'bubbles', id: 'bubbles' }, got.rows.length ? got.rows.map((m, i) => el('div', { class: 'bubble' + (m.mine ? ' mine' : '') }, m.photo ? postPhoto(m.photo) : null, attachCard(m.attach), m.body ? richP(m.body) : null, el('span', { class: 'small', text: fmtWhen(m.created_at) + (m.mine && i === got.rows.length - 1 && m.read ? ' · ' + t('Seen') : '') }), !m.mine && CLOUD.extras ? el('button', { type: 'button', class: 'linkbtn small', text: t('Report'), onclick: () => reportAsk('message', m.id, name + ': ' + m.body) }) : null))
     : el('p', { class: 'muted small', text: t(got.failed ? 'Messages could not be loaded. Try again later.' : 'No messages yet. Say hello.') }));
   out.append(list);
   if (!f) { out.append(el('p', { class: 'muted small', text: t('You can only message friends. Add this person as a friend to write to them.') })); }
   else {
-    const body = el('textarea', { id: 'c-body', rows: 2, maxlength: 2000, placeholder: t('Write a message'), 'aria-label': t('Write a message') }), st = el('span', { class: 'status', role: 'status' }); body.value = S.chatDraft || '';
-    body.addEventListener('input', () => { S.chatDraft = body.value; });
-    const send = async () => { const v = body.value.trim(); if (!v) return; st.textContent = t('Sending…'); try { const r = await CLOUD.sendMessage(uid, v); if (r === 'sent') { S.chatDraft = ''; body.value = ''; st.textContent = ''; await loadChat(uid, true); } else st.textContent = r === 'slow' ? t('You are sending messages very quickly. Wait a moment.') : r === 'not_friends' ? t('You can only message friends.') : t('Couldn’t send. Try again.'); } catch (e) { st.textContent = t('Couldn’t send. Try again.'); } };
-    body.addEventListener('keydown', (ev) => { if (ev.key === 'Enter' && !ev.shiftKey && !matchMedia('(pointer: coarse)').matches) { ev.preventDefault(); send(); } });
-    out.append(el('form', { class: 'row chatform', style: 'flex-wrap:nowrap;align-items:flex-end', onsubmit: (ev) => { ev.preventDefault(); send(); } }, body, el('button', { type: 'submit', class: 'btn primary', id: 'b-send', text: t('Send') })), st,
+    out.append(...chatForm(async (v, ph) => { const r = await CLOUD.sendMessage(uid, v, ph, null); if (r === 'sent') await loadChat(uid, true); return r; }, 'p:' + uid),
       el('p', { class: 'muted small' }, el('span', { text: t('Only you and {n} can read this. Messages follow the', { n: name }) + ' ' }), el('a', { href: '#/guidelines', text: t('community guidelines') }), el('span', { text: '.' })));
   }
   if (S.chatDown) { S.chatDown = false; setTimeout(() => { const b = document.getElementById('bubbles'); if (b) b.scrollTop = b.scrollHeight; }, 0); }
@@ -957,7 +956,7 @@ function viewCommunities() {
         field(t('Name'), name), field(t('About'), about), el('div', { class: 'row' }, el('button', { type: 'submit', class: 'btn primary', id: 'b-cm-save', text: t('Create community') }), el('button', { type: 'button', class: 'btn', text: t('Cancel'), onclick: () => { S.newCom = false; render(); } }), status))));
   } else out.append(el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn primary', id: 'b-cm-new', onclick: () => { S.newCom = true; render(); } }, ico('plus', t('Start a community')))));
   const list = CLOUD.communities, joined = list.filter((c) => c.joined), evs = CLOUD.events.slice(0, 3);
-  if (joined.length) out.append(panel(t('Your communities'), null, el('div', { class: 'tiles', id: 'my-communities' }, joined.map((c) => el('a', { class: 'tile', href: '#/community/' + c.id }, el('span', { class: 'avatar', 'aria-hidden': 'true', text: (c.name.trim()[0] || '?').toUpperCase() }), el('span', { class: 'col', style: 'gap:2px;min-width:0' }, el('b', { text: c.name, style: 'overflow-wrap:anywhere' }), el('span', { class: 'muted small', text: t('Members: {n}', { n: c.members }) })))))));
+  if (joined.length) out.append(panel(t('Your communities'), null, el('div', { class: 'tiles', id: 'my-communities' }, joined.map((c) => el('a', { class: 'tile', href: '#/community/' + c.id }, el('span', { class: 'avatar', 'aria-hidden': 'true', text: (c.name.trim()[0] || '?').toUpperCase() }), el('span', { class: 'col', style: 'gap:2px;min-width:0' }, el('b', { text: c.name, style: 'overflow-wrap:anywhere' }), el('span', { class: 'muted small', text: t('Members: {n}', { n: c.members }) }), faces(c.faces, Number(c.members))))))));
   if (evs.length) out.append(panel(t('Upcoming events'), null, eventList(evs), CLOUD.events.length > evs.length ? el('a', { class: 'small', href: '#/events', text: t('See all events') }) : null));
   out.append(panel(t(joined.length ? 'Find more communities' : 'All communities'), null, list.filter((c) => !c.joined || !joined.length).length ? el('ul', { class: 'due-list' }, list.filter((c) => !c.joined || !joined.length).map((c) => el('li', {},
     el('span', { class: 'col', style: 'gap:2px;min-width:0;flex:1 1 14rem' }, el('a', { href: '#/community/' + c.id, style: 'font-weight:600;overflow-wrap:anywhere', text: c.name }), c.about ? el('span', { class: 'small', style: 'overflow-wrap:anywhere', text: c.about }) : null, el('span', { class: 'muted small', text: t('Members: {n}', { n: c.members }) + ' · ' + t('Started by {h}', { h: memberName(c.host) }) })),
@@ -967,7 +966,7 @@ function viewCommunities() {
 }
 const memberName = (n) => n === 'A member' ? t('A member') : n;
 function loadPosts(id) { S.posts = S.posts || {}; S.posts[id] = S.posts[id] || { loading: true }; return CLOUD.posts(id).then((rows) => { S.posts[id] = { rows: rows || [] }; }).catch(() => { S.posts[id] = { rows: [], failed: true }; }).then(render); }
-const socialCache = () => { const u = CLOUD.user && CLOUD.user.id; if (S.cacheUser !== u) { S.cacheUser = u; S.members = {}; S.member = {}; S.going = {}; S.allMembers = null; } };
+const socialCache = () => { const u = CLOUD.user && CLOUD.user.id; if (S.cacheUser !== u) { S.cacheUser = u; S.members = {}; S.member = {}; S.going = {}; S.allMembers = null; S.eng = {}; S.engAsked = {}; S.cotw = {}; S.gchat = {}; S.asked = {}; } };
 function loadMembers(id) { S.members = S.members || {}; S.members[id] = S.members[id] || { loading: true }; const key = S.members[id].key; return CLOUD.listMembers(id).then((rows) => { S.members[id] = { rows: rows || [], key }; }).catch((e) => { S.members[id] = { rows: [], off: true, key }; }).then(render); }
 const memberLink = (uid, name, mine) => uid && !(S.membersOff) ? el('a', { class: 'who', href: mine ? '#/profile' : '#/member/' + uid, text: name }) : el('b', { text: name });
 function membersPanel(id) {
@@ -977,6 +976,7 @@ function membersPanel(id) {
   if (got.loading) return skel('4rem'); if (got.off) { S.membersOff = true; return null; }
   S.membersOff = false;
   const all = got.rows, show = S.allMembers === id ? all : all.slice(0, 12);
+  if (engOn()) return storiesPanel(id, all);
   return panel(t('Members'), null, el('ul', { class: 'members', id: 'members' }, show.map((m) => el('li', {}, el('a', { class: 'member', href: m.me ? '#/profile' : '#/member/' + m.user_id }, avatarEl(m.avatar, memberName(m.name)), el('span', { class: 'col', style: 'gap:2px;min-width:0' }, el('b', { text: m.me ? t('You') : memberName(m.name), style: 'overflow-wrap:anywhere' }), m.founder ? el('span', { class: 'muted small', text: t('Founder') }) : null))))),
     all.length > show.length ? el('button', { type: 'button', class: 'linkbtn small', id: 'b-all-members', text: t('Show all {n} members', { n: all.length }), onclick: () => { S.allMembers = id; render(); } }) : null,
     all.length > 1 ? el('p', { class: 'muted small', text: t('Tap a member to see their page and add them as a friend.') }) : el('p', { class: 'muted small', text: t('You are the only member so far. Invite people to join.') }));
@@ -991,7 +991,7 @@ function viewMember(uid) {
   const m = got.m;
   if (!m) { out.append(el('p', { class: 'empty', text: t(got.failed ? 'This page could not be loaded. Try again later.' : 'This member’s page is not available.') })); return out; }
   const name = memberName(m.name), again = (fn, done) => async () => { try { await fn(); if (done) toast(done); } catch (e) { toast(t('Couldn’t save. Try again.')); } delete S.member[uid]; render(); };
-  out.append(el('div', { class: 'row', style: 'gap:16px;flex-wrap:nowrap;align-items:center' }, avatarEl(m.avatar, name, 'lg'), el('div', { class: 'col', style: 'gap:4px;min-width:0' }, el('h1', { text: name, style: 'overflow-wrap:anywhere' }), el('span', { class: 'muted small', style: 'overflow-wrap:anywhere', text: [m.username ? '@' + m.username : '', m.garage && m.garage !== m.name ? m.garage : '', m.city].filter(Boolean).join(' · ') }), socialLinks(m.links))));
+  if (engOn()) out.append(memberHead(m, name)); else out.append(el('div', { class: 'row', style: 'gap:16px;flex-wrap:nowrap;align-items:center' }, avatarEl(m.avatar, name, 'lg'), el('div', { class: 'col', style: 'gap:4px;min-width:0' }, el('h1', { text: name, style: 'overflow-wrap:anywhere' }), el('span', { class: 'muted small', style: 'overflow-wrap:anywhere', text: [m.username ? '@' + m.username : '', m.garage && m.garage !== m.name ? m.garage : '', m.city].filter(Boolean).join(' · ') }), socialLinks(m.links))));
   const acts = el('div', { class: 'row' });
   if (m.relation === 'self') acts.append(el('a', { class: 'btn', href: '#/profile', text: t('Edit my profile') }));
   else if (m.relation === 'none') acts.append(el('button', { type: 'button', class: 'btn primary', id: 'b-add-member' }, ico('plus', t('Add as a friend'))));
@@ -1002,6 +1002,7 @@ function viewMember(uid) {
   if (m.relation !== 'self' && CLOUD.extras) acts.append(el('button', { type: 'button', class: 'linkbtn small', text: t('Report'), onclick: () => reportAsk('user', uid, name) }), el('button', { type: 'button', class: 'linkbtn small', text: t('Block'), onclick: () => blockAsk(uid, name) }));
   out.append(acts);
   if (m.relation !== 'self' && m.relation !== 'friends') out.append(el('p', { class: 'muted small', text: t('Once you are friends, you can open {n}’s garage if they share it, follow their projects and join their events.', { n: name }) }));
+  if (engOn()) { const mc = memberCars(m); if (mc) out.append(mc); }
   const cs = m.communities || [];
   if (cs.length && m.relation !== 'self') out.append(panel(t('Communities you share'), null, el('ul', { class: 'due-list' }, cs.map((c) => el('li', {}, el('a', { href: '#/community/' + c.id, text: c.name }))))));
   const pj = (CLOUD.projects || []).filter((x) => !x.mine && x.owner === uid);
@@ -1015,20 +1016,23 @@ function viewCommunity(id) {
   if (!c) { out.append(el('p', { class: 'empty', text: t('That community no longer exists.') })); return out; }
   out.append(el('div', { class: 'col', style: 'gap:6px' }, el('h1', { text: c.name, style: 'overflow-wrap:anywhere' }), c.about ? el('p', { style: 'overflow-wrap:anywhere', text: c.about }) : null, ((fo) => el('p', { class: 'muted small' }, el('span', { text: t('Members: {n}', { n: c.members }) + ' · ' + t('Started by') + ' ' }), fo ? el('a', { id: 'a-founder', href: fo.me ? '#/profile' : '#/member/' + fo.user_id, text: memberName(c.host) }) : el('span', { text: memberName(c.host) })))(c.joined ? (((S.members || {})[id] || {}).rows || []).find((m) => m.founder) : null),
     el('div', { class: 'row' }, !c.joined ? el('button', { type: 'button', class: 'btn primary', id: 'b-join', text: t('Join'), onclick: doing(() => CLOUD.joinCommunity(c.id), t('You joined {n}', { n: c.name })) }) : null,
+      c.joined && engOn() ? el('a', { class: 'btn', id: 'a-gchat', href: '#/gchat/community/' + c.id }, ico('chat', t('Group chat') + ((n) => n ? ' (' + n + ')' : '')(Number(((CLOUD.gchats || []).find((g) => g.scope === 'community' && g.ref === c.id) || {}).unread || 0)))) : null,
+      el('button', { type: 'button', class: 'btn', id: 'b-invite', onclick: () => { S.invite = { id: c.id, name: c.name }; render(); } }, ico('share', t('Invite'))),
       c.joined ? el('button', { type: 'button', class: 'btn', onclick: () => { S.evFor = c.id; S.newEv = true; nav('#/events'); } }, ico('plus', t('Create an event'))) : null,
       c.joined && !c.mine ? el('button', { type: 'button', class: 'btn', text: t('Leave'), onclick: () => { if (confirm(t('Leave {n}?', { n: c.name }))) { S.posts = {}; doing(() => CLOUD.leaveCommunity(c.id))(); } } }) : null,
       !c.mine && CLOUD.extras ? el('button', { type: 'button', class: 'linkbtn small', text: t('Report'), onclick: () => reportAsk('community', c.id, c.name + ' / ' + (c.about || '')) }) : null,
       c.mine ? el('button', { type: 'button', class: 'btn', text: t('Delete community'), onclick: () => { if (confirm(t('Delete {n} with all its posts and events? This cannot be undone.', { n: c.name }))) CLOUD.deleteCommunity(c.id).then(() => { toast(t('Community deleted')); nav('#/communities'); }).catch(() => toast(t('Couldn’t save. Try again.'))); } }) : null)));
   if (!c.joined) { out.append(el('p', { class: 'empty', text: t('Join to read and write posts and to see this community’s events.') })); return out; }
   out.append(membersPanel(id));
+  const cw = cotwPanel(c); if (cw) out.append(cw);
   const evs = CLOUD.events.filter((e) => e.community_id === c.id);
   if (evs.length) out.append(panel(t('Upcoming events'), null, eventList(evs)));
   S.draft = S.draft || {}; const dr = S.draft[id] = S.draft[id] || { text: '', file: null };
   const pfile = el('input', { type: 'file', accept: 'image/*', id: 'p-photo', style: 'display:none' }), pname = el('div', { class: 'attach', id: 'p-attach' });
   const showPick = () => { pname.replaceChildren(); if (!dr.file) return; const im = el('img', { alt: '' }); try { im.src = URL.createObjectURL(dr.file); } catch (e) {} pname.append(im, el('span', { class: 'small', text: t('Photo attached. Press Post to share it.') }), el('button', { type: 'button', class: 'linkbtn small', id: 'p-unpick', text: t('Remove'), onclick: () => { dr.file = null; pfile.value = ''; showPick(); } })); };
   pfile.addEventListener('change', () => { if (pfile.files[0]) dr.file = pfile.files[0]; showPick(); }); showPick();
-  const body = el('textarea', { id: 'p-body', rows: 3, maxlength: 2000, placeholder: t('Share news, a question or a photo with the community') }), status = el('span', { class: 'status', role: 'status' }); body.value = dr.text; body.addEventListener('input', () => { dr.text = body.value; });
-  const got = (S.posts || {})[id]; if (!got) loadPosts(id);
+  const body = el('textarea', { id: 'p-body', rows: 3, maxlength: 2000, placeholder: t('Share news, a question or a photo with the community') + (engOn() ? '. ' + t('Use @username to mention someone.') : '') }), status = el('span', { class: 'status', role: 'status' }); body.value = dr.text; body.addEventListener('input', () => { dr.text = body.value; });
+  const got = (S.posts || {})[id]; if (!got) loadPosts(id); else if (got.rows) ensureSeeds('post', got.rows.map((p) => p.id));
   if (S.focusPost && Date.now() < S.focusPost) setTimeout(() => { const b = document.getElementById('p-body'); if (b && document.activeElement !== b) { b.focus(); b.scrollIntoView({ block: 'center' }); } }, 0); else S.focusPost = 0;
   out.append(panel(t('Posts'), null,
     el('form', { class: 'col', style: 'gap:8px', onsubmit: async (ev) => { ev.preventDefault(); const v = body.value.trim(), f = CLOUD.extras && dr.file; if (!v && !f) { status.textContent = t('Write something or add a photo.'); return; } if (!ls.get('g197-rules-' + CLOUD.user.id, '')) { if (!confirm(t('Before your first post: be respectful, stay on cars, no abuse, spam or other people’s private details. Posts that break the community guidelines are removed and accounts can be closed. Do you agree?'))) return; ls.set('g197-rules-' + CLOUD.user.id, '1'); } const btn = document.getElementById('b-post'); if (btn) btn.disabled = true; status.textContent = f ? t('Uploading the photo…') : t('Sending…'); let step = 'photo'; try { let ph = null; if (f) ph = (await CLOUD.upload('community-' + id, await shrink(f))).path; step = 'post'; status.textContent = t('Sending…'); await CLOUD.post(id, v, ph); dr.text = ''; dr.file = null; body.value = ''; pfile.value = ''; showPick(); status.textContent = ''; body.blur(); await loadPosts(id); } catch (e) { const why = String((e && e.message) || '').slice(0, 140); status.textContent = (step === 'photo' ? t('The photo could not be uploaded. Try again.') : t('Couldn’t save. Try again.')) + (why ? ' (' + why + ')' : ''); } if (btn) btn.disabled = false; } }, body, pname, el('div', { class: 'row' }, el('button', { type: 'submit', class: 'btn primary', id: 'b-post', text: t('Post') }), CLOUD.extras ? el('button', { type: 'button', class: 'btn', onclick: () => pfile.click() }, ico('camera', t('Add a photo'))) : null, pfile), status),
@@ -1036,7 +1040,7 @@ function viewCommunity(id) {
     !got || got.loading ? skel('5rem') : got.rows.length ? el('ul', { class: 'posts' }, got.rows.map((p) => el('li', {}, el('div', { class: 'row between' }, el('span', { class: 'row', style: 'gap:8px' }, avatarEl(p.avatar, memberName(p.author), 'sm'), memberLink(p.author_id, p.mine ? t('You') : memberName(p.author), p.mine), el('span', { class: 'muted small', text: fmtWhen(p.created_at) })),
       el('span', { class: 'row', style: 'gap:12px' }, p.mine || c.mine ? el('button', { type: 'button', class: 'linkbtn small', text: t('Remove'), onclick: async () => { try { await CLOUD.deletePost(p.id); if (p.mine && p.photo) CLOUD.removeFiles([p.photo]); await loadPosts(id); } catch (e) { toast(t('Couldn’t save. Try again.')); } } }) : null,
         !p.mine && CLOUD.extras ? el('button', { type: 'button', class: 'linkbtn small', text: t('Report'), onclick: () => reportAsk('post', p.id, p.author + ': ' + p.body + (p.photo ? ' [' + p.photo + ']' : '')) }) : null,
-        !p.mine && CLOUD.extras && p.author_id ? el('button', { type: 'button', class: 'linkbtn small', text: t('Block'), onclick: () => blockAsk(p.author_id, memberName(p.author)) }) : null)), p.body ? el('p', { text: p.body }) : null, p.photo ? postPhoto(p.photo) : null)))
+        !p.mine && CLOUD.extras && p.author_id ? el('button', { type: 'button', class: 'linkbtn small', text: t('Block'), onclick: () => blockAsk(p.author_id, memberName(p.author)) }) : null)), p.body ? richP(p.body) : null, p.photo ? (engOn() ? bigPhoto(p.photo, 'post', p.id) : postPhoto(p.photo)) : null, engageBar('post', p.id))))
       : el('p', { class: 'empty', text: t(got.failed ? 'Posts could not be loaded. Try again later.' : 'No posts yet. Say hello.') })));
   return out;
 }
@@ -1056,13 +1060,15 @@ function toggleGoing(e) {
 }
 const reGoing = (e) => { const g = (S.going || {})[e.id]; if (g && g.open && !g.off) CLOUD.listGoing(e.id).then((rows) => { S.going[e.id] = { open: true, rows: rows || [] }; render(); }).catch(() => {}); };
 function eventList(evs) {
+  ensureSeeds('event', evs.map((e) => e.id));
   return el('ul', { class: 'posts' }, evs.map((e) => el('li', {},
     el('div', { class: 'row between' }, el('b', { text: e.title, style: 'overflow-wrap:anywhere' }), el('span', { class: 'tag', text: fmtWhen(e.starts_at) })),
     el('span', { class: 'muted small', text: [e.place, e.community ? e.community : t('For friends of {h}', { h: e.mine ? t('You') : memberName(e.host) }), t('Hosted by {h}', { h: e.mine ? t('You') : memberName(e.host) })].filter(Boolean).join(' · ') }),
-    e.details ? el('p', { text: e.details }) : null,
-    el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn sm' + (e.me_going ? '' : ' primary'), 'aria-pressed': e.me_going ? 'true' : 'false', text: e.me_going ? t('You are going ✓') : t('I’m going'), onclick: doing(() => CLOUD.rsvp(e.id, !e.me_going).then(() => reGoing(e))) }), el('button', { type: 'button', class: 'linkbtn small going-btn', 'aria-expanded': ((S.going || {})[e.id] || {}).open ? 'true' : 'false', text: t('Going: {n}', { n: e.going }) + ' · ' + (((S.going || {})[e.id] || {}).open ? t('Hide') : t('See who')), onclick: () => toggleGoing(e) }),
+    e.details ? richP(e.details) : null,
+    el('div', { class: 'row' }, faces(e.faces, Number(e.going)), el('button', { type: 'button', class: 'btn sm' + (e.me_going ? '' : ' primary'), 'aria-pressed': e.me_going ? 'true' : 'false', text: e.me_going ? t('You are going ✓') : t('I’m going'), onclick: doing(() => CLOUD.rsvp(e.id, !e.me_going).then(() => reGoing(e))) }), el('button', { type: 'button', class: 'linkbtn small going-btn', 'aria-expanded': ((S.going || {})[e.id] || {}).open ? 'true' : 'false', text: t('Going: {n}', { n: e.going }) + ' · ' + (((S.going || {})[e.id] || {}).open ? t('Hide') : t('See who')), onclick: () => toggleGoing(e) }),
       !e.mine && CLOUD.extras ? el('button', { type: 'button', class: 'linkbtn small', text: t('Report'), onclick: () => reportAsk('event', e.id, e.host + ': ' + e.title + ' / ' + (e.place || '') + ' / ' + (e.details || '')) }) : null,
-      e.mine ? el('button', { type: 'button', class: 'linkbtn small', text: t('Cancel event'), onclick: () => { if (confirm(t('Cancel {n}?', { n: e.title }))) doing(() => CLOUD.deleteEvent(e.id), t('Event cancelled'))(); } }) : null), goingBox(e))));
+      engOn() && (e.me_going || e.mine) ? el('a', { class: 'btn sm', href: '#/gchat/event/' + e.id }, ico('chat', t('Chat'))) : null,
+      e.mine ? el('button', { type: 'button', class: 'linkbtn small', text: t('Cancel event'), onclick: () => { if (confirm(t('Cancel {n}?', { n: e.title }))) doing(() => CLOUD.deleteEvent(e.id), t('Event cancelled'))(); } }) : null), goingBox(e), engageBar('event', e.id))));
 }
 function viewEvents() {
   const out = el('div', { class: 'col', style: 'max-width:46rem' }, socialTabs('events'), tip('events'));
@@ -1106,6 +1112,12 @@ function noteLine(n) {
   if (n.kind === 'suggest') return [t('{who} made a suggestion on your project {what}', { who, what }), '#/project/' + n.ref];
   if (n.kind === 'helpful') return [t('{who} responded to your suggestion on {what}', { who, what }), '#/project/' + n.ref];
   if (n.kind === 'cheer') return [t('{who} cheered your project {what}', { who, what }), '#/project/' + n.ref];
+  if (n.kind === 'like' || n.kind === 'comment' || n.kind === 'mention') {
+    const i = String(n.ref).indexOf(':'), k = n.ref.slice(0, i), href = '#/' + n.ref.slice(i + 1).split('/').map(encodeURIComponent).join('/');
+    const L = { like: { post: '{who} liked your post in {what}', pupdate: '{who} liked your update on {what}', car: '{who} liked your car {what}', event: '{who} liked your event {what}' }, comment: { post: '{who} commented on your post in {what}', pupdate: '{who} commented on your update on {what}', car: '{who} commented on your car {what}', event: '{who} commented on your event {what}' }, mention: { post: '{who} mentioned you in {what}', pupdate: '{who} mentioned you on {what}', car: '{who} mentioned you on the car {what}', event: '{who} mentioned you on the event {what}' } };
+    return [t(L[n.kind][k] || L[n.kind].post, { who, what }), href];
+  }
+  if (n.kind === 'cotw') return [t('Your car won car of the week in {what}', { what }), '#/community/' + n.ref];
   return [t('{who} is going to {what}', { who, what }), '#/events'];
 }
 function viewNotifications() {
@@ -1113,7 +1125,7 @@ function viewNotifications() {
   if (!CLOUD.socialLoaded) { out.append(skel('10rem')); return out; }
   const seen = S.noteSeen != null ? S.noteSeen : (S.noteSeen = CLOUD.seenAt ? Date.parse(CLOUD.seenAt) : 0);
   if (CLOUD.unread()) CLOUD.markSeen();
-  out.append(panel(null, null, CLOUD.notes.length ? el('ul', { class: 'due-list' }, CLOUD.notes.map((n) => { const [text, href] = noteLine(n), fresh = Date.parse(n.at) > seen; return el('li', { class: fresh ? 'fresh' : '' }, el('a', { href, text, style: fresh ? 'font-weight:600' : '' }), el('span', { class: 'muted small', text: fmtWhen(n.at) })); }))
+  out.append(panel(null, null, CLOUD.notes.length ? el('ul', { class: 'due-list' }, CLOUD.notes.map((n) => { const [text, href] = noteLine(n), fresh = Date.parse(n.at) > seen; return el('li', { class: 'note' + (fresh ? ' fresh' : '') }, el('a', { class: 'row', href, style: 'gap:10px;flex-wrap:nowrap;min-width:0;text-decoration:none;color:inherit' + (fresh ? ';font-weight:600' : '') }, n.kind === 'cotw' ? el('span', { class: 'avatar sm', 'aria-hidden': 'true' }, svgIcon(ICONS.trophy)) : avatarEl(n.avatar, memberName(n.who || '?'), 'sm'), el('span', { text, style: 'overflow-wrap:anywhere' })), el('span', { class: 'muted small', text: engOn() ? ago(n.at) : fmtWhen(n.at) })); }))
     : el('p', { class: 'empty', text: t('Nothing new yet. Friend requests, new cars, posts and events will show here.') })),
     el('p', { class: 'muted small', text: t('These show while the app is open. Alerts on your phone when the app is closed are not available yet.') }));
   return out;
@@ -1154,11 +1166,14 @@ function viewProfile() {
   if (CLOUD.profiles) {
     const name = el('input', { type: 'text', id: 'pr-name', maxlength: 40, autocomplete: 'name', value: CLOUD.profile.name }), city = el('input', { type: 'text', id: 'pr-city', maxlength: 60, value: CLOUD.profile.city, placeholder: t('e.g. Doha') }), status = el('span', { class: 'status' });
     const uname = el('input', { type: 'text', id: 'pr-username', maxlength: 20, value: CLOUD.profile.username || '', placeholder: t('e.g. amethyst964'), autocapitalize: 'off', autocomplete: 'off', spellcheck: 'false', dir: 'ltr' });
+    const bio = el('textarea', { id: 'pr-bio', rows: 2, maxlength: 160, placeholder: t('e.g. Air-cooled Porsches and old Mercedes. Always up for a morning drive.') }); bio.value = CLOUD.profile.bio || '';
+    const cfile = el('input', { type: 'file', accept: 'image/*', id: 'pr-cover', style: 'display:none' });
+    cfile.addEventListener('change', async () => { const f = cfile.files[0]; if (!f) return; status.textContent = t('Uploading…'); try { const old = CLOUD.profile.cover, up = await CLOUD.upload('profile', await shrink(f)); await CLOUD.saveProfile({ cover: up.path }); if (old) CLOUD.removeFiles([old]); S.member = {}; toast(t('Cover photo updated')); render(); } catch (e) { status.textContent = t('Couldn’t save: {m}', { m: (e && e.message) || '' }); } });
     const file = el('input', { type: 'file', accept: 'image/*', id: 'pr-photo', style: 'display:none' });
-    file.addEventListener('change', async () => { const f = file.files[0]; if (!f) return; status.textContent = t('Uploading…'); try { const old = CLOUD.profile.avatar, up = await CLOUD.upload('profile', await shrink(f)); await CLOUD.saveProfile({ avatar: up.path }); if (old) CLOUD.removeFiles([old]); toast(t('Photo updated')); render(); } catch (e) { status.textContent = t('Couldn’t save: {m}', { m: (e && e.message) || '' }); } });
-    out.append(el('section', { class: 'panel' }, el('div', { class: 'row', style: 'gap:16px' }, avatarEl(CLOUD.profile.avatar, CLOUD.profile.name || CLOUD.user.email || '', 'lg'), el('div', { class: 'col', style: 'gap:6px' }, el('button', { type: 'button', class: 'btn', id: 'b-pr-photo', onclick: () => file.click() }, ico('camera', t(CLOUD.profile.avatar ? 'Change photo' : 'Add a photo'))), file, el('span', { class: 'muted small', text: t('Your name, username and photo are shown to other members. Your email is not shown to them.') }))),
-      el('form', { class: 'col', style: 'gap:12px', onsubmit: async (ev) => { ev.preventDefault(); const un = uname.value.trim().replace(/^@/, '').toLowerCase(); if (CLOUD.usernames && un && !/^[a-z0-9_]{3,20}$/.test(un)) { status.textContent = t('A username is 3 to 20 characters: English letters, numbers and underscores only.'); return; } const patch = { display_name: name.value.trim().slice(0, 40) || null, city: city.value.trim().slice(0, 60) || null }; if (CLOUD.usernames) patch.username = un || null; try { await CLOUD.saveProfile(patch); document.activeElement && document.activeElement.blur(); toast(t('Saved')); render(); } catch (e) { status.textContent = e && (e.status === 409 || e.code === '23505') ? t('That username is taken. Try another.') : t('Couldn’t save. Try again.'); } } },
-        field(t('Your name'), name), CLOUD.usernames ? field(t('Username'), uname, t('Friends can find you by this instead of your email.')) : null, field(t('City'), city, t('Shown to friends only.')), el('div', { class: 'row' }, el('button', { type: 'submit', class: 'btn primary', id: 'b-pr-save', text: t('Save profile') }), status))));
+    file.addEventListener('change', async () => { const f = file.files[0]; if (!f) return; status.textContent = t('Uploading…'); try { const old = CLOUD.profile.avatar, up = await CLOUD.upload('profile', await shrink(f)); await CLOUD.saveProfile({ avatar: up.path }); if (old) CLOUD.removeFiles([old]); S.member = {}; toast(t('Photo updated')); render(); } catch (e) { status.textContent = t('Couldn’t save: {m}', { m: (e && e.message) || '' }); } });
+    out.append(el('section', { class: 'panel' }, el('div', { class: 'row', style: 'gap:16px' }, avatarEl(CLOUD.profile.avatar, CLOUD.profile.name || CLOUD.user.email || '', 'lg'), el('div', { class: 'col', style: 'gap:6px' }, el('button', { type: 'button', class: 'btn', id: 'b-pr-photo', onclick: () => file.click() }, ico('camera', t(CLOUD.profile.avatar ? 'Change photo' : 'Add a photo'))), file, engOn() ? el('button', { type: 'button', class: 'btn', id: 'b-pr-cover', onclick: () => cfile.click() }, ico('camera', t(CLOUD.profile.cover ? 'Change cover photo' : 'Add a cover photo'))) : null, cfile, engOn() ? el('a', { class: 'small', id: 'a-my-page', href: myPage(), text: t('See my page as others see it') }) : null, el('span', { class: 'muted small', text: t('Your name, username and photo are shown to other members. Your email is not shown to them.') }))),
+      el('form', { class: 'col', style: 'gap:12px', onsubmit: async (ev) => { ev.preventDefault(); const un = uname.value.trim().replace(/^@/, '').toLowerCase(); if (CLOUD.usernames && un && !/^[a-z0-9_]{3,20}$/.test(un)) { status.textContent = t('A username is 3 to 20 characters: English letters, numbers and underscores only.'); return; } const patch = { display_name: name.value.trim().slice(0, 40) || null, city: city.value.trim().slice(0, 60) || null }; if (engOn()) patch.bio = bio.value.trim().slice(0, 160) || null; if (CLOUD.usernames) patch.username = un || null; try { await CLOUD.saveProfile(patch); S.member = {}; document.activeElement && document.activeElement.blur(); toast(t('Saved')); render(); } catch (e) { status.textContent = e && (e.status === 409 || e.code === '23505') ? t('That username is taken. Try another.') : t('Couldn’t save. Try again.'); } } },
+        field(t('Your name'), name), engOn() ? field(t('About you'), bio, t('A line or two shown on your page, up to 160 characters.')) : null, CLOUD.usernames ? field(t('Username'), uname, t('Friends can find you by this instead of your email.')) : null, field(t('City'), city, t('Shown to friends only.')), el('div', { class: 'row' }, el('button', { type: 'submit', class: 'btn primary', id: 'b-pr-save', text: t('Save profile') }), status))));
   }
   const lp = linksPanel(); if (lp) out.append(lp);
   if (CLOUD.social) {
@@ -1248,8 +1263,8 @@ const HELP = {
   set(patch) { const h = { ...this.get(), ...patch }; ls.set(this.key(), JSON.stringify(h)); this.push(); return h; },
   mark(what) { const h = this.get(), did = h.did || {}; if (!did[what]) { did[what] = 1; this.set({ did }); } }
 };
-const NEWS_V = 4;
-const NEWS = ['BMW M, Ferrari, Lamborghini and Toyota Land Cruiser models are now in the market data.', 'A simpler layout: four tabs, with Settings and About behind your photo at the top.', 'One Add button for cars, logbook records, reminders, projects, posts and events.', 'Search everything from the top: your cars, market models, people and communities.', 'Private messages with friends, and usernames so friends can find you without your email.', 'Communities now show their members and who is going to each event.'];
+const NEWS_V = 5;
+const NEWS = ['Likes, comments and @mentions on posts, project updates, events and friends’ cars.', 'A photo feed on Home, car of the week in each community, group chats, and invite links with a QR code.', 'BMW M, Ferrari, Lamborghini and Toyota Land Cruiser models are now in the market data.', 'A simpler layout: four tabs, with Settings and About behind your photo at the top.', 'One Add button for cars, logbook records, reminders, projects, posts and events.', 'Search everything from the top: your cars, market models, people and communities.', 'Private messages with friends, and usernames so friends can find you without your email.', 'Communities now show their members and who is going to each event.'];
 function startSteps() {
   const c = S.cars[0], did = HELP.get().did || {}, base = c ? '#/car/' + c.id + '/' : '#/car/new';
   const steps = [
@@ -1395,7 +1410,8 @@ function viewProject(id) {
       try { let ph = null; if (f) ph = (await CLOUD.upload('project-' + id, await shrink(f))).path; await CLOUD.addUpdate(id, v, ph); body.value = ''; body.blur(); CLOUD.loadSocial(); await loadProject(id); } catch (e) { st.textContent = t('Couldn’t save. Try again.'); } } },
       body, el('div', { class: 'row' }, el('button', { type: 'submit', class: 'btn primary', id: 'b-u-post', text: t('Post update') }), el('button', { type: 'button', class: 'btn', onclick: () => file.click() }, ico('camera', t('Add a photo'))), draftBtn(x, body, file, st), file, fname, st)));
   }
-  upPanel.append(loading ? skel('5rem') : d.updates.length ? el('ul', { class: 'posts timeline' }, d.updates.map((u) => el('li', {}, el('div', { class: 'row between' }, el('span', { class: 'muted small', text: fmtWhen(u.created_at) }), x.mine ? el('button', { type: 'button', class: 'linkbtn small', text: t('Remove'), onclick: async () => { try { await CLOUD.deleteUpdate(u.id); if (u.photo) CLOUD.removeFiles([u.photo]); CLOUD.loadSocial(); await loadProject(id); } catch (e) { toast(t('Couldn’t save. Try again.')); } } }) : null), u.body ? el('p', { text: u.body }) : null, u.photo ? postPhoto(u.photo) : null)))
+  if (!loading) ensureSeeds('pupdate', d.updates.map((u) => u.id));
+  upPanel.append(loading ? skel('5rem') : d.updates.length ? el('ul', { class: 'posts timeline' }, d.updates.map((u) => el('li', {}, el('div', { class: 'row between' }, el('span', { class: 'muted small', text: fmtWhen(u.created_at) }), x.mine ? el('button', { type: 'button', class: 'linkbtn small', text: t('Remove'), onclick: async () => { try { await CLOUD.deleteUpdate(u.id); if (u.photo) CLOUD.removeFiles([u.photo]); CLOUD.loadSocial(); await loadProject(id); } catch (e) { toast(t('Couldn’t save. Try again.')); } } }) : null), u.body ? richP(u.body) : null, u.photo ? postPhoto(u.photo) : null, engageBar('pupdate', u.id))))
     : el('p', { class: 'empty', text: t(x.mine ? 'No updates yet. Post the first one to show where the project stands.' : 'No updates yet.') }));
   out.append(upPanel);
   // suggestions
@@ -1688,18 +1704,21 @@ function render() {
   const dark = S.theme === 'dark' || (S.theme === 'auto' && window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches), tc = document.querySelector('meta[name=theme-color]'); if (tc) tc.content = dark ? '#120d1c' : '#ffffff';
   const r = route(); aiCheck();
   if (!CLOUD.user && PAGES[r.name]) { app.replaceChildren(el('header', { class: 'head' }, brand('#/home'), el('a', { class: 'btn sm', href: '#/home', text: t('Sign in') })), el('main', {}, viewPage(r.name)), footer()); return; }
+  if (!CLOUD.user && r.name === 'community' && /^[0-9a-f-]{36}$/.test(r.a || '')) { ls.set('g197-invite', r.a); S.invited = true; S.inviteTo = r.a; }
   if (!CLOUD.user || S.mode === 'newpass') { app.replaceChildren(el('main', {}, viewLogin())); return; }
-  const top = r.name === 'home' ? 'home' : ['friends', 'friend', 'member', 'communities', 'community', 'events'].includes(r.name) ? 'friends' : r.name === 'market' || r.name === 'model' ? 'market' : ['settings', 'profile', 'notifications', 'messages', 'chat', 'search', 'projects', 'project'].includes(r.name) || PAGES[r.name] ? '' : 'garage';
+  if (ls.get('g197-invite', '')) { const inv = ls.get('g197-invite', ''); ls.set('g197-invite', ''); S.invited = false; if (r.name !== 'community') { location.hash = '#/community/' + inv; return; } }
+  const top = r.name === 'home' ? 'home' : ['friends', 'friend', 'member', 'communities', 'community', 'events', 'u'].includes(r.name) ? 'friends' : r.name === 'market' || r.name === 'model' ? 'market' : ['settings', 'profile', 'notifications', 'messages', 'chat', 'gchat', 'search', 'projects', 'project'].includes(r.name) || PAGES[r.name] ? '' : 'garage';
   const tab = (id, href, label) => el('a', { class: 'tab', id: 't-' + id, href, 'aria-current': top === id ? 'page' : 'false' }, ico(id, label));
   const nUnread = CLOUD.extras ? CLOUD.unread() : 0, bell = CLOUD.extras ? el('a', { class: 'bell', id: 'a-bell', href: '#/notifications', 'aria-label': nUnread ? t('Notifications, {n} new', { n: nUnread }) : t('Notifications'), 'aria-current': r.name === 'notifications' ? 'page' : 'false' }, svgIcon(ICONS.bell), nUnread ? el('span', { class: 'count', text: nUnread > 9 ? '9+' : String(nUnread) }) : null) : null;
   const me = el('a', { class: 'mebtn', id: 'a-me', href: '#/profile', 'aria-label': t('Your profile and settings'), 'aria-current': ['profile', 'settings'].includes(r.name) ? 'page' : 'false' }, avatarEl(CLOUD.profile.avatar, CLOUD.profile.name || CLOUD.user.email || '', 'sm'));
   const nMsg = unreadChats(), tool = (id, href, icon, label, n, cur) => el('a', { class: 'bell', id, href, 'aria-label': label, title: label, 'aria-current': cur ? 'page' : 'false' }, svgIcon(ICONS[icon]), n ? el('span', { class: 'count', text: n > 9 ? '9+' : String(n) }) : null);
   const find = el('a', { class: 'bell', id: 'a-search', href: '#/search', 'aria-label': t('Search'), title: t('Search'), 'aria-current': r.name === 'search' ? 'page' : 'false', onclick: () => { S.qFocus = true; } }, svgIcon(ICONS.search));
-  const msgs = CLOUD.chatsOn ? tool('a-msgs', '#/messages', 'chat', nMsg ? t('Messages, {n} new', { n: nMsg }) : t('Messages'), nMsg, r.name === 'messages' || r.name === 'chat') : null;
+  const msgs = CLOUD.chatsOn ? tool('a-msgs', '#/messages', 'chat', nMsg ? t('Messages, {n} new', { n: nMsg }) : t('Messages'), nMsg, r.name === 'messages' || r.name === 'chat' || r.name === 'gchat') : null;
   const plus = el('button', { type: 'button', class: 'fab', id: 'b-add', 'aria-label': t('Add'), title: t('Add'), onclick: () => { S.addOpen = {}; render(); } }, svgIcon(ICONS.plus), el('span', { text: t('Add') }));
   const head = el('header', { class: 'head' }, brand('#/home'), el('span', { class: 'headtools' }, find, msgs, bell, me), el('nav', { class: 'tabs', 'aria-label': t('Sections') }, tab('home', '#/home', t('Home')), tab('garage', '#/garage', t('Garage')), tab('market', '#/market', t('Market')), tab('friends', '#/communities', t('Community') + (incoming().length ? ' (' + incoming().length + ')' : ''))), plus);
   let main;
   if (r.name !== 'notifications') S.noteSeen = null;
+  if (r.name !== 'messages') S.chatsAt = null;
   if (r.name === 'garage') main = viewGarage();
   else if (r.name === 'market') main = viewMarket();
   else if (r.name === 'settings') main = viewSettings();
@@ -1716,14 +1735,16 @@ function render() {
   else if (r.name === 'search') main = viewSearch();
   else if (r.name === 'ask') main = viewAsk();
   else if (r.name === 'chat') main = viewChat(r.a);
-  else if (r.name === 'model') { HELP.mark('market'); const m = catOf(r.a); let mb = null, mc = null; main = el('div', { class: 'col' }, el('div', { class: 'col', style: 'gap:6px' }, el('a', { class: 'small', href: '#/market', text: '‹ ' + t('Market') }), m ? (mb = banner({ name: shortModel(m.name) }, null)) : el('h1', { text: t('Model not found') }), m ? (mc = el('p', { class: 'muted small photo-credit', id: 'model-credit' })) : null, m ? el('p', { class: 'muted', text: t('Built {a} to {b}', { a: m.from, b: m.to }) }) : null), m ? panel(null, null, marketView(m.name, null)) : null, m ? el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn primary', id: 'b-own-one', text: t('I own one: add it to my garage'), onclick: () => { S.prefill = m.name; nav('#/car/new'); } })) : null); if (m) modelPhotoInto(mb, mc, m.name); }
+  else if (r.name === 'gchat') main = viewGroupChat(r.a, r.b);
+  else if (r.name === 'u') main = viewU(r.a || '');
+  else if (r.name === 'model') { HELP.mark('market'); const m = catOf(r.a); let mb = null, mc = null; main = el('div', { class: 'col' }, el('div', { class: 'col', style: 'gap:6px' }, el('a', { class: 'small', href: '#/market', text: '‹ ' + t('Market') }), m ? (mb = banner({ name: shortModel(m.name) }, null)) : el('h1', { text: t('Model not found') }), m ? (mc = el('p', { class: 'muted small photo-credit', id: 'model-credit' })) : null, m ? el('p', { class: 'muted', text: t('Built {a} to {b}', { a: m.from, b: m.to }) }) : null), m ? panel(null, null, marketView(m.name, null)) : null, m ? el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn primary', id: 'b-own-one', text: t('I own one: add it to my garage'), onclick: () => { S.prefill = m.name; nav('#/car/new'); } }), shareBtn({ type: 'model', name: m.name })) : null); if (m) modelPhotoInto(mb, mc, m.name); }
   else if (r.name === 'projects') main = viewProjects();
   else if (r.name === 'project') main = r.a === 'new' ? projectForm() : viewProject(r.a);
   else if (r.name === 'car' && r.a === 'new') main = carForm(null);
   else if (r.name === 'car') { const car = S.cars.find((c) => c.id === r.a); main = !car ? el('p', { class: 'empty', text: t(CLOUD.loaded ? 'That car is no longer in your garage.' : 'Loading your garage…') }) : r.b === 'edit' ? carForm(car) : viewCar(car, r.b || 'overview'); }
   else main = viewHome();
-  const hideAdd = ['chat', 'search', 'ask'].includes(r.name) || (r.name === 'car' && (r.a === 'new' || r.b === 'edit')) || (r.name === 'project' && r.a === 'new'); if (hideAdd) plus.hidden = true;
-  app.replaceChildren(...[head, el('main', {}, main), CLOUD.user && !(r.name === 'profile' || r.name === 'settings' || PAGES[r.name]) ? el('div', { class: 'footpad' }) : footer(), addSheet()].filter(Boolean));
+  const hideAdd = ['chat', 'gchat', 'search', 'ask'].includes(r.name) || (r.name === 'car' && (r.a === 'new' || r.b === 'edit')) || (r.name === 'project' && r.a === 'new'); if (hideAdd) plus.hidden = true;
+  app.replaceChildren(...[head, el('main', {}, main), CLOUD.user && !(r.name === 'profile' || r.name === 'settings' || PAGES[r.name]) ? el('div', { class: 'footpad' }) : footer(), addSheet(), inviteSheet(), shareSheet()].filter(Boolean));
 }
 let rz; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { if (S.redraw) S.redraw(); }, 150); });
 
@@ -1734,7 +1755,7 @@ fetch('sales.csv').then((r) => { if (!r.ok) throw new Error('load'); return r.te
   let busy = () => { const a = document.activeElement; return !!(a && a.closest && a.closest('form') && /INPUT|TEXTAREA|SELECT/.test(a.tagName)); };
   S.db.collection('cars').onSnapshot((snap) => { S.cars = snap.docs.map((d) => ({ id: d.id, ...d.data() })).sort((a, b) => (a.name || '').localeCompare(b.name || '')); if (!busy()) render(); });
   CLOUD.onAuth(() => { if (!CLOUD.user) { S.fcars = {}; S.posts = {}; S.proj = {}; } if (!busy() || !CLOUD.user) render(); });
-  let lastSocial = 0; window.addEventListener('hashchange', () => { const n = route().name; if (['home', 'friends', 'communities', 'community', 'events', 'notifications', 'projects', 'project'].includes(n) && CLOUD.user && CLOUD.social && Date.now() - lastSocial > 20000) { lastSocial = Date.now(); S.fcars = {}; S.posts = {}; S.proj = {}; CLOUD.loadSocial(); } });
+  let lastSocial = 0; window.addEventListener('hashchange', () => { const n = route().name; if (['home', 'friends', 'communities', 'community', 'events', 'notifications', 'projects', 'project', 'messages'].includes(n) && CLOUD.user && CLOUD.social && Date.now() - lastSocial > 20000) { lastSocial = Date.now(); S.fcars = {}; S.posts = {}; S.proj = {}; CLOUD.loadSocial(); } });
   setInterval(() => { if (CLOUD.user && CLOUD.social && document.visibilityState === 'visible' && !busy()) CLOUD.loadSocial(); }, 120000);
   try { const k = await CLOUD.fromLink(); if (k === 'recovery') S.mode = 'newpass'; else if (k && k.error) S.loginMsg = t('That link didn’t work: {m}. Ask for a new one.', { m: k.error }); } catch (e) { S.loginMsg = t('That link has expired. Ask for a new one.'); }
   render();
